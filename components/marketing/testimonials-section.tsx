@@ -2,29 +2,27 @@
 
 import { useState, useEffect, useRef } from "react"
 import { MessageCircle } from "lucide-react"
-import Image from "next/image"
-
 const testimonials = [
   {
     name: "Maria Santos",
     role: "Operations Director, Coastal Bistro Group",
     content:
       "ResolveHQ cut our average resolution time in half. The sector-specific intake form captures exactly what our kitchen team needs.",
-    avatar: "/placeholder.svg?height=48&width=48",
+    initials: "MS",
   },
   {
     name: "Dr. James Okonkwo",
     role: "Patient Experience Lead, Meridian Health",
     content:
       "HIPAA-aware workflows and internal notes let our supervisors escalate complaints without exposing sensitive details to patients.",
-    avatar: "/placeholder.svg?height=48&width=48",
+    initials: "JO",
   },
   {
     name: "Sarah Chen",
     role: "CX Manager, Urban Retail Co.",
     content:
       "The REST API meant we plugged complaint intake into our existing mobile app in a week. Same backend, same SLA rules.",
-    avatar: "/placeholder.svg?height=48&width=48",
+    initials: "SC",
   },
 ]
 
@@ -87,13 +85,12 @@ export function TestimonialsSection() {
                   className="flex-shrink-0 w-full sm:w-[400px] bg-card border border-border rounded-2xl p-8"
                 >
                   <div className="flex items-start gap-4 mb-6">
-                    <Image
-                      src={testimonial.avatar || "/placeholder.svg"}
-                      alt={testimonial.name}
-                      width={48}
-                      height={48}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
+                    <div
+                      aria-hidden="true"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground"
+                    >
+                      {testimonial.initials}
+                    </div>
                     <p className="text-lg text-foreground leading-relaxed flex-1">
                       &ldquo;{testimonial.content}&rdquo;
                     </p>
