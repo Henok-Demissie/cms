@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { BackButton } from "@/components/back-button"
 
 const productLinks = [
   { label: "Intake Forms", target: "services" },
@@ -131,6 +132,10 @@ export function Header() {
         }`}
       >
         <div className="flex items-center gap-4 lg:gap-6">
+          <BackButton
+            fallbackHref="/"
+            className={`shrink-0 ${isScrolled ? "text-zinc-600 hover:text-black" : ""}`}
+          />
           {/* Logo */}
           <a href="#" onClick={handleLogoClick} className="flex items-center gap-2 cursor-pointer shrink-0">
             <svg

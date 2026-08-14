@@ -1,6 +1,8 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { assignComplaintToMe, closeComplaint } from "./actions"
+import { BackButton } from "@/components/back-button"
 import {
   Card,
   CardContent,
@@ -15,55 +17,11 @@ type Props = {
   params: Promise<{ id: string }>
 }
 
-const demoComplaints: Record<string, any> = {
-  "CMP-1024": {
-    id: "CMP-1024",
-    customerName: "Alicia Brooks",
-    customerPhone: "+1 202-555-0101",
-    customerEmail: "alicia@example.com",
-    source: "Email",
-    title: "Delayed delivery refund",
-    description:
-      "The customer reported a delayed delivery and requested a refund for the missing shipment window.",
-    status: "In review",
-    priority: "High",
-  },
-  "CMP-1022": {
-    id: "CMP-1022",
-    customerName: "Marcus Lee",
-    customerPhone: "+1 202-555-0123",
-    customerEmail: "marcus@example.com",
-    source: "Phone",
-    title: "Billing mismatch",
-    description:
-      "The customer noticed an invoice amount that did not match the order confirmation.",
-    status: "Escalated",
-    priority: "Critical",
-  },
-  "CMP-1019": {
-    id: "CMP-1019",
-    customerName: "Nina Patel",
-    customerPhone: "+1 202-555-0144",
-    customerEmail: "nina@example.com",
-    source: "Portal",
-    title: "Order not received",
-    description:
-      "The customer reported that the order had not arrived after the expected delivery date.",
-    status: "Resolved",
-    priority: "Medium",
-  },
-  "CMP-1016": {
-    id: "CMP-1016",
-    customerName: "Daniel Ortiz",
-    customerPhone: "+1 202-555-0187",
-    customerEmail: "daniel@example.com",
-    source: "Chat",
-    title: "Wrong item delivered",
-    description:
-      "The customer received the wrong product and requested a replacement or credit.",
-    status: "Pending",
-    priority: "High",
-  },
+function formatLabel(value: string) {
+  return value
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/^\w/, (character) => character.toUpperCase())
 }
 
 export default async function ComplaintDetailPage({ params }: Props) {
@@ -72,9 +30,14 @@ export default async function ComplaintDetailPage({ params }: Props) {
 
   const { id } = await params
 
-  const complaint = (await prisma.complaint.findUnique({
-    where: { id },
-  })) ?? demoComplaints[id]
+  const complaint = (await prisma.complaint.findFirst({
+    where: { id, tenantId: session.user.tenantId },
+    include: {
+      assignedTo: {
+        select: { id: true, name: true, email: true },
+      },
+    },
+  }))
 
   if (!complaint) {
     return (
@@ -85,7 +48,7 @@ export default async function ComplaintDetailPage({ params }: Props) {
             <CardDescription>The complaint ID `{id}` was not found.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">It may be a demo ID — return to the complaints list to view real records.</p>
+            <BackButton fallbackHref="/dashboard/complaints" label="Back to complaints" />
           </CardContent>
         </Card>
       </div>
@@ -140,15 +103,49 @@ export default async function ComplaintDetailPage({ params }: Props) {
             </div>
 
             <div className="flex items-center gap-3">
-              <Badge variant="secondary">{complaint.status}</Badge>
-              <Badge variant={complaint.priority === "Critical" ? "destructive" : "outline"}>
-                {complaint.priority}
+              <Badge variant="secondary">{formatLabel(complaint.status)}</Badge>
+              <Badge variant={complaint.priority === "CRITICAL" ? "destructive" : "outline"}>
+                {formatLabel(complaint.priority)}
               </Badge>
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline">Assign</Button>
-              <Button variant="destructive">Close</Button>
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <p className="text-sm text-muted-foreground">Assigned to</p>
+              <p className="font-medium">
+                {complaint.assignedTo?.name ?? "Not assigned"}
+              </p>
+              {complaint.assignedTo?.email && (
+                <p className="text-xs text-muted-foreground">
+                  {complaint.assignedTo.email}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <form action={assignComplaintToMe.bind(null, complaint.id)}>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  disabled={
+                    complaint.assignedTo?.id === session.user.id ||
+                    complaint.status === "RESOLVED" ||
+                    complaint.status === "CLOSED"
+                  }
+                >
+                  {complaint.assignedTo?.id === session.user.id
+                    ? "Assigned to you"
+                    : "Assign to me"}
+                </Button>
+              </form>
+              <form action={closeComplaint.bind(null, complaint.id)}>
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  disabled={complaint.status === "CLOSED"}
+                >
+                  {complaint.status === "CLOSED" ? "Closed" : "Close complaint"}
+                </Button>
+              </form>
             </div>
           </div>
         </CardContent>

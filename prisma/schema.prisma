@@ -19,32 +19,43 @@ model Tenant {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  tenantId     String
-  name         String
-  email        String   @unique
-  role         String   @default("AGENT")
-  passwordHash String
-  createdAt    DateTime @default(now())
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id                 String      @id @default(cuid())
+  tenantId           String
+  name               String
+  firstName          String?
+  lastName           String?
+  email              String      @unique
+  phone              String?     @unique
+  gender             String?
+  language           String?     @default("AM")
+  nationalId         String?
+  role               String      @default("AGENT")
+  passwordHash       String
+  createdAt          DateTime    @default(now())
+  tenant             Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignedComplaints Complaint[] @relation("ComplaintAssignee")
 
   @@index([tenantId])
 }
 
 model Complaint {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   tenantId       String
+  assignedToId   String?
   customerName   String?
   customerPhone  String?
   customerEmail  String?
-  source         String   @default("OTHER")
+  source         String    @default("OTHER")
   title          String
   description    String
-  status         String   @default("NEW")
-  priority       String   @default("MEDIUM")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  status         String    @default("NEW")
+  priority       String    @default("MEDIUM")
+  assignedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignedTo     User?     @relation("ComplaintAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
+  @@index([assignedToId])
 }

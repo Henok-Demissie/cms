@@ -1,11 +1,13 @@
 import Link from "next/link"
 import { Suspense } from "react"
 import { LoginForm } from "@/components/auth/login-form"
+import { BackButton } from "@/components/back-button"
 
 export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-md">
+        <BackButton fallbackHref="/" className="mb-4" />
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <svg className="w-6 h-6 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

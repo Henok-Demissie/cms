@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, MessageSquareText, Settings, ShieldCheck } from "lucide-react"
+import { LayoutDashboard, LogOut, MessageSquareText, ShieldCheck } from "lucide-react"
+import { signOut } from "next-auth/react"
 
 import {
   Sidebar,
@@ -19,7 +20,6 @@ import {
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Complaints", href: "/dashboard/complaints", icon: MessageSquareText },
-  { title: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
 export function AppSidebar({ variant = "sidebar" }: { variant?: "sidebar" | "floating" | "inset" }) {
@@ -66,11 +66,18 @@ export function AppSidebar({ variant = "sidebar" }: { variant?: "sidebar" | "flo
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="px-4 py-4">
-        <div className="rounded-lg border border-border bg-card p-3 text-sm text-muted-foreground">
-          <p className="font-medium text-foreground">Your workspace</p>
-          <p className="mt-1">Manage complaints, SLA replies, and team activity from one place.</p>
-        </div>
+      <SidebarFooter className="p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="text-muted-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign out</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   )

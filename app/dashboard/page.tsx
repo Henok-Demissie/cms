@@ -1,8 +1,10 @@
 // app/dashboard/page.tsx
 import { auth } from "@/auth";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AdminComplaintsDashboard } from "@/components/admin-complaints-dashboard";
-import { DashboardStats } from "@/components/dashboard-stats";
+import { ExternalLink } from "lucide-react";
+import { AdminComplaintsDashboard } from "@/components/dashboard/admin-complaints-dashboard";
+import { DashboardStats } from "@/components/dashboard/dashboard-stats";
 import { prisma } from "@/lib/prisma";
 
 function buildMonthlyChartData(
@@ -74,14 +76,27 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-1 flex-col gap-3 p-3 md:gap-4 md:p-4">
       <div className="rounded-xl border border-border bg-card p-4">
-        <div>
-          <p className="text-xs text-muted-foreground">Dashboard</p>
-          <h1 className="text-xl font-semibold">
-            {tenant?.name ?? "Your organization"}
-          </h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Overview of complaint activity for {session.user.name}
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Dashboard</p>
+            <h1 className="text-xl font-semibold">
+              {tenant?.name ?? "Your organization"}
+            </h1>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Overview of complaint activity for {session.user.name}
+            </p>
+          </div>
+          {tenant && (
+            <Link
+              href={`/org/${tenant.subdomain}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-medium transition-colors hover:bg-accent"
+            >
+              Open public complaint form
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Link>
+          )}
         </div>
       </div>
 

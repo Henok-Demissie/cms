@@ -1,10 +1,8 @@
 import { z } from "zod"
 import { SECTORS } from "@/lib/constants"
-import { apiError, apiSuccess } from "@/lib/api-response"
-import { createTenantWithAdmin, findUserByEmail } from "@/lib/auth-service"
-import { signApiToken } from "@/lib/jwt"
+import { apiError, apiSuccess } from "@/lib/api/response"
 import { prisma } from "@/lib/prisma"
-import { uniqueSubdomain } from "@/lib/slug"
+import bcrypt from "bcrypt"
 
 const registerSchema = z.object({
   name: z.string().min(2).max(100),
@@ -16,65 +14,79 @@ const registerSchema = z.object({
 })
 
 export async function POST(request: Request) {
+  let body: any
   try {
-    const body = await request.json()
-    const parsed = registerSchema.safeParse(body)
+    body = await request.json()
+  } catch (err) {
+    return apiError("Invalid JSON payload", 400)
+  }
 
-    if (!parsed.success) {
-      return apiError(parsed.error.issues[0]?.message ?? "Invalid input", 400)
+  const parsed = registerSchema.safeParse(body)
+  if (!parsed.success) {
+    return apiError(parsed.error.issues[0]?.message ?? "Invalid input", 400)
+  }
+
+  const { name, email, password, businessName, sector, subdomain } = parsed.data
+
+  // 🔧 Generate a subdomain if not provided
+  let finalSubdomain = subdomain
+  if (!finalSubdomain) {
+    // Convert "My Great Cafe" → "my-great-cafe"
+    finalSubdomain = businessName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")  // replace non-alphanumeric with dash
+      .replace(/^-|-$/g, "")        // remove leading/trailing dashes
+    // If still empty, fallback
+    if (!finalSubdomain) {
+      finalSubdomain = `tenant-${Date.now()}`
     }
+  }
 
-    const { name, email, password, businessName, sector } = parsed.data
-    const existing = await findUserByEmail(email)
-    if (existing) {
-      return apiError("An account with this email already exists", 409)
-    }
+  try {
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 10)
 
-    const subdomain =
-      parsed.data.subdomain ??
-      (await uniqueSubdomain(businessName, async (candidate) => {
-        const found = await prisma.tenant.findUnique({ where: { subdomain: candidate } })
-        return Boolean(found)
-      }))
+    // Create Tenant and User in one transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create the tenant
+      const tenant = await tx.tenant.create({
+        data: {
+          name: businessName,
+          sector: sector,
+          subdomain: finalSubdomain,
+          // plan defaults to "STARTER"
+        },
+      })
 
-    const { tenant, user } = await createTenantWithAdmin({
-      name,
-      email,
-      password,
-      businessName,
-      sector,
-      subdomain,
+      // 2. Create the user linked to this tenant
+      const user = await tx.user.create({
+        data: {
+          name: name,
+          email: email,
+          passwordHash: passwordHash,
+          tenantId: tenant.id,
+          role: "AGENT", // you can change to "ADMIN" if you prefer
+        },
+      })
+
+      return { tenant, user }
     })
 
-    const token = await signApiToken({
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      tenantId: user.tenantId,
-    })
+    return apiSuccess(result, 201)
+  } catch (error: any) {
+    console.error("❌ Registration error:", error)
 
-    return apiSuccess(
-      {
-        token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          tenantId: user.tenantId,
-        },
-        tenant: {
-          id: tenant.id,
-          name: tenant.name,
-          sector: tenant.sector,
-          subdomain: tenant.subdomain,
-          plan: tenant.plan,
-        },
-      },
-      201,
-    )
-  } catch {
+    // Handle duplicate email or subdomain
+    if (error.code === "P2002") {
+      const target = error.meta?.target
+      if (target?.includes("email")) {
+        return apiError("Email already registered", 409)
+      }
+      if (target?.includes("subdomain")) {
+        return apiError("Subdomain already taken", 409)
+      }
+    }
+
     return apiError("Registration failed", 500)
   }
 }
