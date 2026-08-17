@@ -8,12 +8,12 @@ export const siteSearchItems: SearchItem[] = [
   {
     label: "Home",
     target: "top",
-    keywords: ["home", "hero", "resolvehq", "complaint management"],
+    keywords: ["home", "hero", "abetbay", "complaint management"],
   },
   {
     label: "About",
     target: "about",
-    keywords: ["about", "resolvehq", "government", "public service"],
+    keywords: ["about", "abetbay", "government", "public service"],
   },
   {
     label: "Features",

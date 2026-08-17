@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Plus, X } from "lucide-react"
 
 import { ComplaintAddForm } from "@/components/dashboard/complaint-add-form"
@@ -11,7 +12,8 @@ type ComplaintFormSectionProps = {
 }
 
 export function ComplaintFormSection({ action }: ComplaintFormSectionProps) {
-  const [open, setOpen] = useState(false)
+  const searchParams = useSearchParams()
+  const [open, setOpen] = useState(searchParams.get("new") === "1")
 
   return (
     <div className="space-y-3">

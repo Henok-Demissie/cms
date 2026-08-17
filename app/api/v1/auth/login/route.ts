@@ -1,11 +1,13 @@
 import { z } from "zod"
-import { apiError, apiSuccess } from "@/lib/api-response"
+import { apiError, apiSuccess } from "@/lib/api/response"
 import { authenticateUser } from "@/lib/auth-service"
 import { signApiToken } from "@/lib/jwt"
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
+  // The mobile app accepts either the customer's email or their registered phone.
+  // Keep this field name for backward compatibility with existing web clients.
+  email: z.string().trim().min(3).max(254),
+  password: z.string().min(6).max(128),
 })
 
 export async function POST(request: Request) {
@@ -14,7 +16,7 @@ export async function POST(request: Request) {
     const parsed = loginSchema.safeParse(body)
 
     if (!parsed.success) {
-      return apiError(parsed.error.issues[0]?.message ?? "Invalid input", 400)
+      return apiError(parsed.error.issues[0]?.message ?? "Enter a valid email or phone number", 400)
     }
 
     const user = await authenticateUser(parsed.data.email, parsed.data.password)

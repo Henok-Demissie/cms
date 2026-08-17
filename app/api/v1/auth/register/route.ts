@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   const { name, email, password, businessName, sector, subdomain } = parsed.data
 
   // 🔧 Generate a subdomain if not provided
-  let finalSubdomain = subdomain
+  let finalSubdomain = subdomain?.trim().toLowerCase()
   if (!finalSubdomain) {
     // Convert "My Great Cafe" → "my-great-cafe"
     finalSubdomain = businessName
@@ -39,6 +39,16 @@ export async function POST(request: Request) {
     // If still empty, fallback
     if (!finalSubdomain) {
       finalSubdomain = `tenant-${Date.now()}`
+    }
+  }
+
+  if (!subdomain) {
+    const safeBase = finalSubdomain.slice(0, 42) || "tenant"
+    let suffix = 2
+
+    while (await prisma.tenant.findUnique({ where: { subdomain: finalSubdomain } })) {
+      finalSubdomain = `${safeBase.slice(0, 48 - String(suffix).length - 1)}-${suffix}`
+      suffix += 1
     }
   }
 

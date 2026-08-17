@@ -11,7 +11,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 const _playfair = Playfair_Display({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ResolveHQ — Multi-Tenant Customer Complaint Management",
+  title: "AbetBay — Customer Complaint Management",
   description:
     "A SaaS platform where businesses sign up, configure sector-specific complaint intake, and manage customer complaints with SLA tracking, analytics, and a versioned REST API.",
   generator: "v0.app",

@@ -1,65 +1,54 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { HelpCircle } from "lucide-react"
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 const faqs = [
   {
-    question: "How does multi-tenancy work?",
-    answer:
-      "Each business registers as a tenant with isolated data scoped by tenant_id on all core tables. You can access your workspace via subdomain (tenant.resolvehq.com) or path-based routing (/org/your-slug). Roles — Admin, Supervisor, Agent, and Viewer — are enforced per tenant.",
+    question: "Who is AbetBay for?",
+    answer: "AbetBay is for organizations that want a clear, reliable way to receive, assign, and resolve customer complaints. It works well for service teams, public offices, and growing businesses handling requests across several channels.",
   },
   {
-    question: "Which business sectors are supported?",
-    answer:
-      "ResolveHQ ships with presets for restaurants, healthcare, retail/e-commerce, banking/finance, hotels/hospitality, telecom/utilities, government, and manufacturing/B2B. During onboarding you pick your sector, which configures default complaint categories and sector-specific metadata fields.",
+    question: "How can customers submit a complaint?",
+    answer: "You can share your public complaint form with customers, or add complaints received by phone, email, WhatsApp, or in person directly from the complaint center.",
   },
   {
-    question: "Can customers submit complaints anonymously?",
-    answer:
-      "Yes. Each tenant can toggle anonymous submission on their public intake form. When enabled, customer name and contact fields become optional while still capturing the complaint details, category, and attachments.",
+    question: "What happens after a complaint is submitted?",
+    answer: "Every complaint enters your workspace with a clear status. Your team can review it, assign responsibility, add internal notes, and keep the customer informed until the case is resolved.",
   },
   {
-    question: "Is there an API for mobile apps?",
-    answer:
-      "Yes. All endpoints live under /api/v1/ with a consistent response shape { success, data, error }. Routes support both session cookies (web) and JWT Bearer tokens (mobile). Complaints, tenants, users, status updates, and webhooks are all exposed from day one.",
+    question: "Can different team members have different access?",
+    answer: "Yes. Your workspace supports role-based access, so administrators, supervisors, agents, and viewers can each work with the information they need.",
   },
   {
-    question: "How do SLA timers and escalation work?",
-    answer:
-      "You define SLA rules per category (e.g., 24 hours for billing complaints). Each complaint gets an slaDeadline. When the deadline is approaching or passed, the system flags the case for auto-escalation and can notify supervisors via email or SMS.",
+    question: "Can I see how my team is performing?",
+    answer: "The dashboard gives you a simple view of new, in-progress, and resolved complaints, plus recent activity and complaint-volume trends to support daily decisions.",
   },
   {
-    question: "What intake channels are supported?",
-    answer:
-      "Phase one includes the public web form and an email parsing webhook. WhatsApp webhook intake is planned for a later release. All channels create complaints in the same pipeline with identical status history and notification flows.",
+    question: "How do I get started?",
+    answer: "Register your organization, choose your setup, and begin adding complaints or sharing your public form. You can invite your team and tailor the process as your workflow grows.",
   },
 ]
 
 export function FAQSection() {
   return (
-    <section id="faq" className="scroll-mt-28 py-24 px-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#ADA996] to-[#F2F2F2] rounded-full mb-6">
-            <HelpCircle className="w-4 h-4 text-black" />
-            <span className="text-xs text-black uppercase tracking-widest">FAQ</span>
+    <section id="faq" className="scroll-mt-20 px-5 py-16 sm:px-6">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-10 text-center">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-1.5">
+            <HelpCircle className="size-4 text-primary" />
+            <span className="text-xs uppercase tracking-widest text-primary">FAQ</span>
           </div>
-          <h2 className="font-sans text-5xl font-normal mb-6 text-balance">Frequently asked questions</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Everything you need to know about ResolveHQ. Can&apos;t find your answer? Contact our support team.
-          </p>
+          <h2 className="mb-4 font-sans text-4xl font-normal text-balance md:text-5xl">Frequently asked questions</h2>
+          <p className="mx-auto max-w-2xl leading-relaxed text-muted-foreground">Everything you need to know about managing complaints with AbetBay.</p>
         </div>
 
         <Accordion type="single" collapsible className="space-y-3">
           {faqs.map((faq, index) => (
-            <AccordionItem
-              key={index}
-              value={`item-${index}`}
-              className="bg-card border border-border rounded-xl px-6 data-[state=open]:border-foreground/30"
-            >
-              <AccordionTrigger className="text-left text-base font-medium text-foreground hover:no-underline py-5">
+            <AccordionItem key={index} value={`item-${index}`} className="rounded-lg border border-border bg-card px-4 data-[state=open]:border-primary/40">
+              <AccordionTrigger className="py-4 text-left text-base font-medium text-foreground hover:text-primary hover:no-underline">
                 {faq.question}
               </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground pb-5 leading-relaxed text-sm">
+              <AccordionContent className="pb-4 text-sm leading-relaxed text-muted-foreground">
                 {faq.answer}
               </AccordionContent>
             </AccordionItem>

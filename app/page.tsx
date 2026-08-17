@@ -4,7 +4,6 @@ import { ServicesSection } from "@/components/marketing/services-section"
 import { FeaturesSection } from "@/components/marketing/features-section"
 import { PricingSection } from "@/components/marketing/pricing-section"
 import { TestimonialsSection } from "@/components/marketing/testimonials-section"
-import { BlogSection } from "@/components/marketing/blog-section"
 import { FAQSection } from "@/components/marketing/faq-section"
 import { CTASection } from "@/components/marketing/cta-section"
 import { AboutSection } from "@/components/marketing/about-section"
@@ -23,7 +22,6 @@ export default function Home() {
       <CTASection />
       <PricingSection />
       <TestimonialsSection />
-      <BlogSection />
       <FeedbackSection />
       <SuggestionsSection />
       <FAQSection />

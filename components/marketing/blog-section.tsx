@@ -18,12 +18,12 @@ const articles = [
 
 export function BlogSection() {
   return (
-    <section id="blog" className="py-24 px-6">
+    <section id="blog" className="px-5 py-16 sm:px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#ADA996] to-[#F2F2F2] rounded-full mb-6">
-            <FileEdit className="w-4 h-4 text-black" />
-            <span className="text-xs text-black uppercase tracking-widest">Resources</span>
+          <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-1.5">
+            <FileEdit className="w-4 h-4 text-primary" />
+            <span className="text-xs uppercase tracking-widest text-primary">Resources</span>
           </div>
           <h2 className="font-sans text-5xl font-normal mb-6">Guides & product updates</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">

@@ -1,10 +1,9 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
+import { ArrowUpRight, TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import Link from "next/link";
 
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
@@ -47,13 +46,6 @@ type AdminComplaintsDashboardProps = {
   chartData: ChartPoint[];
 };
 
-function formatStatus(status: string) {
-  return status
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/^\w/, (c) => c.toUpperCase());
-}
-
 export function AdminComplaintsDashboard({
   recentComplaints,
   chartData,
@@ -62,17 +54,20 @@ export function AdminComplaintsDashboard({
 
   return (
     <div className="grid gap-3 lg:grid-cols-5">
-      <Card className="lg:col-span-2">
+      <Card className="lg:col-span-3">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 py-3">
-          <CardTitle className="text-sm font-medium">Volume trend</CardTitle>
-          <span className="text-xs text-muted-foreground">{total} total</span>
+          <div>
+            <CardTitle className="text-sm font-medium">Complaint volume</CardTitle>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">Activity over the last 6 months</p>
+          </div>
+          <span className="rounded bg-primary/10 px-2 py-1 text-xs font-medium text-primary">{total} total</span>
         </CardHeader>
         <CardContent className="px-2 pb-3 pt-0">
-          <ChartContainer config={chartConfig} className="h-[100px] w-full">
+          <ChartContainer config={chartConfig} className="h-[180px] w-full">
             <AreaChart
               accessibilityLayer
               data={chartData}
-              margin={{ left: 4, right: 4, top: 4, bottom: 0 }}
+              margin={{ left: 8, right: 8, top: 10, bottom: 0 }}
             >
               <CartesianGrid
                 vertical={false}
@@ -97,21 +92,22 @@ export function AdminComplaintsDashboard({
                 fill="var(--color-complaints)"
                 fillOpacity={0.25}
                 stroke="var(--color-complaints)"
-                strokeWidth={1.5}
+                strokeWidth={2}
               />
             </AreaChart>
           </ChartContainer>
           <p className="flex items-center gap-1 px-2 text-[10px] text-muted-foreground">
-            Last 6 months <TrendingUp className="size-3" />
+            Updated in real time <TrendingUp className="size-3 text-primary" />
           </p>
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-3">
-        <CardHeader className="px-4 py-3">
-          <CardTitle className="text-sm font-medium">
-            Recent complaints
-          </CardTitle>
+      <Card className="lg:col-span-2">
+        <CardHeader className="flex flex-row items-center justify-between px-4 py-3">
+          <CardTitle className="text-sm font-medium">Recent complaints</CardTitle>
+          <Link href="/dashboard/complaints" className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline">
+            View all <ArrowUpRight className="size-3" />
+          </Link>
         </CardHeader>
         <CardContent className="px-4 pb-3 pt-0">
           {recentComplaints.length === 0 ? (
@@ -122,8 +118,6 @@ export function AdminComplaintsDashboard({
                 <TableRow>
                   <TableHead className="h-8 text-xs">Customer</TableHead>
                   <TableHead className="h-8 text-xs">Issue</TableHead>
-                  <TableHead className="h-8 text-xs">Status</TableHead>
-                  <TableHead className="h-8 text-xs">Priority</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -144,23 +138,6 @@ export function AdminComplaintsDashboard({
                       >
                         {complaint.title}
                       </Link>
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <Badge variant="secondary" className="text-[10px]">
-                        {formatStatus(complaint.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <Badge
-                        variant={
-                          complaint.priority === "CRITICAL"
-                            ? "destructive"
-                            : "outline"
-                        }
-                        className="text-[10px]"
-                      >
-                        {complaint.priority}
-                      </Badge>
                     </TableCell>
                   </TableRow>
                 ))}

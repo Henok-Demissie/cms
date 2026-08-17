@@ -150,7 +150,7 @@ export function Header() {
             <span
               className={`text-lg font-medium tracking-tight transition-colors duration-300 ${isScrolled ? "text-black" : "text-foreground"}`}
             >
-              ResolveHQ
+              AbetBay
             </span>
           </a>
 

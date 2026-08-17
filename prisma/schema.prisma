@@ -16,6 +16,8 @@ model Tenant {
   createdAt DateTime   @default(now())
   users     User[]
   complaints Complaint[]
+  suggestions Suggestion[]
+  feedback    Feedback[]
 }
 
 model User {
@@ -34,6 +36,7 @@ model User {
   createdAt          DateTime    @default(now())
   tenant             Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assignedComplaints Complaint[] @relation("ComplaintAssignee")
+  complaintMessages  ComplaintMessage[]
 
   @@index([tenantId])
 }
@@ -55,7 +58,58 @@ model Complaint {
   updatedAt      DateTime  @updatedAt
   tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assignedTo     User?     @relation("ComplaintAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  messages       ComplaintMessage[]
+  reactions      ComplaintReaction[]
 
   @@index([tenantId])
   @@index([assignedToId])
+}
+
+model ComplaintMessage {
+  id          String    @id @default(cuid())
+  complaintId String
+  authorId    String
+  message     String
+  createdAt   DateTime  @default(now())
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([complaintId])
+}
+
+model ComplaintReaction {
+  id          String    @id @default(cuid())
+  complaintId String
+  staffId     String
+  type        String
+  createdAt   DateTime  @default(now())
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  @@unique([complaintId, staffId, type])
+  @@index([complaintId])
+}
+
+model Suggestion {
+  id          String   @id @default(cuid())
+  tenantId    String
+  authorId    String
+  title       String
+  description String
+  status      String   @default("NEW")
+  createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  tenantId  String
+  authorId  String
+  message   String
+  rating    Int?
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }

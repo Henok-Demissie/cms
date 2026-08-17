@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { assignComplaintToMe, closeComplaint } from "./actions"
+import { assignComplaintToMe, closeComplaint, reactToComplaint, replyToComplaint } from "./actions"
 import { BackButton } from "@/components/back-button"
 import {
   Card,
@@ -36,6 +36,8 @@ export default async function ComplaintDetailPage({ params }: Props) {
       assignedTo: {
         select: { id: true, name: true, email: true },
       },
+      messages: { include: { author: { select: { name: true } } }, orderBy: { createdAt: "asc" } },
+      reactions: true,
     },
   }))
 
@@ -54,6 +56,10 @@ export default async function ComplaintDetailPage({ params }: Props) {
       </div>
     )
   }
+
+  const isStaff = session.user.role !== "CUSTOMER"
+  const acknowledged = complaint.reactions.some((reaction) => reaction.type === "ACKNOWLEDGED")
+  const priorityReaction = complaint.reactions.some((reaction) => reaction.type === "PRIORITY")
 
   return (
     <div className="p-4 md:p-6">
@@ -121,7 +127,7 @@ export default async function ComplaintDetailPage({ params }: Props) {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            {isStaff && <div className="flex flex-wrap gap-2">
               <form action={assignComplaintToMe.bind(null, complaint.id)}>
                 <Button
                   type="submit"
@@ -146,7 +152,17 @@ export default async function ComplaintDetailPage({ params }: Props) {
                   {complaint.status === "CLOSED" ? "Closed" : "Close complaint"}
                 </Button>
               </form>
+            </div>}
+
+            <div className="rounded-lg border border-border p-3">
+              <h3 className="font-semibold">Case conversation</h3>
+              <div className="mt-3 space-y-2">
+                {complaint.messages.length ? complaint.messages.map((item) => <div key={item.id} className="rounded-md bg-muted/50 p-2"><p className="text-xs font-medium">{item.author.name}</p><p className="mt-1 text-sm">{item.message}</p></div>) : <p className="text-sm text-muted-foreground">No staff reply has been sent yet.</p>}
+              </div>
+              {isStaff && <form action={replyToComplaint.bind(null, complaint.id)} className="mt-3 space-y-2"><textarea name="message" required rows={3} placeholder="Write a reply to the customer" className="w-full rounded-md border border-input bg-background p-2 text-sm" /><Button type="submit">Send reply</Button></form>}
             </div>
+
+            {isStaff && <div className="flex flex-wrap gap-2"><form action={reactToComplaint.bind(null, complaint.id, "ACKNOWLEDGED")}><Button type="submit" variant="outline" disabled={acknowledged}>{acknowledged ? "Acknowledged" : "Acknowledge case"}</Button></form><form action={reactToComplaint.bind(null, complaint.id, "PRIORITY")}><Button type="submit" variant="outline" disabled={priorityReaction}>{priorityReaction ? "Marked priority" : "Mark as priority"}</Button></form></div>}
           </div>
         </CardContent>
       </Card>

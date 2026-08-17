@@ -38,7 +38,7 @@ export function AppSidebar({ variant = "sidebar" }: { variant?: "sidebar" | "flo
             <ShieldCheck className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold">ResolveHQ</p>
+            <p className="text-sm font-semibold">AbetBay</p>
             <p className="text-xs text-muted-foreground">Complaint management</p>
           </div>
         </div>

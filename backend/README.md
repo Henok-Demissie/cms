@@ -1,4 +1,4 @@
-# ResolveHQ Backend
+# AbetBay Backend
 
 FastAPI + PostgreSQL + SQLAlchemy + Alembic + JWT + Pydantic.
 

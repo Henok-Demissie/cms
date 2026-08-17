@@ -42,7 +42,7 @@ function buildCustomerEmail(phone: string, email?: string) {
   if (trimmedEmail) return trimmedEmail
 
   const digits = phone.replace(/\D/g, "")
-  return `customer.${digits}@resolvehq.local`
+  return `customer.${digits}@abetbay.local`
 }
 
 export async function POST(request: Request) {
@@ -95,8 +95,9 @@ export async function POST(request: Request) {
         id: true,
         name: true,
         email: true,
-        phone: true,
         role: true,
+        phone: true,
+        language: true,
       },
     })
 

@@ -12,7 +12,6 @@ const footerLinks = {
     { label: "About", href: "#" },
     { label: "Careers", href: "#" },
     { label: "Press", href: "#" },
-    { label: "Resources", href: "#blog" },
   ],
   legal: [
     { label: "Terms of Service", href: "#" },
@@ -22,7 +21,7 @@ const footerLinks = {
   ],
   support: [
     { label: "Help Center", href: "#" },
-    { label: "Contact", href: "#" },
+    { label: "Contact", href: "/contact" },
     { label: "FAQ", href: "#faq" },
     { label: "API Docs", href: "#" },
   ],
@@ -30,7 +29,7 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer id="contact" className="scroll-mt-28 border-t border-border py-16 px-6">
+    <footer id="contact" className="scroll-mt-20 border-t border-border px-5 py-12 sm:px-6">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2 md:col-span-1">
@@ -44,7 +43,7 @@ export function Footer() {
               >
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
               </svg>
-              <span className="text-base font-medium text-foreground">ResolveHQ</span>
+              <span className="text-base font-medium text-foreground">AbetBay</span>
             </Link>
             <p className="text-sm text-muted-foreground mb-6">
               Multi-tenant customer complaint management for every business sector.
@@ -143,8 +142,8 @@ export function Footer() {
         </div>
 
         <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-muted-foreground">© 2026 ResolveHQ. All rights reserved.</p>
-          <p className="text-xs text-muted-foreground">ResolveHQ Inc. — SOC 2 compliant infrastructure</p>
+          <p className="text-xs text-muted-foreground">© 2026 AbetBay. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">AbetBay — Customer complaint management</p>
         </div>
       </div>
     </footer>

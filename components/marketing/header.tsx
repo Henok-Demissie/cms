@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { ChevronDown, Globe2, Menu, X } from "lucide-react"
 
@@ -32,12 +33,14 @@ const navLinks = [
   { label: "FAQ", target: "faq" },
 ]
 
-const LANGUAGE_STORAGE_KEY = "resolvehq-language"
+const LANGUAGE_STORAGE_KEY = "abetbay-language"
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [activeTarget, setActiveTarget] = useState("top")
   const [language, setLanguage] = useState<Language>("EN")
+  const pathname = usePathname()
   const { data: session, status } = useSession()
   const isAuthenticated = status === "authenticated"
 
@@ -51,6 +54,33 @@ export function Header() {
   }, [])
 
   useEffect(() => {
+    if (pathname === "/contact") {
+      setActiveTarget("contact")
+      return
+    }
+
+    const sectionTargets = navLinks
+      .map((item) => item.target)
+      .filter((target) => target !== "top" && target !== "contact")
+
+    const updateActiveTarget = () => {
+      const current = sectionTargets.find((target) => {
+        const section = document.getElementById(target)
+        if (!section) return false
+
+        const bounds = section.getBoundingClientRect()
+        return bounds.top <= 140 && bounds.bottom > 140
+      })
+
+      setActiveTarget(current ?? "top")
+    }
+
+    updateActiveTarget()
+    window.addEventListener("scroll", updateActiveTarget, { passive: true })
+    return () => window.removeEventListener("scroll", updateActiveTarget)
+  }, [pathname])
+
+  useEffect(() => {
     const savedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null
     if (savedLanguage && languages.includes(savedLanguage)) {
       setLanguage(savedLanguage)
@@ -59,18 +89,22 @@ export function Header() {
   }, [])
 
   const navLinkClass =
-    "whitespace-nowrap text-sm transition duration-200 ease-out inline-flex items-center gap-1 group text-muted-foreground hover:text-foreground"
+    "group inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground transition-all duration-200 ease-out hover:bg-primary/10 hover:text-primary"
 
   const navigateToSection = (targetId: string) => {
     if (targetId === "top") {
       window.scrollTo({ top: 0, behavior: "smooth" })
+      setActiveTarget("top")
       setIsOpen(false)
       return
     }
 
     const element = document.getElementById(targetId)
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" })
+      const headerOffset = 96
+      const destination = element.getBoundingClientRect().top + window.scrollY - headerOffset
+      window.scrollTo({ top: Math.max(0, destination), behavior: "smooth" })
+      setActiveTarget(targetId)
       setIsOpen(false)
       return
     }
@@ -85,11 +119,6 @@ export function Header() {
   ) => {
     event.preventDefault()
     navigateToSection(targetId)
-  }
-
-  const handleLogoClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
-    navigateToSection("top")
   }
 
   const handleLanguageChange = (nextLanguage: Language) => {
@@ -107,14 +136,13 @@ export function Header() {
       <div
         className={`mx-auto w-full max-w-[96rem] transition-all duration-300 ${
           isScrolled
-            ? "rounded-2xl border border-border bg-background/95 px-4 py-2.5 shadow-sm backdrop-blur-xl lg:px-6"
+            ? "rounded-xl border border-border bg-background/95 px-4 py-2.5 shadow-sm backdrop-blur-xl lg:px-6"
             : "border border-transparent bg-background/90 px-4 py-3 backdrop-blur-md lg:px-6"
         }`}
       >
         <div className="flex items-center gap-3 xl:gap-4">
-          <a
-            href="#"
-            onClick={handleLogoClick}
+          <Link
+            href="/"
             className="flex shrink-0 items-center gap-1.5 cursor-pointer"
           >
             <svg
@@ -127,17 +155,24 @@ export function Header() {
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
             <span className="text-sm font-medium tracking-tight text-foreground transition-colors duration-300">
-              ResolveHQ
+              AbetBay
             </span>
-          </a>
+          </Link>
 
           <nav className="hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-x-2 overflow-x-auto px-1 [scrollbar-width:none] lg:flex xl:gap-x-3 [&::-webkit-scrollbar]:hidden">
             {navLinks.map((item) => (
               <a
                 key={item.label}
-                href={`#${item.target}`}
-                onClick={(event) => handleSmoothScroll(event, item.target)}
-                className={`${navLinkClass} shrink-0 relative before:absolute before:left-0 before:-bottom-1 before:h-[2px] before:w-full before:scale-x-0 before:bg-foreground before:transition-transform before:duration-200 before:origin-left hover:before:scale-x-100`}
+                href={item.target === "contact" ? "/contact" : pathname === "/" ? `#${item.target}` : `/#${item.target}`}
+                onClick={(event) => {
+                  if (item.target !== "contact" && pathname === "/") {
+                    handleSmoothScroll(event, item.target)
+                  } else {
+                    setActiveTarget(item.target)
+                    setIsOpen(false)
+                  }
+                }}
+                className={`${navLinkClass} relative shrink-0 before:absolute before:bottom-0 before:left-2 before:h-px before:w-[calc(100%-1rem)] before:origin-left before:bg-primary before:transition-transform before:duration-200 ${activeTarget === item.target ? "bg-primary/10 text-primary before:scale-x-100" : "before:scale-x-0 hover:before:scale-x-100"}`}
               >
                 {translateNavLabel(language, item.label)}
               </a>
@@ -178,14 +213,14 @@ export function Header() {
             {isAuthenticated ? (
               <Link
                 href="/dashboard"
-                className="rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background transition duration-200 hover:bg-foreground/90 md:text-sm"
+                className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition duration-200 hover:opacity-90 md:text-sm"
               >
                 {translateNavLabel(language, "Dashboard")}
               </Link>
             ) : (
               <Link
-                href="/login"
-                className="rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background transition duration-200 hover:bg-foreground/90 md:text-sm"
+                href="/login?portal=staff"
+                className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition duration-200 hover:opacity-90 md:text-sm"
               >
                 {translateNavLabel(language, "Sign In")}
               </Link>
@@ -207,9 +242,16 @@ export function Header() {
             {navLinks.map((item) => (
               <a
                 key={item.label}
-                href={`#${item.target}`}
-                onClick={(event) => handleSmoothScroll(event, item.target)}
-                className={`block py-2 px-1 ${navLinkClass}`}
+                href={item.target === "contact" ? "/contact" : pathname === "/" ? `#${item.target}` : `/#${item.target}`}
+                onClick={(event) => {
+                  if (item.target !== "contact" && pathname === "/") {
+                    handleSmoothScroll(event, item.target)
+                  } else {
+                    setActiveTarget(item.target)
+                    setIsOpen(false)
+                  }
+                }}
+                className={`block px-2 py-2 ${navLinkClass} ${activeTarget === item.target ? "bg-primary/10 text-primary" : ""}`}
               >
                 {translateNavLabel(language, item.label)}
               </a>
@@ -246,14 +288,14 @@ export function Header() {
               {isAuthenticated ? (
                 <Link
                   href="/dashboard"
-                  className="rounded-full bg-foreground px-4 py-2.5 text-center text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+                  className="rounded-md bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
                 >
                   {translateNavLabel(language, "Dashboard")}
                 </Link>
               ) : (
                 <Link
-                  href="/login"
-                  className="rounded-full bg-foreground px-4 py-2.5 text-center text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+                  href="/login?portal=staff"
+                  className="rounded-md bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
                 >
                   {translateNavLabel(language, "Sign In")}
                 </Link>

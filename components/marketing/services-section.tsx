@@ -1,4 +1,4 @@
-import { ClipboardList, Building2, Timer, BarChart3, Code2, Bell, Layers } from "lucide-react"
+import { ClipboardList, Building2, Timer, BarChart3, Code2, Bell } from "lucide-react"
 
 const services = [
   {
@@ -41,13 +41,9 @@ const services = [
 
 export function ServicesSection() {
   return (
-    <section id="services" className="scroll-mt-28 py-24 px-6">
+    <section id="services" className="scroll-mt-20 px-5 py-16 sm:px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-full mb-6 bg-gradient-to-r from-[#ADA996] to-[#F2F2F2]">
-            <Layers className="w-4 h-4 text-black" />
-            <span className="text-xs text-black uppercase tracking-widest">Platform</span>
-          </div>
           <h2 className="font-sans text-5xl font-normal mb-6 text-balance">
             Everything you need to manage customer complaints
           </h2>
@@ -59,10 +55,10 @@ export function ServicesSection() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((service, index) => (
-            <div key={index} className="group relative rounded-3xl transition-all duration-300">
-              <div className="absolute inset-0 bg-gradient-to-b from-[#ADA996] to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div key={index} className="group relative rounded-xl transition-all duration-300">
+              <div className="absolute inset-0 rounded-xl bg-primary/15 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-              <div className="relative bg-card p-8 rounded-3xl h-full border border-border group-hover:border-transparent transition-all duration-300 m-[1px]">
+              <div className="relative m-px h-full rounded-xl border border-border bg-card p-6 transition-all duration-300 group-hover:border-primary/40">
                 <div className="w-12 h-12 border border-border rounded-xl flex items-center justify-center mb-6 group-hover:border-foreground/30 transition-colors">
                   <service.icon className="w-5 h-5 text-foreground" />
                 </div>
