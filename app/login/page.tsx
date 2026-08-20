@@ -1,9 +1,26 @@
 import Link from "next/link"
 import { Suspense } from "react"
-import { LoginForm } from "@/components/auth/login-form"
+import { LoginForm, type LoginPortal } from "@/components/auth/login-form"
 import { BackButton } from "@/components/back-button"
 
-export default function LoginPage() {
+const PORTAL_COPY: Record<LoginPortal, { badge: string; heading: string; blurb: string }> = {
+  customer: {
+    badge: "Customer portal",
+    heading: "Welcome back",
+    blurb: "Sign in to raise a complaint and follow where it goes.",
+  },
+  staff: {
+    badge: "Staff portal",
+    heading: "Welcome back",
+    blurb: "Sign in to manage complaints for your organization.",
+  },
+}
+
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ portal?: string }> }) {
+  const { portal } = await searchParams
+  const audience: LoginPortal = portal === "customer" ? "customer" : "staff"
+  const copy = PORTAL_COPY[audience]
+
   return (
     <div className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-md">
@@ -15,13 +32,18 @@ export default function LoginPage() {
             </svg>
             <span className="text-lg font-medium">AbetBay</span>
           </Link>
-          <h1 className="font-serif text-3xl font-normal mb-1">Welcome back</h1>
-          <p className="text-sm text-muted-foreground">Sign in to manage complaints for your organization.</p>
+          <p className="mb-2">
+            <span className="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+              {copy.badge}
+            </span>
+          </p>
+          <h1 className="font-serif text-3xl font-normal mb-1">{copy.heading}</h1>
+          <p className="text-sm text-muted-foreground">{copy.blurb}</p>
         </div>
 
         <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
           <Suspense fallback={<div className="text-sm text-muted-foreground">Loading...</div>}>
-            <LoginForm />
+            <LoginForm portal={audience} />
           </Suspense>
         </div>
       </div>

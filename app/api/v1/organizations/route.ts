@@ -6,7 +6,7 @@ export async function GET() {
     const organizations = await prisma.tenant.findMany({
       where: { subdomain: { not: "public" } },
       orderBy: { name: "asc" },
-      select: { name: true, subdomain: true, sector: true },
+      select: { id: true, name: true, subdomain: true, sector: true },
     })
     return apiSuccess({ organizations })
   } catch {

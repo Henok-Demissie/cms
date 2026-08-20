@@ -1,6 +1,7 @@
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { palette } from '../theme';
+import { useTheme, useThemedStyles } from '../contexts/ThemeContext';
+import type { Palette } from '../theme';
 
 export function Field({
   label,
@@ -25,6 +26,9 @@ export function Field({
   keyboardType?: 'default' | 'phone-pad';
   required?: boolean;
 }) {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <View style={styles.field}>
       <Text style={styles.label}>
@@ -53,21 +57,22 @@ export function Field({
   );
 }
 
-const styles = StyleSheet.create({
-  field: { gap: 7 },
-  label: { color: palette.text, fontSize: 13, fontWeight: '600' },
-  inputWrap: { position: 'relative' },
-  inputIcon: { position: 'absolute', left: 14, top: 17, zIndex: 1 },
-  input: {
-    color: palette.text,
-    backgroundColor: palette.bgSoft,
-    borderWidth: 1,
-    borderColor: palette.border,
-    borderRadius: 14,
-    minHeight: 52,
-    paddingHorizontal: 16,
-    fontSize: 15,
-  },
-  inputWithIcon: { paddingLeft: 42 },
-  eyeBtn: { position: 'absolute', right: 14, top: 15 },
-});
+const makeStyles = (p: Palette) =>
+  StyleSheet.create({
+    field: { gap: 7 },
+    label: { color: p.text, fontSize: 13, fontWeight: '600' },
+    inputWrap: { position: 'relative' },
+    inputIcon: { position: 'absolute', left: 14, top: 17, zIndex: 1 },
+    input: {
+      color: p.text,
+      backgroundColor: p.bgSoft,
+      borderWidth: 1,
+      borderColor: p.border,
+      borderRadius: 14,
+      minHeight: 52,
+      paddingHorizontal: 16,
+      fontSize: 15,
+    },
+    inputWithIcon: { paddingLeft: 42 },
+    eyeBtn: { position: 'absolute', right: 14, top: 15 },
+  });

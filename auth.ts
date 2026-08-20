@@ -6,7 +6,7 @@ import { authConfig } from "@/auth.config"
 
 const credentialsSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(6),
 })
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -32,6 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           role: user.role as UserRole,
           tenantId: user.tenantId,
+          accountType: user.accountType,
         }
       },
     }),
@@ -42,6 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id as string
         token.role = user.role as UserRole
         token.tenantId = user.tenantId as string
+        token.accountType = (user as any).accountType
       }
       return token
     },
@@ -50,6 +52,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string
         session.user.role = token.role as UserRole
         session.user.tenantId = token.tenantId as string
+        session.user.accountType = token.accountType
       }
       return session
     },

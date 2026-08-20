@@ -31,7 +31,7 @@ async function addComplaint(formData: FormData) {
   "use server";
 
   const session = await auth();
-  if (!session?.user?.tenantId) {
+  if (!session?.user) {
     redirect("/login");
   }
   if (session.user.role !== "CUSTOMER") {
@@ -40,14 +40,28 @@ async function addComplaint(formData: FormData) {
 
   const title = formData.get("title")?.toString()?.trim();
   const description = formData.get("description")?.toString()?.trim();
+  const targetTenantId = formData.get("tenantId")?.toString()?.trim();
 
   if (!title || !description) {
     throw new Error("Title and description are required");
   }
 
+  let tenant = null;
+  if (targetTenantId) {
+    tenant = await prisma.tenant.findUnique({ where: { id: targetTenantId } });
+  }
+  if (!tenant) {
+    tenant = (await prisma.tenant.findFirst({ where: { subdomain: { not: "public" } } })) || (await prisma.tenant.findFirst());
+  }
+
+  if (!tenant) {
+    throw new Error("No organization found to send complaint to.");
+  }
+
   await prisma.complaint.create({
     data: {
-      tenantId: session.user.tenantId,
+      tenantId: tenant.id,
+      customerId: session.user.id,
       customerName: session.user.name || null,
       customerEmail: session.user.email || null,
       source: "WEB",
@@ -58,7 +72,9 @@ async function addComplaint(formData: FormData) {
     },
   });
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/complaints");
+  revalidatePath("/dashboard/my-complaints");
   redirect("/dashboard/complaints");
 }
 
@@ -86,6 +102,10 @@ function getStatusConfig(status: string) {
       return { dot: "bg-blue-400", text: "text-blue-400", bg: "bg-blue-400/10 border-blue-400/20" };
     case "IN_PROGRESS":
       return { dot: "bg-amber-400", text: "text-amber-400", bg: "bg-amber-400/10 border-amber-400/20" };
+    case "IN_REVIEW":
+      return { dot: "bg-indigo-400", text: "text-indigo-400", bg: "bg-indigo-400/10 border-indigo-400/20" };
+    case "ASSIGNED":
+      return { dot: "bg-sky-400", text: "text-sky-400", bg: "bg-sky-400/10 border-sky-400/20" };
     case "RESOLVED":
       return { dot: "bg-emerald-400", text: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/20" };
     case "CLOSED":
@@ -99,6 +119,7 @@ function getStatusConfig(status: string) {
 
 function getPriorityConfig(priority: string) {
   switch (priority) {
+    case "CRITICAL":
     case "URGENT":
     case "HIGH":
       return "destructive" as const;
@@ -120,25 +141,36 @@ export default async function ComplaintsPage() {
 
   const isCustomer = session.user.role === "CUSTOMER";
 
-  const complaints = await prisma.complaint.findMany({
-    where: {
-      tenantId: session.user.tenantId,
-      ...(isCustomer
+  const [complaints, organizations] = await Promise.all([
+    prisma.complaint.findMany({
+      where: isCustomer
         ? {
             OR: [
+              { customerId: session.user.id },
               { customerEmail: session.user.email ?? undefined },
               { customerName: session.user.name ?? undefined },
             ],
           }
-        : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+        : { tenantId: session.user.tenantId },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: {
+        tenant: { select: { id: true, name: true, subdomain: true, sector: true } },
+        messages: { select: { id: true } },
+      },
+    }),
+    isCustomer
+      ? prisma.tenant.findMany({
+          where: { subdomain: { not: "public" } },
+          select: { id: true, name: true, subdomain: true, sector: true },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
+  ]);
 
   const totalCount = complaints.length;
   const newCount = complaints.filter((c) => c.status === "NEW").length;
-  const inProgressCount = complaints.filter((c) => c.status === "IN_PROGRESS").length;
+  const inProgressCount = complaints.filter((c) => ["IN_PROGRESS", "IN_REVIEW", "ASSIGNED"].includes(c.status)).length;
   const resolvedCount = complaints.filter((c) => ["RESOLVED", "CLOSED"].includes(c.status)).length;
 
   const stats = [
@@ -161,8 +193,8 @@ export default async function ComplaintsPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isCustomer
-              ? "Submit a complaint and follow its progress."
-              : "Review incoming complaints, triage cases, and track resolution."}
+              ? "Submit a complaint to an organization and follow its resolution."
+              : "Review incoming complaints for your organization, triage cases, and respond to customers."}
           </p>
         </div>
         {isCustomer && (
@@ -197,14 +229,14 @@ export default async function ComplaintsPage() {
         })}
       </section>
 
-      {isCustomer && <ComplaintFormSection action={addComplaint} />}
+      {isCustomer && <ComplaintFormSection action={addComplaint} organizations={organizations} />}
 
       {/* Table Section */}
       <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
           <div>
             <h2 className="font-serif text-lg font-semibold">
-              {isCustomer ? "Recent Complaints" : "Incoming Complaints"}
+              {isCustomer ? "My Submitted Complaints" : "Incoming Complaints"}
             </h2>
             <p className="text-xs text-muted-foreground">
               {totalCount} complaint{totalCount !== 1 ? "s" : ""} captured
@@ -227,8 +259,8 @@ export default async function ComplaintsPage() {
               <h3 className="mt-4 font-serif text-lg font-semibold">No Complaints Yet</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 {isCustomer
-                  ? "Submit your first complaint to get started."
-                  : "No complaints have been submitted yet."}
+                  ? "Submit your first complaint to an organization to get started."
+                  : "No complaints have been submitted to your organization yet."}
               </p>
               {isCustomer && (
                 <Link
@@ -250,15 +282,19 @@ export default async function ComplaintsPage() {
               <TableRow>
                 <TableHead className="w-[80px] pl-5">#</TableHead>
                 <TableHead>Complaint</TableHead>
-                {!isCustomer && <TableHead>Customer</TableHead>}
+                {isCustomer ? (
+                  <TableHead>Recipient Organization</TableHead>
+                ) : (
+                  <TableHead>Customer</TableHead>
+                )}
                 <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
-                <TableHead>Source</TableHead>
+                <TableHead>Responses</TableHead>
                 <TableHead className="pr-5 text-right">Submitted</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {complaints.map((complaint, index) => {
+              {complaints.map((complaint) => {
                 const statusConfig = getStatusConfig(complaint.status);
                 return (
                   <TableRow key={complaint.id} className="group">
@@ -277,13 +313,24 @@ export default async function ComplaintsPage() {
                         {complaint.description}
                       </p>
                     </TableCell>
-                    {!isCustomer && (
+                    {isCustomer ? (
+                      <TableCell>
+                        <Badge variant="outline" className="font-semibold text-primary">
+                          {complaint.tenant.name}
+                        </Badge>
+                      </TableCell>
+                    ) : (
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
                             {(complaint.customerName || "U")[0].toUpperCase()}
                           </span>
-                          <span className="text-sm">{complaint.customerName || "Unknown"}</span>
+                          <div>
+                            <p className="text-sm font-medium">{complaint.customerName || "Customer"}</p>
+                            {complaint.customerEmail && (
+                              <p className="text-[10px] text-muted-foreground">{complaint.customerEmail}</p>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                     )}
@@ -299,8 +346,8 @@ export default async function ComplaintsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {complaint.source}
+                      <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                        {complaint.messages.length} message{complaint.messages.length !== 1 ? "s" : ""}
                       </span>
                     </TableCell>
                     <TableCell className="pr-5 text-right">
@@ -314,7 +361,7 @@ export default async function ComplaintsPage() {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={isCustomer ? 5 : 6} className="pl-5">
+                <TableCell colSpan={6} className="pl-5">
                   Total
                 </TableCell>
                 <TableCell className="pr-5 text-right">

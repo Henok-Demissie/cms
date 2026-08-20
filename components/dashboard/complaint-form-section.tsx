@@ -4,14 +4,15 @@ import { useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Plus, X } from "lucide-react"
 
-import { ComplaintAddForm } from "@/components/dashboard/complaint-add-form"
+import { ComplaintAddForm, type OrgOption } from "@/components/dashboard/complaint-add-form"
 import { Button } from "@/components/ui/button"
 
 type ComplaintFormSectionProps = {
   action: (formData: FormData) => Promise<void>
+  organizations?: OrgOption[]
 }
 
-export function ComplaintFormSection({ action }: ComplaintFormSectionProps) {
+export function ComplaintFormSection({ action, organizations = [] }: ComplaintFormSectionProps) {
   const searchParams = useSearchParams()
   const [open, setOpen] = useState(searchParams.get("new") === "1")
 
@@ -38,7 +39,7 @@ export function ComplaintFormSection({ action }: ComplaintFormSectionProps) {
         </Button>
       </div>
 
-      {open ? <ComplaintAddForm action={action} /> : null}
+      {open ? <ComplaintAddForm action={action} organizations={organizations} /> : null}
     </div>
   )
 }

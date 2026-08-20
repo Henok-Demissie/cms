@@ -2,12 +2,13 @@ import { jwtVerify } from "jose"
 
 import { prisma } from "@/lib/prisma"
 
-type ApiIdentity = {
+export type ApiIdentity = {
   id: string
   email: string
   name: string
   role: string
   tenantId: string
+  accountType: "customer" | "staff"
 }
 
 function signingKey() {
@@ -25,24 +26,55 @@ export async function requireApiUser(request: Request): Promise<ApiIdentity> {
     const { payload } = await jwtVerify(token, signingKey())
     if (!payload.sub) throw new Error("Missing subject")
 
-    const user = await prisma.user.findUnique({
-      where: { id: payload.sub },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        tenantId: true,
-      },
-    })
+    const role = (payload.role as string) || "CUSTOMER"
+    const isCustomer = role === "CUSTOMER" || payload.accountType === "customer"
 
-    if (!user) throw new Error("Unknown user")
-    return user
+    if (isCustomer) {
+      const customer = await prisma.customer.findUnique({
+        where: { id: payload.sub },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+        },
+      })
+      if (!customer) throw new Error("Unknown customer")
+      return {
+        id: customer.id,
+        email: customer.email,
+        name: customer.name,
+        role: "CUSTOMER",
+        tenantId: "public",
+        accountType: "customer",
+      }
+    } else {
+      const user = await prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          tenantId: true,
+        },
+      })
+      if (!user) throw new Error("Unknown user")
+      return {
+        ...user,
+        accountType: "staff",
+      }
+    }
   } catch {
     throw new Error("UNAUTHORIZED")
   }
 }
 
-export function customerComplaintFilter(user: Pick<ApiIdentity, "email">) {
-  return { customerEmail: user.email }
+export function customerComplaintFilter(user: Pick<ApiIdentity, "id" | "email">) {
+  return {
+    OR: [
+      { customerId: user.id },
+      { customerEmail: user.email },
+    ],
+  }
 }

@@ -1,5 +1,5 @@
 import { z } from "zod"
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs"
 
 import { apiError, apiSuccess } from "@/lib/api/response"
 import { prisma } from "@/lib/prisma"
@@ -20,22 +20,6 @@ const registerCustomerSchema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   })
-
-async function getPublicTenant() {
-  const existing = await prisma.tenant.findUnique({
-    where: { subdomain: "public" },
-  })
-
-  if (existing) return existing
-
-  return prisma.tenant.create({
-    data: {
-      name: "Public Customers",
-      sector: "GOVERNMENT",
-      subdomain: "public",
-    },
-  })
-}
 
 function buildCustomerEmail(phone: string, email?: string) {
   const trimmedEmail = email?.trim()
@@ -74,12 +58,10 @@ export async function POST(request: Request) {
   const fullName = `${firstName} ${lastName}`.trim()
 
   try {
-    const tenant = await getPublicTenant()
     const passwordHash = await bcrypt.hash(password, 10)
 
-    const user = await prisma.user.create({
+    const customer = await prisma.customer.create({
       data: {
-        tenantId: tenant.id,
         name: fullName,
         firstName,
         lastName,
@@ -101,7 +83,7 @@ export async function POST(request: Request) {
       },
     })
 
-    return apiSuccess({ user }, 201)
+    return apiSuccess({ user: { ...customer, accountType: "customer" } }, 201)
   } catch (error: unknown) {
     const prismaError = error as { code?: string; meta?: { target?: string[] } }
     if (prismaError.code === "P2002") {

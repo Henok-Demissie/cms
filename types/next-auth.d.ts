@@ -7,12 +7,14 @@ declare module "next-auth" {
       id: string
       role: UserRole
       tenantId: string
+      accountType?: "customer" | "staff"
     } & DefaultSession["user"]
   }
 
   interface User {
     role: UserRole
     tenantId: string
+    accountType?: "customer" | "staff"
   }
 }
 
@@ -21,5 +23,6 @@ declare module "next-auth/jwt" {
     id: string
     role: UserRole
     tenantId: string
+    accountType?: "customer" | "staff"
   }
 }

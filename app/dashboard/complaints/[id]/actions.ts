@@ -5,10 +5,12 @@ import { redirect } from "next/navigation"
 
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { createCustomerNotification } from "@/lib/notifications"
 
 function refreshComplaintPages(id: string) {
   revalidatePath("/dashboard")
   revalidatePath("/dashboard/complaints")
+  revalidatePath("/dashboard/notifications")
   revalidatePath(`/dashboard/complaints/${id}`)
 }
 
@@ -69,13 +71,57 @@ export async function closeComplaint(id: string) {
 export async function replyToComplaint(id: string, formData: FormData) {
   const session = await auth()
   if (!session?.user) redirect(`/login?callbackUrl=/dashboard/complaints/${id}`)
-  requireStaff(session.user.role)
   const message = formData.get("message")?.toString().trim()
   if (!message) throw new Error("A reply is required.")
-  const complaint = await prisma.complaint.findFirst({ where: { id, tenantId: session.user.tenantId }, select: { id: true } })
+
+  const complaint = await prisma.complaint.findUnique({
+    where: { id },
+    include: { tenant: true },
+  })
   if (!complaint) throw new Error("Complaint not found.")
-  await prisma.complaintMessage.create({ data: { complaintId: id, authorId: session.user.id, message } })
-  await prisma.complaint.update({ where: { id }, data: { status: "IN_REVIEW" } })
+
+  const isCustomer = session.user.role === "CUSTOMER"
+  if (isCustomer) {
+    if (complaint.customerId !== session.user.id && complaint.customerEmail !== session.user.email) {
+      throw new Error("You do not have permission to reply to this complaint.")
+    }
+  } else {
+    if (complaint.tenantId !== session.user.tenantId) {
+      throw new Error("You do not have permission to reply to this complaint.")
+    }
+  }
+
+  await prisma.complaintMessage.create({
+    data: {
+      complaintId: id,
+      authorId: isCustomer ? null : session.user.id,
+      customerId: isCustomer ? session.user.id : null,
+      authorName: session.user.name || (isCustomer ? "Customer" : "Staff"),
+      authorRole: isCustomer ? "CUSTOMER" : (session.user.role || "AGENT"),
+      message,
+    },
+  })
+
+  await prisma.complaint.update({
+    where: { id },
+    data: {
+      status: isCustomer ? "IN_PROGRESS" : "IN_REVIEW",
+      updatedAt: new Date(),
+    },
+  })
+
+  // 🔔 Notify Customer when staff replies
+  if (!isCustomer && complaint.customerId) {
+    await createCustomerNotification({
+      customerId: complaint.customerId,
+      type: "COMPLAINT_REPLY",
+      title: `Response from ${complaint.tenant.name}`,
+      message: `${session.user.name || "Staff"} replied to "${complaint.title}": "${message.slice(0, 100)}${message.length > 100 ? "..." : ""}"`,
+      refType: "COMPLAINT",
+      refId: complaint.id,
+    })
+  }
+
   refreshComplaintPages(id)
 }
 

@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { PressableScale, Card, Field, SelectField, PickerModal } from '../components';
-import { palette } from '../theme';
+import { useTheme, useThemedStyles } from '../contexts/ThemeContext';
+import type { Palette } from '../theme';
 import { t, Lang } from '../i18n';
 
 type Gender = 'MALE' | 'FEMALE';
@@ -11,6 +12,8 @@ type Gender = 'MALE' | 'FEMALE';
 export function CustomerRegisterScreen() {
   const navigation = useNavigation<any>();
   const { busy, registerCustomer, uiLang } = useAuth();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -108,7 +111,7 @@ export function CustomerRegisterScreen() {
         </View>
 
         <PressableScale style={[styles.primaryBtn, busy && styles.btnDisabled]} onPress={handleSubmit} disabled={busy} scaleTo={0.97}>
-          {busy ? <ActivityIndicator color={palette.ink} /> : <Text style={styles.primaryBtnText}>{t(uiLang, 'register')}</Text>}
+          {busy ? <ActivityIndicator color={palette.onPrimary} /> : <Text style={styles.primaryBtnText}>{t(uiLang, 'register')}</Text>}
         </PressableScale>
 
         <PressableScale style={styles.linkBtn} onPress={() => navigation.navigate('Login', { staff: false })} scaleTo={0.96}>
@@ -138,23 +141,24 @@ export function CustomerRegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 24, paddingTop: 20 },
-  row: { flexDirection: 'row', gap: 12 },
-  half: { flex: 1 },
-  primaryBtn: {
-    backgroundColor: palette.primary,
-    borderRadius: 16,
-    minHeight: 54,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 6,
-  },
-  primaryBtnText: { color: palette.ink, fontWeight: '800', fontSize: 15 },
-  btnDisabled: { opacity: 0.6 },
-  linkBtn: { marginTop: 18, alignItems: 'center' },
-  linkText: { color: palette.primary, fontWeight: '600', fontSize: 14 },
-});
+const makeStyles = (p: Palette) =>
+  StyleSheet.create({
+    container: { flex: 1, paddingHorizontal: 24, paddingTop: 20 },
+    row: { flexDirection: 'row', gap: 12 },
+    half: { flex: 1 },
+    primaryBtn: {
+      backgroundColor: p.primarySolid,
+      borderRadius: 16,
+      minHeight: 54,
+      paddingHorizontal: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      marginTop: 6,
+    },
+    primaryBtnText: { color: p.onPrimary, fontWeight: '800', fontSize: 15 },
+    btnDisabled: { opacity: 0.6 },
+    linkBtn: { marginTop: 18, alignItems: 'center' },
+    linkText: { color: p.primary, fontWeight: '600', fontSize: 14 },
+  });

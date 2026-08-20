@@ -2,8 +2,9 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme, useThemedStyles } from '../contexts/ThemeContext';
 import { PressableScale, Card, Field } from '../components';
-import { palette } from '../theme';
+import type { Palette } from '../theme';
 import { t } from '../i18n';
 
 export function LoginScreen() {
@@ -11,6 +12,8 @@ export function LoginScreen() {
   const route = useRoute();
   const { staff = false } = route.params || {};
   const { busy, signIn, uiLang } = useAuth();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,7 +42,7 @@ export function LoginScreen() {
         />
 
         <PressableScale style={[styles.primaryBtn, busy && styles.btnDisabled]} onPress={handleSignIn} disabled={busy} scaleTo={0.97}>
-          {busy ? <ActivityIndicator color={palette.ink} /> : <Text style={styles.primaryBtnText}>{t(uiLang, 'signIn')}</Text>}
+          {busy ? <ActivityIndicator color={palette.onPrimary} /> : <Text style={styles.primaryBtnText}>{t(uiLang, 'signIn')}</Text>}
         </PressableScale>
 
         {staff ? (
@@ -56,21 +59,23 @@ export function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 24, justifyContent: 'center' },
-  primaryBtn: {
-    backgroundColor: palette.primary,
-    borderRadius: 16,
-    minHeight: 54,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 6,
-  },
-  primaryBtnText: { color: palette.ink, fontWeight: '800', fontSize: 15 },
-  btnDisabled: { opacity: 0.6 },
-  linkBtn: { marginTop: 18, alignItems: 'center' },
-  linkText: { color: palette.primary, fontWeight: '600', fontSize: 14 },
-});
+const makeStyles = (p: Palette) =>
+  StyleSheet.create({
+    // No backgroundColor: this screen lets the navigator/App gradient show through.
+    container: { flex: 1, paddingHorizontal: 24, justifyContent: 'center' },
+    primaryBtn: {
+      backgroundColor: p.primarySolid,
+      borderRadius: 16,
+      minHeight: 54,
+      paddingHorizontal: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      marginTop: 6,
+    },
+    primaryBtnText: { color: p.onPrimary, fontWeight: '800', fontSize: 15 },
+    btnDisabled: { opacity: 0.6 },
+    linkBtn: { marginTop: 18, alignItems: 'center' },
+    linkText: { color: p.primary, fontWeight: '600', fontSize: 14 },
+  });

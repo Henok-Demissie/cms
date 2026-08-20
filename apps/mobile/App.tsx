@@ -1,25 +1,50 @@
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 import { AuthProvider } from './src/contexts/AuthContext';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
-import { palette } from './src/theme';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <View style={styles.root}>
-        <LinearGradient colors={['#061018', '#0a1c28', '#061018']} style={StyleSheet.absoluteFill} />
-        <StatusBar style="light" />
-        <NavigationContainer>
-          <AppNavigator />
-        </NavigationContainer>
-      </View>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Root />
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+function Root() {
+  const { palette, mode } = useTheme();
+  const isDark = mode === 'dark';
+
+  // Give React Navigation the matching base theme so its own chrome (card
+  // backgrounds during transitions, default text) doesn't flash the wrong shade.
+  const navTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme : DefaultTheme).colors,
+      background: palette.bg,
+      card: palette.surface,
+      text: palette.text,
+      border: palette.border,
+      primary: palette.primary,
+    },
+  };
+
+  return (
+    <View style={[styles.root, { backgroundColor: palette.bg }]}>
+      <LinearGradient colors={palette.gradient} style={StyleSheet.absoluteFill} />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <NavigationContainer theme={navTheme}>
+        <AppNavigator />
+      </NavigationContainer>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: palette.bg },
+  root: { flex: 1 },
 });

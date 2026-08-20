@@ -3,13 +3,16 @@ import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { PressableScale, Card, Field, SelectField, PickerModal } from '../components';
-import { palette } from '../theme';
+import { useTheme, useThemedStyles } from '../contexts/ThemeContext';
+import type { Palette } from '../theme';
 import { t } from '../i18n';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 export function BusinessRegisterScreen() {
   const navigation = useNavigation<any>();
   const { busy, registerBusiness, uiLang } = useAuth();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -57,7 +60,7 @@ export function BusinessRegisterScreen() {
 
           <Animated.View entering={FadeInDown.duration(400).delay(350)}>
             <PressableScale style={[styles.primaryBtn, busy && styles.btnDisabled]} onPress={handleSubmit} disabled={busy} scaleTo={0.97}>
-              {busy ? <ActivityIndicator color={palette.ink} /> : <Text style={styles.primaryBtnText}>{t(uiLang, 'createWorkspace')}</Text>}
+              {busy ? <ActivityIndicator color={palette.onPrimary} /> : <Text style={styles.primaryBtnText}>{t(uiLang, 'createWorkspace')}</Text>}
             </PressableScale>
           </Animated.View>
 
@@ -83,31 +86,32 @@ export function BusinessRegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: palette.bg },
-  innerContainer: { flex: 1, paddingHorizontal: 24, paddingTop: 12 },
-  row: { flexDirection: 'row', gap: 12 },
-  half: { flex: 1 },
-  primaryBtn: {
-    backgroundColor: palette.primary,
-    borderRadius: 16,
-    minHeight: 54,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 6,
-  },
-  primaryBtnText: { color: palette.ink, fontWeight: '700', fontSize: 16 },
-  btnDisabled: { opacity: 0.6 },
-  linkBtn: { 
-    marginTop: 18, 
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  linkText: { color: palette.primary, fontWeight: '600', fontSize: 15 },
-  linkArrow: { color: palette.primary, fontSize: 18, marginLeft: 4 },
-});
+const makeStyles = (p: Palette) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: p.bg },
+    innerContainer: { flex: 1, paddingHorizontal: 24, paddingTop: 12 },
+    row: { flexDirection: 'row', gap: 12 },
+    half: { flex: 1 },
+    primaryBtn: {
+      backgroundColor: p.primarySolid,
+      borderRadius: 16,
+      minHeight: 54,
+      paddingHorizontal: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      marginTop: 6,
+    },
+    primaryBtnText: { color: p.onPrimary, fontWeight: '700', fontSize: 16 },
+    btnDisabled: { opacity: 0.6 },
+    linkBtn: {
+      marginTop: 18,
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 4,
+    },
+    linkText: { color: p.primary, fontWeight: '600', fontSize: 15 },
+    linkArrow: { color: p.primary, fontSize: 18, marginLeft: 4 },
+  });

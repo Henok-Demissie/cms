@@ -27,19 +27,34 @@ async function updateProfile(formData: FormData) {
   const language = formData.get("language")?.toString().trim() || null
   const nationalId = formData.get("nationalId")?.toString().trim() || null
   const name = [firstName, lastName].filter(Boolean).join(" ") || session.user.name || "User"
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { firstName, lastName, phone, gender, language, nationalId, name },
-  })
+
+  const isCustomer = session.user.role === "CUSTOMER"
+
+  if (isCustomer) {
+    await prisma.customer.update({
+      where: { id: session.user.id },
+      data: { firstName, lastName, phone, gender, language, nationalId, name },
+    })
+  } else {
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { firstName, lastName, phone, gender, language, name },
+    })
+  }
+
   revalidatePath("/dashboard/profile")
 }
-
-
 
 export default async function ProfilePage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
-  const user = await prisma.user.findUnique({ where: { id: session.user.id } })
+
+  const isCustomer = session.user.role === "CUSTOMER"
+
+  const user = isCustomer
+    ? await prisma.customer.findUnique({ where: { id: session.user.id } })
+    : await prisma.user.findUnique({ where: { id: session.user.id } })
+
   if (!user) redirect("/login")
 
   const initials = (user.name || "User")
@@ -56,13 +71,10 @@ export default async function ProfilePage() {
     year: "numeric",
   }).format(user.createdAt)
 
-
-
   return (
     <div className="flex flex-1 flex-col gap-0 bg-background">
       {/* ─── Hero Banner ─── */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/80 via-primary/55 to-amber-400/75 px-6 py-10 text-primary-foreground md:px-10 md:py-12">
-        {/* Decorative circles */}
         <div className="absolute -left-20 -top-20 h-52 w-52 rounded-full bg-white/10" />
         <div className="absolute -bottom-28 right-8 h-52 w-52 rounded-full bg-white/10" />
         <div className="absolute left-1/2 top-0 h-32 w-32 -translate-x-1/2 rounded-full bg-white/5" />
@@ -113,98 +125,99 @@ export default async function ProfilePage() {
 
       {/* ─── Main Content ─── */}
       <div className="flex flex-1 flex-col gap-5 p-4 md:p-7">
-          {/* ─── Personal Information Form ─── */}
-          <section className="mx-auto w-full max-w-4xl overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-            <div className="grid grid-cols-3 border-b border-border">
-              <button className="border-b-2 border-primary px-4 py-3.5 text-sm font-medium text-primary">
-                Profile
-              </button>
-              <button className="px-4 py-3.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-                Sessions
-              </button>
-              <button className="px-4 py-3.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-                Security
-              </button>
+        <section className="mx-auto w-full max-w-4xl overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="grid grid-cols-3 border-b border-border">
+            <button className="border-b-2 border-primary px-4 py-3.5 text-sm font-medium text-primary">
+              Profile
+            </button>
+            <button className="px-4 py-3.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+              Sessions
+            </button>
+            <button className="px-4 py-3.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+              Security
+            </button>
+          </div>
+
+          <form action={updateProfile} className="p-5 md:p-7">
+            <div className="mb-6 flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/15 text-primary">
+                <UserRound className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 className="font-serif text-xl font-semibold">Personal Information</h2>
+                <p className="text-sm text-muted-foreground">Update your personal details</p>
+              </div>
             </div>
 
-            <form action={updateProfile} className="p-5 md:p-7">
-              <div className="mb-6 flex items-center gap-3">
-                <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/15 text-primary">
-                  <UserRound className="h-5 w-5" />
-                </span>
-                <div>
-                  <h2 className="font-serif text-xl font-semibold">Personal Information</h2>
-                  <p className="text-sm text-muted-foreground">Update your personal details</p>
-                </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  defaultValue={user.firstName ?? user.name.split(" ")[0] ?? ""}
+                />
               </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    defaultValue={user.firstName ?? user.name.split(" ")[0] ?? ""}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    defaultValue={user.lastName ?? user.name.split(" ").slice(1).join(" ")}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" value={user.email} readOnly className="opacity-60" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    defaultValue={user.phone ?? ""}
-                    placeholder="Add your phone number"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
-                  <Input
-                    id="gender"
-                    name="gender"
-                    defaultValue={user.gender ?? ""}
-                    placeholder="e.g. Male, Female"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="language">Language</Label>
-                  <Input
-                    id="language"
-                    name="language"
-                    defaultValue={user.language ?? "AM"}
-                    placeholder="e.g. AM, EN"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  defaultValue={user.lastName ?? user.name.split(" ").slice(1).join(" ")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" value={user.email} readOnly className="opacity-60" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  defaultValue={user.phone ?? ""}
+                  placeholder="Add your phone number"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Input
+                  id="gender"
+                  name="gender"
+                  defaultValue={user.gender ?? ""}
+                  placeholder="e.g. Male, Female"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="language">Language</Label>
+                <Input
+                  id="language"
+                  name="language"
+                  defaultValue={user.language ?? "AM"}
+                  placeholder="e.g. AM, EN"
+                />
+              </div>
+              {isCustomer && (
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="nationalId">National ID</Label>
                   <Input
                     id="nationalId"
                     name="nationalId"
-                    defaultValue={user.nationalId ?? ""}
+                    defaultValue={(user as any).nationalId ?? ""}
                     placeholder="Your national identification number"
                   />
                 </div>
-              </div>
+              )}
+            </div>
 
-              <div className="mt-6 flex justify-end">
-                <Button type="submit" className="gap-2">
-                  <ShieldCheck className="h-4 w-4" />
-                  Save Changes
-                </Button>
-              </div>
-            </form>
-          </section>
+            <div className="mt-6 flex justify-end">
+              <Button type="submit" className="gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                Save Changes
+              </Button>
+            </div>
+          </form>
+        </section>
       </div>
     </div>
   )

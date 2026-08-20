@@ -1,8 +1,7 @@
-﻿import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { VictoryPie, VictoryLegend } from 'victory-native';
-import { palette } from '../theme';
-
-const { width } = Dimensions.get('window');
+import { View, Text, StyleSheet } from 'react-native';
+import { VictoryPie } from 'victory-native';
+import { useTheme, useThemedStyles } from '../contexts/ThemeContext';
+import type { Palette } from '../theme';
 
 // Example data – replace with your real status counts
 const data = [
@@ -12,10 +11,11 @@ const data = [
   { x: 'Escalated', y: 5 },
 ];
 
-const colors = ['#45d6a1', '#fbbf24', '#60a5fa', '#ff6b6b'];
-
 export function CaseStatusChart() {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const total = data.reduce((sum, d) => sum + d.y, 0);
+  const colors = [palette.primary, palette.warning, palette.info, palette.danger];
 
   return (
     <View style={styles.container}>
@@ -35,7 +35,8 @@ export function CaseStatusChart() {
               fontWeight: '600',
             },
             data: {
-              stroke: palette.bg,
+              // Slice separator: match the card the chart sits on, not the screen.
+              stroke: palette.surface,
               strokeWidth: 2,
             },
           }}
@@ -58,46 +59,47 @@ export function CaseStatusChart() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: palette.border,
-    marginVertical: 16,
-  },
-  title: {
-    color: palette.text,
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  chartWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  legendContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginTop: 12,
-    gap: 12,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendColor: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  legendText: {
-    color: palette.text,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-});
+const makeStyles = (p: Palette) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: p.surface,
+      borderRadius: 16,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: p.border,
+      marginVertical: 16,
+    },
+    title: {
+      color: p.text,
+      fontSize: 18,
+      fontWeight: '700',
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    chartWrapper: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    legendContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      marginTop: 12,
+      gap: 12,
+    },
+    legendItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    legendColor: {
+      width: 14,
+      height: 14,
+      borderRadius: 7,
+    },
+    legendText: {
+      color: p.text,
+      fontSize: 13,
+      fontWeight: '500',
+    },
+  });

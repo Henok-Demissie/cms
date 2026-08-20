@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { ArrowUpRight, ArrowRight, BriefcaseBusiness, MessageSquareWarning, UserRound } from "lucide-react"
-import { useEffect, useState } from "react"
-import { AnimatedText } from "./animated-text"
+import { useEffect, useRef, useState } from "react"
 
-function useCountUp(end: number, duration = 2000, suffix = "") {
+function useCountUp(end: number, duration = 2000, suffix = "", start = true) {
   const [count, setCount] = useState(0)
 
   useEffect(() => {
+    if (!start) return
+
     let startTime: number
     let animationFrame: number
 
@@ -26,13 +27,41 @@ function useCountUp(end: number, duration = 2000, suffix = "") {
 
     animationFrame = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(animationFrame)
-  }, [end, duration])
+  }, [end, duration, start])
 
   return count + suffix
 }
 
+// Fires once when the element first scrolls into view, so the stats below the
+// fold animate when the visitor reaches them instead of on page load.
+function useInView<T extends HTMLElement>(threshold = 0.25) {
+  const ref = useRef<T>(null)
+  const [inView, setInView] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true)
+          observer.disconnect()
+        }
+      },
+      { threshold },
+    )
+
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [threshold])
+
+  return [ref, inView] as const
+}
+
 export function HeroSection() {
   const [isVisible, setIsVisible] = useState(false)
+  const [statsRef, statsInView] = useInView<HTMLDivElement>()
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,15 +70,16 @@ export function HeroSection() {
     return () => clearTimeout(timer)
   }, [])
 
-  const sectors = useCountUp(8, 2000, "")
-  const slaCompliance = useCountUp(94, 2000, "%")
-  const tenants = useCountUp(500, 2000, "+")
-  const resolved = useCountUp(2, 2000, "M+")
+  const sectors = useCountUp(8, 2000, "", statsInView)
+  const slaCompliance = useCountUp(94, 2000, "%", statsInView)
+  const tenants = useCountUp(500, 2000, "+", statsInView)
+  const resolved = useCountUp(2, 2000, "M+", statsInView)
 
   return (
-    <section className="px-5 pb-16 pt-24 sm:px-6">
+    <section className="px-5 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-10 text-center">
+        {/* First screen — fills the viewport and ends at the sign-in card. */}
+        <div className="flex min-h-[100svh] flex-col justify-start pt-20 pb-16 text-center">
           <div
             className={`transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-5"}`}
           >
@@ -58,8 +88,9 @@ export function HeroSection() {
               <span className="text-xs text-primary uppercase tracking-widest">Trusted by 100+ Legal Organizations</span>
             </div>
 
-            <h1 className="font-serif text-4xl md:text-5xl font-normal leading-tight mb-6 lg:text-6xl w-full">
-              Transform Your <span className="font-semibold">Customer</span> <span className="font-semibold">Service</span> Operations
+            <h1 className="font-serif text-[2.75rem] md:text-[3.5rem] font-normal leading-tight mb-6 lg:text-[4.25rem] w-full">
+              Transform Your <span className="font-semibold">Customer</span> <span className="font-semibold">Service</span>
+              <span className="block">Operations</span>
             </h1>
           </div>
 
@@ -81,7 +112,7 @@ export function HeroSection() {
             </Link>
           </div>
 
-          <div className={`mx-auto mt-8 max-w-2xl transition-all duration-700 delay-350 ease-[cubic-bezier(0.16,1,0.3,1)] ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+          <div className={`mx-auto mt-8 max-w-2xl w-full transition-all duration-700 delay-350 ease-[cubic-bezier(0.16,1,0.3,1)] ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             <div className="rounded-xl border border-border bg-card/70 p-3 shadow-sm backdrop-blur-sm sm:flex sm:items-center sm:justify-between sm:gap-5 sm:p-4">
               <div className="mb-3 text-left sm:mb-0">
                 <p className="text-sm font-medium text-foreground">Sign in to your account</p>
@@ -107,20 +138,11 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center gap-12">
-          <div className="relative">
+        {/* Second screen — the stats, revealed on scroll. */}
+        <div ref={statsRef} className="pb-16">
+          <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-6 lg:grid-cols-4 lg:gap-8">
             <div
-              className={`relative w-[520px] md:w-[625px] lg:w-[780px] will-change-transform transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] delay-300 ${
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[400px]"
-              }`}
-            >
-              <div className="absolute bottom-0 left-0 right-0 h-56 bg-gradient-to-t from-background to-transparent z-20 pointer-events-none" />
-            </div>
-          </div>
-
-          <div className="grid max-w-6xl grid-cols-2 gap-6 lg:grid-cols-4 lg:gap-8">
-            <div
-              className={`text-left transition-all duration-700 delay-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+              className={`text-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${statsInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
             >
               <p className="text-4xl md:text-5xl font-medium text-primary mb-2">
                 {sectors}
@@ -133,7 +155,7 @@ export function HeroSection() {
             </div>
 
             <div
-              className={`text-left transition-all duration-700 delay-[380ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+              className={`text-center transition-all duration-700 delay-[80ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${statsInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
             >
               <p className="text-4xl md:text-5xl font-medium text-primary mb-2">
                 {slaCompliance}
@@ -145,7 +167,7 @@ export function HeroSection() {
             </div>
 
             <div
-              className={`text-left transition-all duration-700 delay-[460ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+              className={`text-center transition-all duration-700 delay-[160ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${statsInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
             >
               <p className="text-4xl md:text-5xl font-medium text-primary mb-2">
                 {tenants}
@@ -157,7 +179,7 @@ export function HeroSection() {
             </div>
 
             <div
-              className={`text-left transition-all duration-700 delay-[540ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+              className={`text-center transition-all duration-700 delay-[240ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${statsInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
             >
               <p className="text-4xl md:text-5xl font-medium text-primary mb-2">
                 {resolved}
@@ -168,15 +190,15 @@ export function HeroSection() {
               </p>
             </div>
           </div>
-        </div>
 
-        <div
-          className={`mt-10 flex justify-center transition-all duration-700 delay-[620ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        >
-          <Link href="/register" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/25">
-            Register your business
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <div
+            className={`mt-10 flex justify-center transition-all duration-700 delay-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${statsInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          >
+            <Link href="/register" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/25">
+              Register your business
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </div>
     </section>

@@ -1,7 +1,8 @@
 import { Text, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { palette } from '../theme';
+import { useThemedStyles } from '../contexts/ThemeContext';
+import type { Palette } from '../theme';
 
 export function MetricCard({
   label,
@@ -16,6 +17,7 @@ export function MetricCard({
   color: string;
   delay?: number;
 }) {
+  const styles = useThemedStyles(makeStyles);
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -43,24 +45,25 @@ export function MetricCard({
   );
 }
 
-const styles = StyleSheet.create({
-  metric: {
-    flex: 1,
-    backgroundColor: palette.surface,
-    borderColor: palette.border,
-    borderWidth: 1,
-    borderRadius: 18,
-    padding: 14,
-    gap: 6,
-  },
-  metricIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  metricValue: { color: palette.text, fontSize: 24, fontWeight: '800' },
-  metricLabel: { color: palette.muted, fontSize: 12 },
-});
+const makeStyles = (p: Palette) =>
+  StyleSheet.create({
+    metric: {
+      flex: 1,
+      backgroundColor: p.surface,
+      borderColor: p.border,
+      borderWidth: 1,
+      borderRadius: 18,
+      padding: 14,
+      gap: 6,
+    },
+    metricIcon: {
+      width: 34,
+      height: 34,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 4,
+    },
+    metricValue: { color: p.text, fontSize: 24, fontWeight: '800' },
+    metricLabel: { color: p.muted, fontSize: 12 },
+  });

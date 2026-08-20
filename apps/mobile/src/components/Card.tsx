@@ -1,8 +1,11 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { ReactNode } from 'react';
-import { palette, radius, spacing } from '../theme';
+import { useThemedStyles } from '../contexts/ThemeContext';
+import { radius, spacing, type Palette } from '../theme';
 
 export function Card({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{title}</Text>
@@ -12,16 +15,17 @@ export function Card({ title, subtitle, children }: { title: string; subtitle: s
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: 'rgba(18,37,51,0.85)',
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: spacing.lg,
-    marginTop: 4,
-  },
-  cardTitle: { color: palette.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
-  cardSubtitle: { color: palette.muted, fontSize: 14, lineHeight: 21, marginTop: 6 },
-  cardBody: { marginTop: 20, gap: 14 },
-});
+const makeStyles = (p: Palette) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: p.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: p.border,
+      padding: spacing.lg,
+      marginTop: 4,
+    },
+    cardTitle: { color: p.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+    cardSubtitle: { color: p.muted, fontSize: 14, lineHeight: 21, marginTop: 6 },
+    cardBody: { marginTop: 20, gap: 14 },
+  });

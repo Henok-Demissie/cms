@@ -18,10 +18,19 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
-export function LoginForm() {
+export type LoginPortal = "customer" | "staff"
+
+// Customers sign up for themselves; staff bring a whole organization with them.
+const SIGN_UP_CTA: Record<LoginPortal, { label: string; href: string; placeholder: string }> = {
+  customer: { label: "Sign up", href: "/customer/register", placeholder: "you@example.com" },
+  staff: { label: "Register your business", href: "/register", placeholder: "you@company.com" },
+}
+
+export function LoginForm({ portal = "staff" }: { portal?: LoginPortal }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard"
+  const cta = SIGN_UP_CTA[portal]
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -58,7 +67,7 @@ export function LoginForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" autoComplete="email" placeholder="you@company.com" {...register("email")} />
+        <Input id="email" type="email" autoComplete="email" placeholder={cta.placeholder} {...register("email")} />
         {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
       </div>
 
@@ -82,8 +91,8 @@ export function LoginForm() {
 
       <p className="text-sm text-muted-foreground text-center">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="text-foreground underline-offset-4 hover:underline">
-          Register your business
+        <Link href={cta.href} className="text-foreground underline-offset-4 hover:underline">
+          {cta.label}
         </Link>
       </p>
     </form>

@@ -1,11 +1,12 @@
 import { SignJWT } from "jose"
 
-type ApiTokenPayload = {
+export type ApiTokenPayload = {
   sub: string
   email: string
   name: string
   role: string
   tenantId: string
+  accountType?: "customer" | "staff"
 }
 
 function getSigningKey() {
@@ -23,6 +24,7 @@ export async function signApiToken(payload: ApiTokenPayload) {
     name: payload.name,
     role: payload.role,
     tenantId: payload.tenantId,
+    accountType: payload.accountType ?? (payload.role === "CUSTOMER" ? "customer" : "staff"),
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)

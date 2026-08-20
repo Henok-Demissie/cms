@@ -6,6 +6,7 @@ import type { Dashboard, User } from '../api';
 
 type AuthContextType = {
   user: User | null;
+  token: string | null;
   dashboard: Dashboard | null;
   staff: boolean;
   busy: boolean;
@@ -13,6 +14,7 @@ type AuthContextType = {
   signIn: (email: string, password: string, isStaff: boolean) => Promise<void>;
   signOut: () => void;
   setUiLang: (lang: Lang) => void;
+  refreshDashboard: () => Promise<void>;
   registerCustomer: (data: any) => Promise<void>;
   registerBusiness: (data: any) => Promise<void>;
 };
@@ -21,10 +23,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children, initialLang = 'AM' }: { children: ReactNode; initialLang?: Lang }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [staff, setStaff] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uiLang, setUiLang] = useState<Lang>(initialLang);
+
+  const refreshDashboard = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await fetchDashboard(token);
+      setDashboard(data);
+    } catch {
+      // ignore background refresh errors
+    }
+  }, [token]);
 
   const signIn = useCallback(
     async (email: string, password: string, isStaff: boolean) => {
@@ -37,11 +50,13 @@ export const AuthProvider = ({ children, initialLang = 'AM' }: { children: React
       try {
         const result = await login(email.trim(), password);
         const isStaffRole = result.user.role !== 'CUSTOMER';
-        if (staff !== isStaffRole) {
-          throw new Error(staff ? 'Use customer sign in for this account' : 'Use staff sign in for this account');
+        if (isStaff !== isStaffRole) {
+          throw new Error(isStaff ? 'This is a customer account. Please use Customer Sign In.' : 'This is a staff account. Please use Staff Sign In.');
         }
         const data = await fetchDashboard(result.token);
+        setToken(result.token);
         setUser(result.user);
+        setStaff(isStaffRole);
         setDashboard(data);
       } catch (error) {
         Alert.alert(t(uiLang, 'signInFailed'), error instanceof Error ? error.message : 'Try again');
@@ -49,11 +64,12 @@ export const AuthProvider = ({ children, initialLang = 'AM' }: { children: React
         setBusy(false);
       }
     },
-    [uiLang, staff]
+    [uiLang]
   );
 
   const signOut = useCallback(() => {
     setUser(null);
+    setToken(null);
     setDashboard(null);
   }, []);
 
@@ -79,7 +95,7 @@ export const AuthProvider = ({ children, initialLang = 'AM' }: { children: React
       }
       setBusy(true);
       try {
-        await registerCustomer(data);
+        await registerCustomer(data as any);
         Alert.alert(t(uiLang, 'accountCreated'), t(uiLang, 'signInNow'));
         setStaff(false);
       } catch (error) {
@@ -117,6 +133,7 @@ export const AuthProvider = ({ children, initialLang = 'AM' }: { children: React
     <AuthContext.Provider
       value={{
         user,
+        token,
         dashboard,
         staff,
         busy,
@@ -124,6 +141,7 @@ export const AuthProvider = ({ children, initialLang = 'AM' }: { children: React
         signIn,
         signOut,
         setUiLang,
+        refreshDashboard,
         registerCustomer: handleCustomerRegister,
         registerBusiness: handleBusinessRegister,
       }}

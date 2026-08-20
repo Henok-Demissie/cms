@@ -1,5 +1,6 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { HeroScreen } from '../screens/HeroScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
@@ -11,10 +12,11 @@ const Stack = createStackNavigator();
 
 export function AppNavigator() {
   const { user } = useAuth();
+  const { palette } = useTheme();
   const isLoggedIn = !!user;
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: '#061018' } }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: palette.bg } }}>
       {!isLoggedIn ? (
         <>
           <Stack.Screen name="Hero" component={HeroScreen} />

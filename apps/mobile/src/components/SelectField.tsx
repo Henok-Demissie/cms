@@ -1,8 +1,12 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { palette } from '../theme';
+import { useTheme, useThemedStyles } from '../contexts/ThemeContext';
+import type { Palette } from '../theme';
 
 export function SelectField({ label, value, onPress }: { label: string; value: string; onPress: () => void }) {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
@@ -16,19 +20,20 @@ export function SelectField({ label, value, onPress }: { label: string; value: s
   );
 }
 
-const styles = StyleSheet.create({
-  field: { gap: 7 },
-  label: { color: palette.text, fontSize: 13, fontWeight: '600' },
-  select: {
-    minHeight: 52,
-    borderWidth: 1,
-    borderColor: palette.border,
-    borderRadius: 14,
-    backgroundColor: palette.bgSoft,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  selectText: { color: palette.text, fontSize: 15, flex: 1 },
-});
+const makeStyles = (p: Palette) =>
+  StyleSheet.create({
+    field: { gap: 7 },
+    label: { color: p.text, fontSize: 13, fontWeight: '600' },
+    select: {
+      minHeight: 52,
+      borderWidth: 1,
+      borderColor: p.border,
+      borderRadius: 14,
+      backgroundColor: p.bgSoft,
+      paddingHorizontal: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    selectText: { color: p.text, fontSize: 15, flex: 1 },
+  });

@@ -4,8 +4,6 @@ import { authenticateUser } from "@/lib/auth-service"
 import { signApiToken } from "@/lib/jwt"
 
 const loginSchema = z.object({
-  // The mobile app accepts either the customer's email or their registered phone.
-  // Keep this field name for backward compatibility with existing web clients.
   email: z.string().trim().min(3).max(254),
   password: z.string().min(6).max(128),
 })
@@ -30,6 +28,7 @@ export async function POST(request: Request) {
       name: user.name,
       role: user.role,
       tenantId: user.tenantId,
+      accountType: user.accountType,
     })
 
     return apiSuccess({
@@ -40,6 +39,7 @@ export async function POST(request: Request) {
         email: user.email,
         role: user.role,
         tenantId: user.tenantId,
+        accountType: user.accountType,
       },
     })
   } catch {

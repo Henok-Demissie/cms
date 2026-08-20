@@ -45,11 +45,6 @@ export const siteSearchItems: SearchItem[] = [
     target: "faq",
     keywords: ["faq", "questions", "multi-tenancy", "sla", "anonymous"],
   },
-  {
-    label: "Pricing",
-    target: "pricing",
-    keywords: ["pricing", "plans", "starter", "subscription"],
-  },
 ]
 
 export function filterSearchItems(query: string): SearchItem[] {
