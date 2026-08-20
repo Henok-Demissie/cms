@@ -16,10 +16,24 @@ const PORTAL_COPY: Record<LoginPortal, { badge: string; heading: string; blurb: 
   },
 }
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ portal?: string }> }) {
-  const { portal } = await searchParams
+// Why the visitor was sent back here, set by app/logout/route.ts. Without this
+// an expired session just looks like the app forgot who you were.
+const SIGNED_OUT_NOTICE: Record<string, string> = {
+  "password-changed": "Your password was changed, so you were signed out everywhere. Sign in with the new one.",
+  "account-removed": "That account no longer exists.",
+  "session-expired": "Your session expired. Please sign in again.",
+  manual: "You have been signed out.",
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ portal?: string; reason?: string }>
+}) {
+  const { portal, reason } = await searchParams
   const audience: LoginPortal = portal === "customer" ? "customer" : "staff"
   const copy = PORTAL_COPY[audience]
+  const notice = reason ? SIGNED_OUT_NOTICE[reason] : undefined
 
   return (
     <div className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-12">
@@ -42,6 +56,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </div>
 
         <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          {notice && (
+            <p
+              role="status"
+              className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground"
+            >
+              {notice}
+            </p>
+          )}
           <Suspense fallback={<div className="text-sm text-muted-foreground">Loading...</div>}>
             <LoginForm portal={audience} />
           </Suspense>

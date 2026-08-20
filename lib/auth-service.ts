@@ -11,6 +11,40 @@ export type AuthenticatedIdentity = {
   role: string
   tenantId: string
   accountType: AccountType
+  passwordFingerprint: string
+}
+
+/**
+ * A short digest of the stored bcrypt hash, carried in the session token so a
+ * password change can be detected and the old session dropped.
+ *
+ * Sessions here are JWTs, which means nothing links a live session back to the
+ * stored password: resetting a password leaves every existing token valid for
+ * the rest of its 7 days. Comparing this value against the current row closes
+ * that gap. It is a one-way truncated digest of an already-salted hash, so it
+ * reveals nothing about the password itself.
+ *
+ * Web Crypto rather than node:crypto: this module is reachable from the Edge
+ * middleware bundle through @/auth, and webpack refuses to bundle a "node:"
+ * import for that runtime.
+ */
+export async function fingerprintPasswordHash(passwordHash: string): Promise<string> {
+  const bytes = new TextEncoder().encode(passwordHash)
+  const digest = await crypto.subtle.digest("SHA-256", bytes)
+  return Array.from(new Uint8Array(digest).slice(0, 8))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+}
+
+/** The stored fingerprint for one account, or null if the row is gone. */
+export async function currentPasswordFingerprint(
+  accountType: AccountType,
+  id: string,
+): Promise<string | null> {
+  const row = accountType === "customer"
+    ? await prisma.customer.findUnique({ where: { id }, select: { passwordHash: true } })
+    : await prisma.user.findUnique({ where: { id }, select: { passwordHash: true } })
+  return row ? await fingerprintPasswordHash(row.passwordHash) : null
 }
 
 /**
@@ -52,6 +86,7 @@ export async function authenticateUser(
           role: "CUSTOMER",
           tenantId: "public",
           accountType: "customer",
+          passwordFingerprint: await fingerprintPasswordHash(customer.passwordHash),
         }
       }
     }
@@ -73,6 +108,7 @@ export async function authenticateUser(
           role: staff.role,
           tenantId: staff.tenantId,
           accountType: "staff",
+          passwordFingerprint: await fingerprintPasswordHash(staff.passwordHash),
         }
       }
     }

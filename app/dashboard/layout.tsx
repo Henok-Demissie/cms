@@ -9,6 +9,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { getUnreadNotificationCount } from "@/lib/notifications"
+import { assertSessionCurrent } from "@/lib/session-guard"
 
 export default async function DashboardLayout({
   children,
@@ -16,6 +17,12 @@ export default async function DashboardLayout({
   children: ReactNode
 }) {
   const session = await auth()
+
+  // A JWT keeps working after its account's password changes, so re-check the
+  // session against the database once per dashboard render. Redirects to
+  // /logout if the password moved on or the account is gone.
+  await assertSessionCurrent(session)
+
   const isCustomer = session?.user?.role === "CUSTOMER"
 
   const unreadCount = isCustomer && session?.user?.id

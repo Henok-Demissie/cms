@@ -38,6 +38,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: user.role as UserRole,
           tenantId: user.tenantId,
           accountType: user.accountType,
+          passwordFingerprint: user.passwordFingerprint,
         }
       },
     }),
@@ -49,6 +50,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role = user.role as UserRole
         token.tenantId = user.tenantId as string
         token.accountType = (user as any).accountType
+        token.passwordFingerprint = (user as any).passwordFingerprint
       }
       return token
     },
@@ -58,6 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role as UserRole
         session.user.tenantId = token.tenantId as string
         session.user.accountType = token.accountType as "customer" | "staff" | undefined
+        session.user.passwordFingerprint = token.passwordFingerprint as string | undefined
       }
       return session
     },

@@ -8,6 +8,10 @@ declare module "next-auth" {
       role: UserRole
       tenantId: string
       accountType?: "customer" | "staff"
+      // Digest of the stored password hash at sign-in time. lib/session-guard.ts
+      // compares it against the database so a password change ends the session
+      // instead of leaving the JWT valid for the rest of its 7 days.
+      passwordFingerprint?: string
     } & DefaultSession["user"]
   }
 
@@ -15,6 +19,7 @@ declare module "next-auth" {
     role: UserRole
     tenantId: string
     accountType?: "customer" | "staff"
+    passwordFingerprint?: string
   }
 }
 
@@ -24,5 +29,6 @@ declare module "next-auth/jwt" {
     role: UserRole
     tenantId: string
     accountType?: "customer" | "staff"
+    passwordFingerprint?: string
   }
 }
