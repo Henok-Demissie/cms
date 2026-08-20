@@ -1,60 +1,116 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { VictoryPie } from 'victory-native';
+import Svg, { Circle, G } from 'react-native-svg';
 import { useTheme, useThemedStyles } from '../contexts/ThemeContext';
 import type { Palette } from '../theme';
 
-// Example data – replace with your real status counts
-const data = [
-  { x: 'Pending', y: 12 },
-  { x: 'In Progress', y: 8 },
-  { x: 'Resolved', y: 20 },
-  { x: 'Escalated', y: 5 },
-];
+/**
+ * Donut of the tenant's case mix, drawn with react-native-svg.
+ *
+ * Not victory-native: the installed v41 is the Skia rewrite, which exports
+ * CartesianChart/Pie and needs @shopify/react-native-skia. The old VictoryPie
+ * this file used to import no longer exists, so it resolved to undefined and
+ * crashed the staff dashboard on render. A ring of dashed circles needs no
+ * charting library at all.
+ */
+export type CaseStatusChartProps = {
+  newCount: number;
+  ongoing: number;
+  resolved: number;
+  /**
+   * Every case for the tenant. The three buckets above do not have to add up to
+   * it — withdrawn and rejected cases are counted in neither — so the remainder
+   * becomes its own slice and the ring stays honest about the total.
+   */
+  total: number;
+};
 
-export function CaseStatusChart() {
+const SIZE = 176;
+const STROKE = 24;
+const RADIUS = (SIZE - STROKE) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const GAP = 3;
+
+export function CaseStatusChart({ newCount, ongoing, resolved, total }: CaseStatusChartProps) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const total = data.reduce((sum, d) => sum + d.y, 0);
-  const colors = [palette.primary, palette.warning, palette.info, palette.danger];
+
+  const other = Math.max(0, total - newCount - ongoing - resolved);
+  const slices = [
+    { label: 'New', value: newCount, color: palette.info },
+    { label: 'In progress', value: ongoing, color: palette.warning },
+    { label: 'Resolved', value: resolved, color: palette.success },
+    { label: 'Withdrawn', value: other, color: palette.muted },
+  ].filter((slice) => slice.value > 0);
+
+  const counted = slices.reduce((sum, slice) => sum + slice.value, 0);
+
+  // Walk the slices around the ring. Each one gives up a few pixels so the card
+  // colour shows between them — unless there is only one, which would then be a
+  // full ring with a nick in it for no reason.
+  let cursor = 0;
+  const arcs = slices.map((slice) => {
+    const length = (slice.value / counted) * CIRCUMFERENCE;
+    const start = cursor;
+    cursor += length;
+    return {
+      ...slice,
+      start,
+      length: slices.length > 1 ? Math.max(length - GAP, 1) : length,
+    };
+  });
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Case Status Distribution</Text>
+      <Text style={styles.title}>Case status distribution</Text>
 
       <View style={styles.chartWrapper}>
-        <VictoryPie
-          data={data}
-          colorScale={colors}
-          radius={({ datum }) => (datum.y / total) * 120 + 40}
-          innerRadius={50}
-          labelRadius={({ datum }) => (datum.y / total) * 120 + 55}
-          style={{
-            labels: {
-              fill: palette.text,
-              fontSize: 12,
-              fontWeight: '600',
-            },
-            data: {
-              // Slice separator: match the card the chart sits on, not the screen.
-              stroke: palette.surface,
-              strokeWidth: 2,
-            },
-          }}
-          labelPlacement="vertical"
-          labelPosition="centroid"
-        />
+        <Svg width={SIZE} height={SIZE}>
+          {/* Rotate so the first slice starts at the top rather than at 3 o'clock. */}
+          <G rotation={-90} origin={`${SIZE / 2}, ${SIZE / 2}`}>
+            <Circle
+              cx={SIZE / 2}
+              cy={SIZE / 2}
+              r={RADIUS}
+              stroke={palette.surfaceRaised}
+              strokeWidth={STROKE}
+              fill="none"
+            />
+            {arcs.map((arc) => (
+              <Circle
+                key={arc.label}
+                cx={SIZE / 2}
+                cy={SIZE / 2}
+                r={RADIUS}
+                stroke={arc.color}
+                strokeWidth={STROKE}
+                fill="none"
+                strokeDasharray={`${arc.length} ${CIRCUMFERENCE - arc.length}`}
+                strokeDashoffset={-arc.start}
+              />
+            ))}
+          </G>
+        </Svg>
+
+        <View style={styles.centerLabel} pointerEvents="none">
+          <Text style={styles.centerValue}>{total}</Text>
+          <Text style={styles.centerCaption}>{total === 1 ? 'case' : 'cases'}</Text>
+        </View>
       </View>
 
-      <View style={styles.legendContainer}>
-        {data.map((item, index) => (
-          <View key={index} style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: colors[index] }]} />
-            <Text style={styles.legendText}>
-              {item.x}: {item.y}
-            </Text>
-          </View>
-        ))}
-      </View>
+      {counted === 0 ? (
+        <Text style={styles.empty}>No cases yet.</Text>
+      ) : (
+        <View style={styles.legendContainer}>
+          {slices.map((slice) => (
+            <View key={slice.label} style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: slice.color }]} />
+              <Text style={styles.legendText}>
+                {slice.label}: {slice.value}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -79,6 +135,29 @@ const makeStyles = (p: Palette) =>
     chartWrapper: {
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    centerLabel: {
+      ...StyleSheet.absoluteFillObject,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    centerValue: {
+      color: p.text,
+      fontSize: 30,
+      fontWeight: '800',
+    },
+    centerCaption: {
+      color: p.muted,
+      fontSize: 12,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    empty: {
+      color: p.muted,
+      fontSize: 13,
+      textAlign: 'center',
+      marginTop: 12,
     },
     legendContainer: {
       flexDirection: 'row',

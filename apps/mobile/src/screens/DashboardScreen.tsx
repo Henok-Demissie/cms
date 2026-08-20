@@ -118,7 +118,12 @@ export function DashboardScreen() {
         {/* Chart (Staff View) */}
         {!isCustomer && (
           <Animated.View entering={FadeInDown.duration(600).delay(250)}>
-            <CaseStatusChart />
+            <CaseStatusChart
+              newCount={dashboard.metrics.new ?? 0}
+              ongoing={dashboard.metrics.ongoing ?? 0}
+              resolved={resolved}
+              total={total}
+            />
           </Animated.View>
         )}
 
