@@ -39,16 +39,25 @@ type RecentComplaint = {
   title: string;
   status: string;
   priority: string;
+  /**
+   * Shown instead of customerName in the first column. Staff care who filed the
+   * complaint; a customer looking at their own complaints cares who received it.
+   */
+  organizationName?: string | null;
 };
 
 type AdminComplaintsDashboardProps = {
   recentComplaints: RecentComplaint[];
   chartData: ChartPoint[];
+  viewAllHref?: string;
+  primaryColumnLabel?: string;
 };
 
 export function AdminComplaintsDashboard({
   recentComplaints,
   chartData,
+  viewAllHref = "/dashboard/complaints",
+  primaryColumnLabel = "Customer",
 }: AdminComplaintsDashboardProps) {
   const total = chartData.reduce((sum, point) => sum + point.complaints, 0);
 
@@ -105,7 +114,7 @@ export function AdminComplaintsDashboard({
       <Card className="lg:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between px-4 py-3">
           <CardTitle className="text-sm font-medium">Recent complaints</CardTitle>
-          <Link href="/dashboard/complaints" className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline">
+          <Link href={viewAllHref} className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline">
             View all <ArrowUpRight className="size-3" />
           </Link>
         </CardHeader>
@@ -116,7 +125,7 @@ export function AdminComplaintsDashboard({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="h-8 text-xs">Customer</TableHead>
+                  <TableHead className="h-8 text-xs">{primaryColumnLabel}</TableHead>
                   <TableHead className="h-8 text-xs">Issue</TableHead>
                 </TableRow>
               </TableHeader>
@@ -128,7 +137,7 @@ export function AdminComplaintsDashboard({
                         href={`/dashboard/complaints/${complaint.id}`}
                         className="block w-full"
                       >
-                        {complaint.customerName || "Unknown customer"}
+                        {complaint.organizationName ?? complaint.customerName ?? "Unknown customer"}
                       </Link>
                     </TableCell>
                     <TableCell className="py-2 text-xs">

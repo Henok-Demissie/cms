@@ -2,7 +2,9 @@ import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { deleteComplaint } from "../actions";
 import { ComplaintFormSection } from "@/components/dashboard/complaint-form-section";
+import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -290,7 +292,8 @@ export default async function ComplaintsPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
                 <TableHead>Responses</TableHead>
-                <TableHead className="pr-5 text-right">Submitted</TableHead>
+                <TableHead className="text-right">Submitted</TableHead>
+                <TableHead className="pr-5 text-right">Delete</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -350,10 +353,17 @@ export default async function ComplaintsPage() {
                         {complaint.messages.length} message{complaint.messages.length !== 1 ? "s" : ""}
                       </span>
                     </TableCell>
-                    <TableCell className="pr-5 text-right">
+                    <TableCell className="text-right">
                       <span className="text-xs text-muted-foreground" title={complaint.createdAt.toLocaleString()}>
                         {formatRelativeDate(complaint.createdAt)}
                       </span>
+                    </TableCell>
+                    <TableCell className="pr-5 text-right">
+                      <DeleteSubmissionButton
+                        id={complaint.id}
+                        action={deleteComplaint}
+                        itemLabel="complaint"
+                      />
                     </TableCell>
                   </TableRow>
                 );
@@ -361,7 +371,7 @@ export default async function ComplaintsPage() {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={6} className="pl-5">
+                <TableCell colSpan={7} className="pl-5">
                   Total
                 </TableCell>
                 <TableCell className="pr-5 text-right">

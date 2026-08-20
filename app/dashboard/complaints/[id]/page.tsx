@@ -2,6 +2,8 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { assignComplaintToMe, closeComplaint, reactToComplaint, replyToComplaint } from "./actions"
+import { deleteComplaint } from "../../actions"
+import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
 import { BackButton } from "@/components/back-button"
 import {
   Card,
@@ -176,6 +178,24 @@ export default async function ComplaintDetailPage({ params }: Props) {
                 </form>
               </div>
             )}
+
+            {/* Erasing the case removes its whole conversation with it — the
+                messages and reactions cascade on the foreign key. */}
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+              <div>
+                <p className="text-sm font-medium">Erase this complaint</p>
+                <p className="text-xs text-muted-foreground">
+                  Permanently deletes the case and every message on it. This cannot be undone.
+                </p>
+              </div>
+              <DeleteSubmissionButton
+                id={complaint.id}
+                action={deleteComplaint}
+                itemLabel="complaint"
+                variant="button"
+                redirectTo={isStaff ? "/dashboard/complaints" : "/dashboard/my-complaints"}
+              />
+            </div>
 
             <div className="rounded-lg border border-border p-3">
               <h3 className="font-semibold">Case conversation & Staff Responses</h3>

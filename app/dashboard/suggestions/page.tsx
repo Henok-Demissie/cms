@@ -2,6 +2,8 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { submitSuggestion, respondSuggestion } from "./actions"
+import { deleteSuggestion } from "../actions"
+import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -164,9 +166,12 @@ export default async function SuggestionsPage({ searchParams }: { searchParams: 
                       )}
                     </div>
                   </div>
-                  <Badge variant={item.status === "ACCEPTED" ? "default" : item.status === "IN_REVIEW" ? "secondary" : "outline"}>
-                    {item.status.replace(/_/g, " ")}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={item.status === "ACCEPTED" ? "default" : item.status === "IN_REVIEW" ? "secondary" : "outline"}>
+                      {item.status.replace(/_/g, " ")}
+                    </Badge>
+                    <DeleteSubmissionButton id={item.id} action={deleteSuggestion} itemLabel="suggestion" />
+                  </div>
                 </div>
                 <p className="text-sm text-foreground/90">{item.description}</p>
 

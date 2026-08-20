@@ -2,6 +2,8 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { submitFeedback, respondFeedback } from "./actions"
+import { deleteFeedback } from "../actions"
+import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -171,9 +173,12 @@ export default async function FeedbackPage({ searchParams }: { searchParams: Pro
                       {staff && item.authorName && ` by ${item.authorName}`}
                     </p>
                   </div>
-                  <Badge variant={item.response || item.status === "REVIEWED" ? "default" : "secondary"}>
-                    {item.response || item.status === "REVIEWED" ? "Responded" : "Pending"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={item.response || item.status === "REVIEWED" ? "default" : "secondary"}>
+                      {item.response || item.status === "REVIEWED" ? "Responded" : "Pending"}
+                    </Badge>
+                    <DeleteSubmissionButton id={item.id} action={deleteFeedback} itemLabel="feedback" />
+                  </div>
                 </div>
 
                 <p className="text-sm text-foreground/90">{item.message}</p>

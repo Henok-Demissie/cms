@@ -2,6 +2,8 @@ import Link from "next/link"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { deleteComplaint } from "../actions"
+import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { CheckCircle2, ClipboardList, Clock3, FileText, Mail, Plus, RefreshCw, Search } from "lucide-react"
@@ -88,6 +90,7 @@ export default async function MyComplaintsPage() {
                 <TableHead>Priority</TableHead>
                 <TableHead>Staff Messages</TableHead>
                 <TableHead className="text-right">Submitted</TableHead>
+                <TableHead className="text-right">Delete</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -116,12 +119,19 @@ export default async function MyComplaintsPage() {
                   <TableCell className="text-right text-muted-foreground">
                     {new Date(complaint.createdAt).toLocaleDateString()}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <DeleteSubmissionButton
+                      id={complaint.id}
+                      action={deleteComplaint}
+                      itemLabel="complaint"
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={5}>Total complaints</TableCell>
+                <TableCell colSpan={6}>Total complaints</TableCell>
                 <TableCell className="text-right">{complaints.length}</TableCell>
               </TableRow>
             </TableFooter>
