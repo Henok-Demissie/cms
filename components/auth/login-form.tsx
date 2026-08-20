@@ -27,11 +27,29 @@ const SIGN_UP_CTA: Record<LoginPortal, { label: string; href: string; placeholde
   staff: { label: "Register your business", href: "/register", placeholder: "you@company.com" },
 }
 
+// A rejected sign-in now means "not valid *for this portal*", because the portal
+// is sent to the server and scopes which identity table is checked. The same
+// address can hold both a customer and a staff account with different passwords,
+// so point people at the other door instead of leaving them stuck here.
+const WRONG_PORTAL_HINT: Record<LoginPortal, { message: string; label: string; href: string }> = {
+  customer: {
+    message: "That email and password don't match a customer account.",
+    label: "Staff sign in here",
+    href: "/login?portal=staff",
+  },
+  staff: {
+    message: "That email and password don't match a staff account.",
+    label: "Customer sign in here",
+    href: "/login?portal=customer",
+  },
+}
+
 export function LoginForm({ portal = "staff" }: { portal?: LoginPortal }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard"
   const cta = SIGN_UP_CTA[portal]
+  const hint = WRONG_PORTAL_HINT[portal]
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -51,13 +69,17 @@ export function LoginForm({ portal = "staff" }: { portal?: LoginPortal }) {
     const result = await signIn("credentials", {
       email: values.email,
       password: values.password,
+      // Without this the server checks the customer table, then falls through to
+      // the staff table on a password mismatch — so a customer who mistyped
+      // could end up in the staff dashboard.
+      portal,
       redirect: false,
     })
 
     setIsLoading(false)
 
     if (result?.error) {
-      setError("Invalid email or password")
+      setError(hint.message)
       return
     }
 
@@ -101,7 +123,14 @@ export function LoginForm({ portal = "staff" }: { portal?: LoginPortal }) {
         {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <div className="space-y-1 text-sm">
+          <p className="text-destructive">{error}</p>
+          <Link href={hint.href} className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+            {hint.label}
+          </Link>
+        </div>
+      )}
 
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? "Signing in..." : "Sign in"}

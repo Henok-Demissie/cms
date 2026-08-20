@@ -7,6 +7,10 @@ import { authConfig } from "@/auth.config"
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
+  // Which sign-in page the form was served from. Optional so a caller that
+  // omits it (older client bundle, curl, the mobile app) still authenticates
+  // against both identity tables.
+  portal: z.enum(["customer", "staff"]).optional(),
 })
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -17,13 +21,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        portal: { label: "Portal", type: "text" },
       },
       async authorize(credentials) {
         const parsed = credentialsSchema.safeParse(credentials)
         if (!parsed.success) return null
 
         const { authenticateUser } = await import("@/lib/auth-service")
-        const user = await authenticateUser(parsed.data.email, parsed.data.password)
+        const user = await authenticateUser(parsed.data.email, parsed.data.password, parsed.data.portal)
         if (!user) return null
 
         return {
@@ -52,7 +57,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string
         session.user.role = token.role as UserRole
         session.user.tenantId = token.tenantId as string
-        session.user.accountType = token.accountType
+        session.user.accountType = token.accountType as "customer" | "staff" | undefined
       }
       return session
     },

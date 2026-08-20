@@ -83,6 +83,10 @@ export function RegisterForm() {
     const signInResult = await signIn("credentials", {
       email: values.email,
       password: values.password,
+      // This form only ever creates staff accounts, so scope the sign-in to the
+      // staff table — otherwise a same-address customer account gets checked
+      // first and could win.
+      portal: "staff",
       redirect: false,
     })
 
