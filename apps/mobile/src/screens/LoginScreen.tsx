@@ -55,6 +55,20 @@ export function LoginScreen() {
             <Text style={styles.linkText}>{t(uiLang, 'createCustomer')}</Text>
           </PressableScale>
         )}
+
+        {/*
+          Staff and customer accounts are separate, and the portal is now
+          enforced by the server rather than guessed from the password. Someone
+          who opened the wrong door needs a way across that is not "go back and
+          hope" — replace rather than push so Back still reaches Welcome.
+        */}
+        <PressableScale
+          style={styles.switchBtn}
+          onPress={() => navigation.replace('Login', { staff: !staff })}
+          scaleTo={0.96}
+        >
+          <Text style={styles.switchText}>{t(uiLang, staff ? 'switchToCustomer' : 'switchToStaff')}</Text>
+        </PressableScale>
       </Card>
     </View>
   );
@@ -79,4 +93,6 @@ const makeStyles = (p: Palette) =>
     btnDisabled: { opacity: 0.6 },
     linkBtn: { marginTop: 18, alignItems: 'center' },
     linkText: { color: p.primary, fontWeight: '600', fontSize: 14 },
+    switchBtn: { marginTop: 12, alignItems: 'center' },
+    switchText: { color: p.muted, fontWeight: '500', fontSize: 13 },
   });

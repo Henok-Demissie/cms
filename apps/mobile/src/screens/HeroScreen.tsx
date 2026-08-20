@@ -192,7 +192,7 @@ export function HeroScreen() {
         <Animated.View entering={FadeInUp.duration(600).delay(1100)}>
           <PressableScale
             style={styles.linkBtn}
-            onPress={() => navigation.navigate('Login')}
+            onPress={() => navigation.navigate('Welcome')}
             scaleTo={0.96}
           >
             <Text style={styles.linkText}>{t(uiLang, 'haveAccount')}</Text>

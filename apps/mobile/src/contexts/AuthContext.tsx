@@ -65,7 +65,22 @@ export const AuthProvider = ({ children, initialLang = 'AM' }: { children: React
         // Tell the server which portal this is, so a wrong password fails as
         // the account type the user picked instead of falling through to the
         // other table. The role check below is then only a second line.
-        const result = await login(email.trim(), password, isStaff ? 'staff' : 'customer');
+        let result;
+        try {
+          result = await login(email.trim(), password, isStaff ? 'staff' : 'customer');
+        } catch (error) {
+          // A rejected login is most often the wrong door rather than a wrong
+          // password: the two account types are separate, and the server no
+          // longer falls back to the other table when the password fails. Name
+          // the door so the message is actionable. Scoped to this call — a 401
+          // from the dashboard fetch below would mean something else.
+          if (isAuthError(error)) {
+            Alert.alert(t(uiLang, 'signInFailed'), t(uiLang, isStaff ? 'wrongDoorStaff' : 'wrongDoorCustomer'));
+            return;
+          }
+          throw error;
+        }
+
         const isStaffRole = result.user.role !== 'CUSTOMER';
         if (isStaff !== isStaffRole) {
           throw new Error(isStaff ? 'This is a customer account. Please use Customer Sign In.' : 'This is a staff account. Please use Staff Sign In.');
