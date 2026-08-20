@@ -12,4 +12,22 @@ backend/
 prisma/dev.db
 prisma/dev.db.backup-*
 
+# Local env files must never ride along. Next.js loads .env from the deployment
+# filesystem at runtime, so an uploaded .env silently overrides the environment
+# variables configured in the Vercel dashboard. Two concrete consequences we hit:
+#
+#   1. AUTH_URL=http://localhost:3000 made the sign-in handler issue the session
+#      cookie under its non-secure name (authjs.session-token) while the Edge
+#      middleware, seeing https, looked for __Secure-authjs.session-token. Every
+#      signed-in user got bounced straight back off /dashboard.
+#   2. DATABASE_URL / DIRECT_URL / AUTH_SECRET were shipped inside the upload,
+#      defeating the point of storing them in Vercel as Sensitive.
+#
+# The deployment gets these from the Vercel dashboard instead. AUTH_URL is
+# deliberately NOT set there — auth.config.ts sets trustHost: true, so Auth.js
+# derives the origin from the request, which is also what makes preview
+# deployments work on their own generated hostnames.
+.env
+.env.*
+
 *.log
