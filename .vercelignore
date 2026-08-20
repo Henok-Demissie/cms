@@ -1,0 +1,15 @@
+# Trim the deployment upload to what the Next.js build actually needs.
+#
+# Note: apps/mobile is deliberately NOT excluded. The root pnpm-lock.yaml has an
+# importer entry for it, and Vercel installs with --frozen-lockfile, so removing
+# the directory would make the lockfile inconsistent and fail the install.
+
+# FastAPI service — nothing in the web app imports it (lib/api/backend-client.ts
+# is dead code), and keeping it out stops Vercel from detecting a Python project.
+backend/
+
+# Local-only database snapshots
+prisma/dev.db
+prisma/dev.db.backup-*
+
+*.log
