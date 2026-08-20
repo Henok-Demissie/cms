@@ -7,6 +7,12 @@ export type ApiTokenPayload = {
   role: string
   tenantId: string
   accountType?: "customer" | "staff"
+  /**
+   * Digest of the stored password hash at sign-in time. Checked on every
+   * request so a password change ends mobile sessions instead of leaving them
+   * valid for the rest of the token's 8 hours. See lib/auth-service.ts.
+   */
+  passwordFingerprint?: string
 }
 
 function getSigningKey() {
@@ -25,6 +31,7 @@ export async function signApiToken(payload: ApiTokenPayload) {
     role: payload.role,
     tenantId: payload.tenantId,
     accountType: payload.accountType ?? (payload.role === "CUSTOMER" ? "customer" : "staff"),
+    passwordFingerprint: payload.passwordFingerprint,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)

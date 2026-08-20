@@ -48,18 +48,43 @@ export async function currentPasswordFingerprint(
 }
 
 /**
+ * True when the identifier has an account in BOTH tables.
+ *
+ * Callers that cannot name a portal (the mobile login route serving an older app
+ * build) use this to refuse rather than guess which account was meant.
+ */
+export async function isAmbiguousIdentifier(identifier: string): Promise<boolean> {
+  const normalized = identifier.trim()
+  const isEmail = normalized.includes("@")
+  const email = normalized.toLowerCase()
+  const cleanPhone = normalized.replace(/\s+/g, "")
+
+  const [customer, staff] = await Promise.all([
+    isEmail
+      ? prisma.customer.findFirst({ where: { email }, select: { id: true } })
+      : prisma.customer.findFirst({ where: { phone: cleanPhone }, select: { id: true } }),
+    isEmail
+      ? prisma.user.findFirst({ where: { email }, select: { id: true } })
+      : prisma.user.findFirst({ where: { phone: cleanPhone }, select: { id: true } }),
+  ])
+
+  return Boolean(customer && staff)
+}
+
+/**
  * Verify an email/phone + password against one or both identity tables.
  *
  * `portal` scopes the lookup to a single table. Customer and User are separate
  * tables with separate passwords, so one address can exist in both — and does
- * here. Without a portal we check Customer first and then fall through to staff
- * on a *password mismatch*, which means a customer who mistypes their password
- * silently lands in the staff dashboard whenever their address also has a staff
- * account. Passing the portal makes a customer's failed login fail as a
- * customer.
+ * here. Checking Customer first and then falling through to staff on a *password
+ * mismatch* means a customer who mistypes their password silently lands in the
+ * staff dashboard whenever their address also has a staff account. Passing the
+ * portal makes a customer's failed login fail as a customer.
  *
- * The argument is optional so the mobile/API login route, which has no notion of
- * a portal, keeps its existing permissive behaviour.
+ * The argument stays optional for the mobile login route, which has to keep
+ * serving app builds that predate it. In that case the fall-through is still
+ * used for addresses that exist in only one table, but an address present in
+ * both is refused outright rather than resolved by guesswork.
  */
 export async function authenticateUser(
   identifier: string,
@@ -68,49 +93,46 @@ export async function authenticateUser(
 ): Promise<AuthenticatedIdentity | null> {
   const normalized = identifier.trim()
   const isEmail = normalized.includes("@")
+  const email = normalized.toLowerCase()
   const cleanPhone = normalized.replace(/\s+/g, "")
 
-  // 1. Check Customer Table
-  if (portal !== "staff") {
-    const customer = isEmail
-      ? await prisma.customer.findFirst({ where: { email: normalized.toLowerCase() } })
+  const customer = portal !== "staff"
+    ? isEmail
+      ? await prisma.customer.findFirst({ where: { email } })
       : await prisma.customer.findFirst({ where: { phone: cleanPhone } })
+    : null
 
-    if (customer) {
-      const isValid = await bcrypt.compare(password, customer.passwordHash)
-      if (isValid) {
-        return {
-          id: customer.id,
-          name: customer.name,
-          email: customer.email,
-          role: "CUSTOMER",
-          tenantId: "public",
-          accountType: "customer",
-          passwordFingerprint: await fingerprintPasswordHash(customer.passwordHash),
-        }
-      }
+  const staff = portal !== "customer"
+    ? isEmail
+      ? await prisma.user.findFirst({ where: { email } })
+      : await prisma.user.findFirst({ where: { phone: cleanPhone } })
+    : null
+
+  // No portal to disambiguate with, and the address is in both tables: refuse
+  // instead of letting a failed customer password promote to a staff session.
+  if (!portal && customer && staff) return null
+
+  if (customer && await bcrypt.compare(password, customer.passwordHash)) {
+    return {
+      id: customer.id,
+      name: customer.name,
+      email: customer.email,
+      role: "CUSTOMER",
+      tenantId: "public",
+      accountType: "customer",
+      passwordFingerprint: await fingerprintPasswordHash(customer.passwordHash),
     }
   }
 
-  // 2. Check User Table (Staff)
-  if (portal !== "customer") {
-    const staff = isEmail
-      ? await prisma.user.findFirst({ where: { email: normalized.toLowerCase() } })
-      : await prisma.user.findFirst({ where: { phone: cleanPhone } })
-
-    if (staff) {
-      const isValid = await bcrypt.compare(password, staff.passwordHash)
-      if (isValid) {
-        return {
-          id: staff.id,
-          name: staff.name,
-          email: staff.email,
-          role: staff.role,
-          tenantId: staff.tenantId,
-          accountType: "staff",
-          passwordFingerprint: await fingerprintPasswordHash(staff.passwordHash),
-        }
-      }
+  if (staff && await bcrypt.compare(password, staff.passwordHash)) {
+    return {
+      id: staff.id,
+      name: staff.name,
+      email: staff.email,
+      role: staff.role,
+      tenantId: staff.tenantId,
+      accountType: "staff",
+      passwordFingerprint: await fingerprintPasswordHash(staff.passwordHash),
     }
   }
 

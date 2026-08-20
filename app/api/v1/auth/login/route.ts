@@ -1,11 +1,15 @@
 import { z } from "zod"
 import { apiError, apiSuccess } from "@/lib/api/response"
-import { authenticateUser } from "@/lib/auth-service"
+import { authenticateUser, isAmbiguousIdentifier } from "@/lib/auth-service"
 import { signApiToken } from "@/lib/jwt"
 
 const loginSchema = z.object({
   email: z.string().trim().min(3).max(254),
   password: z.string().min(6).max(128),
+  // Which door the app's login screen was opened at. Optional so app builds
+  // that predate it keep working, but without it an address that exists in
+  // both identity tables is refused rather than guessed at.
+  portal: z.enum(["customer", "staff"]).optional(),
 })
 
 export async function POST(request: Request) {
@@ -17,7 +21,16 @@ export async function POST(request: Request) {
       return apiError(parsed.error.issues[0]?.message ?? "Enter a valid email or phone number", 400)
     }
 
-    const user = await authenticateUser(parsed.data.email, parsed.data.password)
+    const { email, password, portal } = parsed.data
+
+    if (!portal && (await isAmbiguousIdentifier(email))) {
+      return apiError(
+        "This address has both a customer and a staff account. Update the app, then sign in from the portal you want.",
+        409,
+      )
+    }
+
+    const user = await authenticateUser(email, password, portal)
     if (!user) {
       return apiError("Invalid email or password", 401)
     }
@@ -29,6 +42,7 @@ export async function POST(request: Request) {
       role: user.role,
       tenantId: user.tenantId,
       accountType: user.accountType,
+      passwordFingerprint: user.passwordFingerprint,
     })
 
     return apiSuccess({

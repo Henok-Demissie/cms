@@ -1,6 +1,6 @@
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useState } from 'react';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme, useThemedStyles } from '../contexts/ThemeContext';
 import { PressableScale, Card, Field } from '../components';
@@ -9,8 +9,9 @@ import { t } from '../i18n';
 
 export function LoginScreen() {
   const navigation = useNavigation<any>();
-  const route = useRoute();
-  const { staff = false } = route.params || {};
+  // useRoute() has no params type here, so `staff` needs naming for TypeScript.
+  const route = useRoute<RouteProp<{ Login: { staff?: boolean } }, 'Login'>>();
+  const { staff = false } = route.params ?? {};
   const { busy, signIn, uiLang } = useAuth();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);

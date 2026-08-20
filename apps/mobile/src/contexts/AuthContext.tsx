@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { Alert } from 'react-native';
-import { fetchDashboard, login, registerBusiness, registerCustomer } from '../api';
+import { fetchDashboard, isAuthError, login, registerBusiness, registerCustomer } from '../api';
 import { t, Lang } from '../i18n';
 import type { Dashboard, User } from '../api';
 
@@ -29,15 +29,29 @@ export const AuthProvider = ({ children, initialLang = 'AM' }: { children: React
   const [busy, setBusy] = useState(false);
   const [uiLang, setUiLang] = useState<Lang>(initialLang);
 
+  const signOut = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    setDashboard(null);
+  }, []);
+
   const refreshDashboard = useCallback(async () => {
     if (!token) return;
     try {
       const data = await fetchDashboard(token);
       setDashboard(data);
-    } catch {
-      // ignore background refresh errors
+    } catch (error) {
+      // A 401 means the token is no longer good — the password changed, or the
+      // account is gone. Swallowing it left the app showing a stale dashboard
+      // that could no longer refresh; drop the session and say why.
+      if (isAuthError(error)) {
+        signOut();
+        Alert.alert(t(uiLang, 'signInFailed'), 'Your session ended. Please sign in again.');
+        return;
+      }
+      // ignore other background refresh errors
     }
-  }, [token]);
+  }, [token, signOut, uiLang]);
 
   const signIn = useCallback(
     async (email: string, password: string, isStaff: boolean) => {
@@ -48,7 +62,10 @@ export const AuthProvider = ({ children, initialLang = 'AM' }: { children: React
 
       setBusy(true);
       try {
-        const result = await login(email.trim(), password);
+        // Tell the server which portal this is, so a wrong password fails as
+        // the account type the user picked instead of falling through to the
+        // other table. The role check below is then only a second line.
+        const result = await login(email.trim(), password, isStaff ? 'staff' : 'customer');
         const isStaffRole = result.user.role !== 'CUSTOMER';
         if (isStaff !== isStaffRole) {
           throw new Error(isStaff ? 'This is a customer account. Please use Customer Sign In.' : 'This is a staff account. Please use Staff Sign In.');
@@ -66,12 +83,6 @@ export const AuthProvider = ({ children, initialLang = 'AM' }: { children: React
     },
     [uiLang]
   );
-
-  const signOut = useCallback(() => {
-    setUser(null);
-    setToken(null);
-    setDashboard(null);
-  }, []);
 
   const handleCustomerRegister = useCallback(
     async (data: {

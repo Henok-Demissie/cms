@@ -112,6 +112,26 @@ export type Dashboard = {
   feedback?: FeedbackItem[]
 }
 
+/**
+ * Carries the HTTP status alongside the message so callers can tell an expired
+ * session (401) apart from a validation error or an outage. Without it every
+ * failure looks the same and a dead token is indistinguishable from a hiccup.
+ */
+export class ApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = "ApiError"
+    this.status = status
+  }
+}
+
+/** True when the server has rejected our token and the app should sign out. */
+export function isAuthError(error: unknown) {
+  return error instanceof ApiError && error.status === 401
+}
+
 async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
   let response: Response
 
@@ -138,7 +158,7 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
   }
 
   if (!response.ok || !body.success) {
-    throw new Error(body.error ?? "Something went wrong")
+    throw new ApiError(body.error ?? "Something went wrong", response.status)
   }
 
   return body.data as T
@@ -148,10 +168,18 @@ export function getApiUrl() {
   return API_URL
 }
 
-export async function login(email: string, password: string) {
+/**
+ * `portal` tells the server which door the login screen was opened at.
+ *
+ * Customers and staff are separate tables with separate passwords, and one
+ * address can exist in both. Without this the server checks the customer table
+ * first and falls through to staff when the password does not match, so a
+ * customer's typo could return a staff token.
+ */
+export async function login(email: string, password: string, portal: "customer" | "staff") {
   return request<{ token: string; user: User }>("/api/v1/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, portal }),
   })
 }
 
