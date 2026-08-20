@@ -7,11 +7,14 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "abetbay",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.abetbay.app"
     },
     "android": {
+      "package": "com.abetbay.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#061018",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -29,7 +32,11 @@
         {
           "cameraPermission": "Allow AbetBay to use your camera for identity verification before sign in."
         }
-      ]
-    ]
+      ],
+      "expo-font"
+    ],
+    "experiments": {
+      "autolinkingModuleResolution": true
+    }
   }
 }
