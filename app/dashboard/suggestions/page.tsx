@@ -1,11 +1,18 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { paginate, readPageParams, type PageSearchParams } from "@/lib/pagination"
+import {
+  paginate,
+  readPageParams,
+  readSearchQuery,
+  searchFilter,
+  type PageSearchParams,
+} from "@/lib/pagination"
 import { submitSuggestion, respondSuggestion } from "./actions"
 import { deleteSuggestion } from "../actions"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
 import { ListPagination } from "@/components/dashboard/list-pagination"
+import { ListSearch } from "@/components/dashboard/list-search"
 import { OrganizationSelect } from "@/components/dashboard/organization-select"
 import { SubmissionPopover } from "@/components/dashboard/submission-popover"
 import { Button } from "@/components/ui/button"
@@ -13,7 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Clock3, Lightbulb, RefreshCw, Search } from "lucide-react"
+import { Clock3, Lightbulb, RefreshCw } from "lucide-react"
 import Link from "next/link"
 
 export default async function SuggestionsPage({
@@ -25,7 +32,10 @@ export default async function SuggestionsPage({
   if (!session?.user) redirect("/login")
   const staff = session.user.role !== "CUSTOMER"
 
-  const where = staff
+  const params = await searchParams
+  const query = readSearchQuery(params)
+
+  const scope = staff
     ? { tenantId: session.user.tenantId }
     : {
         OR: [
@@ -35,9 +45,16 @@ export default async function SuggestionsPage({
         ],
       }
 
+  // Staff search across who sent it too; a customer only ever sees their own.
+  const matches = searchFilter(
+    query,
+    staff ? ["title", "description", "authorName", "authorEmail"] : ["title", "description"],
+  )
+  const where = { AND: matches ? [scope, matches] : [scope] }
+
   // Count first so the requested page can be clamped before it is queried.
   const totalCount = await prisma.suggestion.count({ where })
-  const pagination = paginate(totalCount, readPageParams(await searchParams))
+  const pagination = paginate(totalCount, readPageParams(params))
 
   const [suggestions, organizations] = await Promise.all([
     prisma.suggestion.findMany({
@@ -110,10 +127,7 @@ export default async function SuggestionsPage({
             {staff ? "Organization Suggestions" : "My Suggestions History"}
           </h2>
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-44 items-center gap-2 rounded-md border border-input bg-background px-3 text-xs text-muted-foreground">
-              <Search className="h-4 w-4" />
-              <span>Search...</span>
-            </div>
+            <ListSearch placeholder="Search suggestions…" className="w-44 sm:w-56" />
             <Link href="/dashboard/suggestions" className="grid h-9 w-9 place-items-center rounded-md border border-border">
               <RefreshCw className="h-4 w-4" />
             </Link>
@@ -185,9 +199,15 @@ export default async function SuggestionsPage({
           <div className="grid min-h-72 place-items-center p-8 text-center">
             <div>
               <Lightbulb className="mx-auto h-10 w-10 text-muted-foreground" />
-              <h3 className="mt-4 font-serif text-lg font-semibold">No suggestions found</h3>
+              <h3 className="mt-4 font-serif text-lg font-semibold">
+                {query ? "No matching suggestions" : "No suggestions found"}
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                {staff ? "No suggestions have been submitted to your organization yet." : "You haven't submitted any suggestions yet."}
+                {query
+                  ? `Nothing matches "${query}". Try a different term or clear the search.`
+                  : staff
+                    ? "No suggestions have been submitted to your organization yet."
+                    : "You haven't submitted any suggestions yet."}
               </p>
             </div>
           </div>

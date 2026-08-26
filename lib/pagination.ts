@@ -3,10 +3,11 @@ export const PER_PAGE_OPTIONS = [10, 20, 50, 100]
 
 export const DEFAULT_PER_PAGE = 10
 
-/** The slice of a page's `searchParams` that the pager owns. */
+/** The slice of a page's `searchParams` that the pager and the search box own. */
 export type PageSearchParams = {
   page?: string | string[]
   perPage?: string | string[]
+  q?: string | string[]
 }
 
 export type Pagination = {
@@ -53,5 +54,30 @@ export function paginate(
     total,
     skip: (current - 1) * perPage,
     take: perPage,
+  }
+}
+
+/** Reads ?q, treating a blank or whitespace-only term as no search at all. */
+export function readSearchQuery(params: PageSearchParams) {
+  const query = firstValue(params.q)?.trim()
+  return query ? query : undefined
+}
+
+/**
+ * Builds a case-insensitive "any of these columns contains the term" filter.
+ *
+ * Returns undefined when there is no term, so it can be spread into an `AND`.
+ */
+export function searchFilter<Field extends string>(
+  query: string | undefined,
+  fields: readonly Field[],
+) {
+  if (!query) return undefined
+  return {
+    OR: fields.map((field) => ({
+      // Postgres LIKE is case-sensitive, so the mode is what makes searching
+      // for "billing" find "Billing dispute".
+      [field]: { contains: query, mode: "insensitive" as const },
+    })),
   }
 }

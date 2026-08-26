@@ -1,11 +1,18 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { paginate, readPageParams, type PageSearchParams } from "@/lib/pagination"
+import {
+  paginate,
+  readPageParams,
+  readSearchQuery,
+  searchFilter,
+  type PageSearchParams,
+} from "@/lib/pagination"
 import { submitFeedback, respondFeedback } from "./actions"
 import { deleteFeedback } from "../actions"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
 import { ListPagination } from "@/components/dashboard/list-pagination"
+import { ListSearch } from "@/components/dashboard/list-search"
 import { OrganizationSelect } from "@/components/dashboard/organization-select"
 import { SubmissionPopover } from "@/components/dashboard/submission-popover"
 import { Button } from "@/components/ui/button"
@@ -25,7 +32,10 @@ export default async function FeedbackPage({
   if (!session?.user) redirect("/login")
   const staff = session.user.role !== "CUSTOMER"
 
-  const where = staff
+  const params = await searchParams
+  const query = readSearchQuery(params)
+
+  const scope = staff
     ? { tenantId: session.user.tenantId }
     : {
         OR: [
@@ -35,9 +45,16 @@ export default async function FeedbackPage({
         ],
       }
 
+  // Staff search across who sent it too; a customer only ever sees their own.
+  const matches = searchFilter(
+    query,
+    staff ? ["message", "response", "authorName", "authorEmail"] : ["message", "response"],
+  )
+  const where = { AND: matches ? [scope, matches] : [scope] }
+
   // Count first so the requested page can be clamped before it is queried.
   const totalCount = await prisma.feedback.count({ where })
-  const pagination = paginate(totalCount, readPageParams(await searchParams))
+  const pagination = paginate(totalCount, readPageParams(params))
 
   const [feedback, organizations] = await Promise.all([
     prisma.feedback.findMany({
@@ -118,9 +135,12 @@ export default async function FeedbackPage({
               <Clock3 className="h-5 w-5 text-primary" />
               {staff ? "Organization Feedback" : "Feedback History"}
             </h2>
-            <p className="mt-1 text-xs text-muted-foreground">{totalCount} entries</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {totalCount} entr{totalCount !== 1 ? "ies" : "y"} {query ? "matching" : "total"}
+            </p>
           </div>
           <div className="flex items-center gap-2">
+            <ListSearch placeholder="Search feedback…" className="w-44 sm:w-56" />
             <Link href="/dashboard/feedback" className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs font-medium">
               <RefreshCw className="h-4 w-4" />Refresh
             </Link>
@@ -186,9 +206,15 @@ export default async function FeedbackPage({
           <div className="grid min-h-52 place-items-center p-6 text-center">
             <div>
               <MessageSquare className="mx-auto h-10 w-10 text-muted-foreground" />
-              <h3 className="mt-3 font-serif text-lg font-semibold">No feedback yet</h3>
+              <h3 className="mt-3 font-serif text-lg font-semibold">
+                {query ? "No matching feedback" : "No feedback yet"}
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                {staff ? "No customer feedback has been submitted to your organization yet." : "Submit your first feedback to get started"}
+                {query
+                  ? `Nothing matches "${query}". Try a different term or clear the search.`
+                  : staff
+                    ? "No customer feedback has been submitted to your organization yet."
+                    : "Submit your first feedback to get started"}
               </p>
             </div>
           </div>

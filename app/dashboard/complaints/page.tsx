@@ -5,6 +5,7 @@ import { deleteComplaint } from "../actions";
 import { ComplaintSubmission } from "@/components/dashboard/complaint-submission";
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button";
 import { ListPagination } from "@/components/dashboard/list-pagination";
+import { ListSearch } from "@/components/dashboard/list-search";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -14,9 +15,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { paginate, readPageParams, type PageSearchParams } from "@/lib/pagination";
+import {
+  paginate,
+  readPageParams,
+  readSearchQuery,
+  searchFilter,
+  type PageSearchParams,
+} from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
-import { ArrowUpRight, Inbox, Search } from "lucide-react";
+import { ArrowUpRight, Inbox } from "lucide-react";
 
 function formatRelativeDate(date: Date) {
   const now = new Date();
@@ -85,7 +92,10 @@ export default async function ComplaintsPage({
 
   const isCustomer = session.user.role === "CUSTOMER";
 
-  const where = isCustomer
+  const params = await searchParams;
+  const query = readSearchQuery(params);
+
+  const scope = isCustomer
     ? {
         OR: [
           { customerId: session.user.id },
@@ -95,9 +105,19 @@ export default async function ComplaintsPage({
       }
     : { tenantId: session.user.tenantId };
 
+  // The scope is itself an OR for customers, so the search term has to be a
+  // sibling condition rather than merged into the same object.
+  const matches = searchFilter(query, [
+    "title",
+    "description",
+    "customerName",
+    "customerEmail",
+  ]);
+  const where = { AND: matches ? [scope, matches] : [scope] };
+
   // Count first so the requested page can be clamped before it is queried.
   const totalCount = await prisma.complaint.count({ where });
-  const pagination = paginate(totalCount, readPageParams(await searchParams));
+  const pagination = paginate(totalCount, readPageParams(params));
 
   const [complaints, organizations] = await Promise.all([
     prisma.complaint.findMany({
@@ -147,14 +167,12 @@ export default async function ComplaintsPage({
               {isCustomer ? "My Submitted Complaints" : "Incoming Complaints"}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {totalCount} complaint{totalCount !== 1 ? "s" : ""} captured
+              {totalCount} complaint{totalCount !== 1 ? "s" : ""}{" "}
+              {query ? "matching" : "captured"}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-xs text-muted-foreground sm:w-64">
-              <Search className="h-3.5 w-3.5" />
-              <span>Search complaints…</span>
-            </div>
+            <ListSearch placeholder="Search complaints…" className="sm:w-64" />
           </div>
         </div>
 
@@ -164,13 +182,17 @@ export default async function ComplaintsPage({
               <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-muted text-muted-foreground">
                 <Inbox className="h-7 w-7" />
               </span>
-              <h3 className="mt-4 font-serif text-lg font-semibold">No Complaints Yet</h3>
+              <h3 className="mt-4 font-serif text-lg font-semibold">
+                {query ? "No Matching Complaints" : "No Complaints Yet"}
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                {isCustomer
-                  ? "Submit your first complaint to an organization to get started."
-                  : "No complaints have been submitted to your organization yet."}
+                {query
+                  ? `Nothing matches "${query}". Try a different term or clear the search.`
+                  : isCustomer
+                    ? "Submit your first complaint to an organization to get started."
+                    : "No complaints have been submitted to your organization yet."}
               </p>
-              {isCustomer && (
+              {isCustomer && !query && (
                 <div className="mt-4 flex justify-center">
                   <ComplaintSubmission triggerLabel="Submit Complaint" organizations={organizations} />
                 </div>

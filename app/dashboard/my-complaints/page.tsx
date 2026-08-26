@@ -2,14 +2,21 @@ import Link from "next/link"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { paginate, readPageParams, type PageSearchParams } from "@/lib/pagination"
+import {
+  paginate,
+  readPageParams,
+  readSearchQuery,
+  searchFilter,
+  type PageSearchParams,
+} from "@/lib/pagination"
 import { deleteComplaint } from "../actions"
 import { ComplaintSubmission } from "@/components/dashboard/complaint-submission"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
 import { ListPagination } from "@/components/dashboard/list-pagination"
+import { ListSearch } from "@/components/dashboard/list-search"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { FileText, RefreshCw, Search } from "lucide-react"
+import { FileText, RefreshCw } from "lucide-react"
 
 export default async function MyComplaintsPage({
   searchParams,
@@ -20,17 +27,23 @@ export default async function MyComplaintsPage({
   if (!session?.user) redirect("/login")
   if (session.user.role !== "CUSTOMER") redirect("/dashboard/complaints")
 
-  const where = {
+  const params = await searchParams
+  const query = readSearchQuery(params)
+
+  // "Mine" is already an OR, so the search term joins it as a sibling AND.
+  const scope = {
     OR: [
       { customerId: session.user.id },
       { customerEmail: session.user.email ?? undefined },
       { customerName: session.user.name ?? undefined },
     ],
   }
+  const matches = searchFilter(query, ["title", "description"])
+  const where = { AND: matches ? [scope, matches] : [scope] }
 
   // Count first so the requested page can be clamped before it is queried.
   const totalCount = await prisma.complaint.count({ where })
-  const pagination = paginate(totalCount, readPageParams(await searchParams))
+  const pagination = paginate(totalCount, readPageParams(params))
 
   const [complaints, organizations] = await Promise.all([
     prisma.complaint.findMany({
@@ -66,13 +79,12 @@ export default async function MyComplaintsPage({
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
           <div>
             <h2 className="font-serif text-lg font-semibold">Complaints List</h2>
-            <p className="text-xs text-muted-foreground">{totalCount} complaints found</p>
+            <p className="text-xs text-muted-foreground">
+            {totalCount} complaint{totalCount !== 1 ? "s" : ""} {query ? "matching" : "found"}
+          </p>
           </div>
           <div className="flex w-full items-center gap-2 sm:w-auto">
-            <div className="flex h-9 flex-1 items-center gap-2 rounded-md border border-input bg-background px-3 text-xs text-muted-foreground sm:w-80">
-              <Search className="h-4 w-4" />
-              <span>Search complaints...</span>
-            </div>
+            <ListSearch placeholder="Search complaints…" className="flex-1 sm:w-80" />
             <Link href="/dashboard/my-complaints" className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs font-medium hover:bg-accent">
               <RefreshCw className="h-4 w-4" />Refresh
             </Link>
@@ -134,11 +146,19 @@ export default async function MyComplaintsPage({
               <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-muted text-muted-foreground">
                 <FileText className="h-7 w-7" />
               </span>
-              <h3 className="mt-4 font-serif text-lg font-semibold">No Complaints Found</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Submit a new complaint to get started.</p>
-              <div className="mt-4 flex justify-center">
-                <ComplaintSubmission triggerLabel="Submit Complaint" organizations={organizations} />
-              </div>
+              <h3 className="mt-4 font-serif text-lg font-semibold">
+                {query ? "No Matching Complaints" : "No Complaints Found"}
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {query
+                  ? `Nothing matches "${query}". Try a different term or clear the search.`
+                  : "Submit a new complaint to get started."}
+              </p>
+              {!query && (
+                <div className="mt-4 flex justify-center">
+                  <ComplaintSubmission triggerLabel="Submit Complaint" organizations={organizations} />
+                </div>
+              )}
             </div>
           </div>
         )}
