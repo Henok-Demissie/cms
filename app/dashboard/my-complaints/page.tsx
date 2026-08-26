@@ -6,7 +6,7 @@ import { deleteComplaint } from "../actions"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CheckCircle2, ClipboardList, Clock3, FileText, Mail, Plus, RefreshCw, Search } from "lucide-react"
+import { FileText, Plus, RefreshCw, Search } from "lucide-react"
 
 export default async function MyComplaintsPage() {
   const session = await auth()
@@ -27,14 +27,7 @@ export default async function MyComplaintsPage() {
     },
     orderBy: { createdAt: "desc" },
   })
-  const active = complaints.filter((complaint) => !["RESOLVED", "CLOSED"].includes(complaint.status)).length
-  const resolved = complaints.filter((complaint) => ["RESOLVED", "CLOSED"].includes(complaint.status)).length
-  const stats = [
-    { label: "Total", value: complaints.length, icon: ClipboardList, tone: "text-primary bg-primary/15" },
-    { label: "Active", value: active, icon: Clock3, tone: "text-amber-500 bg-amber-500/15" },
-    { label: "Resolved", value: resolved, icon: CheckCircle2, tone: "text-emerald-500 bg-emerald-500/15" },
-    { label: "With Responses", value: complaints.filter((complaint) => complaint.messages.length > 0).length, icon: Mail, tone: "text-indigo-400 bg-indigo-400/15" },
-  ]
+  // Complaint totals live on the dashboard's stat tabs, not here.
 
   return (
     <div className="flex flex-1 flex-col gap-5 bg-background p-4 md:p-7">
@@ -46,22 +39,6 @@ export default async function MyComplaintsPage() {
         <Link href="/dashboard/complaints" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90">
           <Plus className="h-4 w-4" />New Complaint
         </Link>
-      </section>
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <article key={stat.label} className="flex min-h-28 items-center justify-between rounded-xl border border-border bg-card p-5 shadow-sm">
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="mt-1 font-serif text-2xl font-semibold">{stat.value}</p>
-              </div>
-              <span className={`grid h-10 w-10 place-items-center rounded-xl ${stat.tone}`}>
-                <Icon className="h-5 w-5" />
-              </span>
-            </article>
-          )
-        })}
       </section>
       <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">

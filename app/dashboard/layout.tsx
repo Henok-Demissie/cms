@@ -1,7 +1,6 @@
 import type { ReactNode } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { auth } from "@/auth"
-import { Search } from "lucide-react"
 import {
   SidebarInset,
   SidebarProvider,
@@ -67,10 +66,7 @@ export default async function DashboardLayout({
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border/80 bg-background/80 px-4 backdrop-blur md:px-6">
             <SidebarTrigger className="md:hidden" />
-            <div className="hidden max-w-sm flex-1 items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs text-muted-foreground md:flex">
-              <Search className="h-3.5 w-3.5" />
-              <span>Search complaints...</span>
-            </div>
+            {/* No global search here — each list page carries its own. */}
             <div className="ml-auto flex items-center gap-3">
               <NotificationsBell />
               <div className="hidden text-right sm:block">
