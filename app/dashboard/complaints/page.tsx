@@ -1,11 +1,15 @@
-import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { deleteComplaint } from "../actions";
-import { ComplaintFormSection } from "@/components/dashboard/complaint-form-section";
+import { submitComplaint } from "./actions";
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button";
+import { OrganizationSelect, type OrgOption } from "@/components/dashboard/organization-select";
+import { SubmissionPopover } from "@/components/dashboard/submission-popover";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -21,63 +25,43 @@ import {
   AlertCircle,
   ArrowUpRight,
   CheckCircle2,
-  Clock3,
   FileText,
   Inbox,
   Loader2,
-  Plus,
   Search,
 } from "lucide-react";
 
-async function addComplaint(formData: FormData) {
-  "use server";
-
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/login");
-  }
-  if (session.user.role !== "CUSTOMER") {
-    throw new Error("Staff cannot submit customer complaints.");
-  }
-
-  const title = formData.get("title")?.toString()?.trim();
-  const description = formData.get("description")?.toString()?.trim();
-  const targetTenantId = formData.get("tenantId")?.toString()?.trim();
-
-  if (!title || !description) {
-    throw new Error("Title and description are required");
-  }
-
-  let tenant = null;
-  if (targetTenantId) {
-    tenant = await prisma.tenant.findUnique({ where: { id: targetTenantId } });
-  }
-  if (!tenant) {
-    tenant = (await prisma.tenant.findFirst({ where: { subdomain: { not: "public" } } })) || (await prisma.tenant.findFirst());
-  }
-
-  if (!tenant) {
-    throw new Error("No organization found to send complaint to.");
-  }
-
-  await prisma.complaint.create({
-    data: {
-      tenantId: tenant.id,
-      customerId: session.user.id,
-      customerName: session.user.name || null,
-      customerEmail: session.user.email || null,
-      source: "WEB",
-      title,
-      description,
-      status: "NEW",
-      priority: "MEDIUM",
-    },
-  });
-
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/complaints");
-  revalidatePath("/dashboard/my-complaints");
-  redirect("/dashboard/complaints");
+/**
+ * Complaint submission popover. Rendered from the page header and again from the
+ * empty state, so it lives in a helper instead of being duplicated inline.
+ */
+function ComplaintPopover({ triggerLabel, organizations }: { triggerLabel: string; organizations: OrgOption[] }) {
+  return (
+    <SubmissionPopover
+      triggerLabel={triggerLabel}
+      title="Submit a complaint"
+      description="Tell us what happened. Staff at the organization you pick will review your case and reply here."
+      submitLabel="Submit complaint"
+      successMessage="Complaint submitted"
+      action={submitComplaint}
+    >
+      <OrganizationSelect organizations={organizations} label="Select organization / company" />
+      <div className="space-y-1.5">
+        <Label htmlFor="title">Complaint title</Label>
+        <Input id="title" name="title" placeholder="e.g. Delayed service / payment issue" required />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          name="description"
+          placeholder="Describe the complaint in detail"
+          rows={4}
+          required
+        />
+      </div>
+    </SubmissionPopover>
+  );
 }
 
 function formatRelativeDate(date: Date) {
@@ -199,15 +183,7 @@ export default async function ComplaintsPage() {
               : "Review incoming complaints for your organization, triage cases, and respond to customers."}
           </p>
         </div>
-        {isCustomer && (
-          <Link
-            href="/dashboard/complaints?new=1"
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            New Complaint
-          </Link>
-        )}
+        {isCustomer && <ComplaintPopover triggerLabel="New Complaint" organizations={organizations} />}
       </div>
 
       {/* Stats Cards */}
@@ -230,8 +206,6 @@ export default async function ComplaintsPage() {
           );
         })}
       </section>
-
-      {isCustomer && <ComplaintFormSection action={addComplaint} organizations={organizations} />}
 
       {/* Table Section */}
       <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
@@ -265,13 +239,9 @@ export default async function ComplaintsPage() {
                   : "No complaints have been submitted to your organization yet."}
               </p>
               {isCustomer && (
-                <Link
-                  href="/dashboard/complaints?new=1"
-                  className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-                >
-                  <Plus className="h-4 w-4" />
-                  Submit Complaint
-                </Link>
+                <div className="mt-4 flex justify-center">
+                  <ComplaintPopover triggerLabel="Submit Complaint" organizations={organizations} />
+                </div>
               )}
             </div>
           </div>

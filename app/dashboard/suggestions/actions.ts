@@ -4,43 +4,55 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import type { FormResult } from "@/lib/form-result"
 import { createCustomerNotification } from "@/lib/notifications"
 
-export async function submitSuggestion(formData: FormData) {
+export async function submitSuggestion(formData: FormData): Promise<FormResult> {
   const session = await auth()
-  if (!session?.user) redirect("/login")
-  if (session.user.role !== "CUSTOMER") throw new Error("Only customers can submit suggestions.")
+  if (!session?.user) {
+    return { ok: false, error: "Your session has expired. Please sign in again." }
+  }
+  if (session.user.role !== "CUSTOMER") {
+    return { ok: false, error: "Only customers can submit suggestions." }
+  }
 
   const title = formData.get("title")?.toString().trim()
   const description = formData.get("description")?.toString().trim()
   const targetTenantId = formData.get("tenantId")?.toString().trim()
 
-  if (!title || !description) throw new Error("A title and suggestion are required.")
-
-  let tenant = null
-  if (targetTenantId) {
-    tenant = await prisma.tenant.findUnique({ where: { id: targetTenantId } })
+  if (!title || !description) {
+    return { ok: false, error: "A title and suggestion details are both required." }
   }
-  if (!tenant) {
-    tenant = (await prisma.tenant.findFirst({ where: { subdomain: { not: "public" } } })) || (await prisma.tenant.findFirst())
-  }
-  if (!tenant) throw new Error("No organization found.")
 
-  await prisma.suggestion.create({
-    data: {
-      tenantId: tenant.id,
-      customerId: session.user.id,
-      authorId: session.user.id,
-      authorName: session.user.name || null,
-      authorEmail: session.user.email || null,
-      title,
-      description,
-      status: "NEW",
-    },
-  })
+  try {
+    let tenant = null
+    if (targetTenantId) {
+      tenant = await prisma.tenant.findUnique({ where: { id: targetTenantId } })
+    }
+    if (!tenant) {
+      tenant = (await prisma.tenant.findFirst({ where: { subdomain: { not: "public" } } })) || (await prisma.tenant.findFirst())
+    }
+    if (!tenant) return { ok: false, error: "No organization is available to receive suggestions." }
+
+    await prisma.suggestion.create({
+      data: {
+        tenantId: tenant.id,
+        customerId: session.user.id,
+        authorId: session.user.id,
+        authorName: session.user.name || null,
+        authorEmail: session.user.email || null,
+        title,
+        description,
+        status: "NEW",
+      },
+    })
+  } catch (error) {
+    console.error("submitSuggestion failed:", error)
+    return { ok: false, error: "Could not save your suggestion. Please try again." }
+  }
 
   revalidatePath("/dashboard/suggestions")
-  redirect("/dashboard/suggestions")
+  return { ok: true, message: "Suggestion submitted" }
 }
 
 export async function respondSuggestion(id: string, formData: FormData) {

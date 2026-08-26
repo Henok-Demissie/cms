@@ -4,19 +4,20 @@ import { prisma } from "@/lib/prisma"
 import { submitSuggestion, respondSuggestion } from "./actions"
 import { deleteSuggestion } from "../actions"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
+import { OrganizationSelect } from "@/components/dashboard/organization-select"
+import { SubmissionPopover } from "@/components/dashboard/submission-popover"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Clock3, Lightbulb, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react"
+import { CheckCircle2, Clock3, Lightbulb, RefreshCw, Search } from "lucide-react"
 import Link from "next/link"
 
-export default async function SuggestionsPage({ searchParams }: { searchParams: Promise<{ new?: string }> }) {
+export default async function SuggestionsPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
   const staff = session.user.role !== "CUSTOMER"
-  const { new: creating } = await searchParams
 
   const [suggestions, organizations] = await Promise.all([
     prisma.suggestion.findMany({
@@ -68,50 +69,32 @@ export default async function SuggestionsPage({ searchParams }: { searchParams: 
           </p>
         </div>
         {!staff && (
-          <Link href="/dashboard/suggestions?new=1" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
-            <Plus className="h-4 w-4" />
-            Submit Suggestion
-          </Link>
+          <SubmissionPopover
+            triggerLabel="Submit Suggestion"
+            title="Submit a suggestion"
+            description="Share an idea with an organization. Their staff will review and respond."
+            submitLabel="Submit"
+            successMessage="Suggestion submitted"
+            action={submitSuggestion}
+          >
+            <OrganizationSelect organizations={organizations} />
+            <div className="space-y-1.5">
+              <Label htmlFor="title">Title</Label>
+              <Input id="title" name="title" placeholder="Suggestion title" required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="description">Suggestion details</Label>
+              <Textarea
+                id="description"
+                name="description"
+                placeholder="Describe your suggestion in detail..."
+                rows={4}
+                required
+              />
+            </div>
+          </SubmissionPopover>
         )}
       </section>
-
-      {!staff && creating === "1" && (
-        <form action={submitSuggestion} className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm">
-          <h2 className="font-serif text-lg font-semibold">Submit a Suggestion</h2>
-          {organizations.length > 0 && (
-            <div className="space-y-1.5">
-              <Label htmlFor="tenantId">Target Organization</Label>
-              <select
-                id="tenantId"
-                name="tenantId"
-                required
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <option value="">-- Choose an Organization --</option>
-                {organizations.map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name} {org.sector ? `(${org.sector})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          <div className="space-y-1.5">
-            <Label htmlFor="title">Title</Label>
-            <Input id="title" name="title" placeholder="Suggestion title" required />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="description">Suggestion Details</Label>
-            <Textarea id="description" name="description" placeholder="Describe your suggestion in detail..." rows={4} required />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Link href="/dashboard/suggestions" className="rounded-md border border-border px-4 py-2 text-sm font-medium">
-              Cancel
-            </Link>
-            <Button type="submit">Submit Suggestion</Button>
-          </div>
-        </form>
-      )}
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => {

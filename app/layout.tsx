@@ -4,6 +4,7 @@ import { Inter, Geist_Mono, Playfair_Display } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/components/providers/session-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
 const _inter = Inter({ subsets: ["latin"] })
@@ -27,6 +28,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
+          <Toaster position="top-center" richColors />
         </ThemeProvider>
         <Analytics />
       </body>

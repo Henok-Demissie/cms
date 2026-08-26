@@ -1,32 +1,16 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { revalidatePath } from "next/cache";
-import { Bell, Check, CheckCheck, Clock, MessageSquare, Lightbulb, Star, ArrowRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Bell, Check, CheckCheck, Clock, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { markAllNotificationsAsRead, markNotificationAsRead } from "@/lib/notifications";
-
-async function markAllReadAction() {
-  "use server";
-  const session = await auth();
-  if (!session?.user?.id) return;
-  await markAllNotificationsAsRead(session.user.id);
-  revalidatePath("/dashboard/notifications");
-  revalidatePath("/dashboard");
-}
-
-async function markOneReadAction(formData: FormData) {
-  "use server";
-  const session = await auth();
-  if (!session?.user?.id) return;
-  const id = formData.get("id")?.toString();
-  if (id) {
-    await markNotificationAsRead(id, session.user.id);
-    revalidatePath("/dashboard/notifications");
-    revalidatePath("/dashboard");
-  }
-}
+import {
+  markAllNotificationsReadAction,
+  markNotificationReadAction,
+} from "./actions";
+import {
+  NotificationIcon,
+  notificationTargetUrl,
+} from "@/components/dashboard/notification-meta";
 
 export default async function NotificationsPage() {
   const session = await auth();
@@ -47,32 +31,6 @@ export default async function NotificationsPage() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  function getNotificationIcon(type: string) {
-    switch (type) {
-      case "COMPLAINT_REPLY":
-        return <MessageSquare className="h-4 w-4 text-blue-400" />;
-      case "SUGGESTION_RESPONSE":
-        return <Lightbulb className="h-4 w-4 text-amber-400" />;
-      case "FEEDBACK_RESPONSE":
-        return <Star className="h-4 w-4 text-purple-400" />;
-      default:
-        return <Bell className="h-4 w-4 text-primary" />;
-    }
-  }
-
-  function getTargetUrl(notif: typeof notifications[0]) {
-    if (notif.refType === "COMPLAINT" && notif.refId) {
-      return `/dashboard/complaints/${notif.refId}`;
-    }
-    if (notif.refType === "SUGGESTION") {
-      return `/dashboard/suggestions`;
-    }
-    if (notif.refType === "FEEDBACK") {
-      return `/dashboard/feedback`;
-    }
-    return `/dashboard`;
-  }
-
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-7">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
@@ -88,7 +46,7 @@ export default async function NotificationsPage() {
           </p>
         </div>
         {unreadCount > 0 && (
-          <form action={markAllReadAction}>
+          <form action={markAllNotificationsReadAction}>
             <button
               type="submit"
               className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm transition-all hover:bg-accent hover:text-primary"
@@ -113,7 +71,7 @@ export default async function NotificationsPage() {
       ) : (
         <div className="space-y-3">
           {notifications.map((n) => {
-            const targetUrl = getTargetUrl(n);
+            const targetUrl = notificationTargetUrl(n);
             return (
               <div
                 key={n.id}
@@ -125,7 +83,7 @@ export default async function NotificationsPage() {
               >
                 <div className="flex items-start gap-3.5">
                   <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent/60">
-                    {getNotificationIcon(n.type)}
+                    <NotificationIcon type={n.type} />
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -146,7 +104,7 @@ export default async function NotificationsPage() {
 
                 <div className="flex items-center gap-2 self-end sm:self-center">
                   {!n.read && (
-                    <form action={markOneReadAction}>
+                    <form action={markNotificationReadAction}>
                       <input type="hidden" name="id" value={n.id} />
                       <button
                         type="submit"

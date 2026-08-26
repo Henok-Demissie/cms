@@ -4,19 +4,20 @@ import { prisma } from "@/lib/prisma"
 import { submitFeedback, respondFeedback } from "./actions"
 import { deleteFeedback } from "../actions"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
+import { OrganizationSelect } from "@/components/dashboard/organization-select"
+import { SubmissionPopover } from "@/components/dashboard/submission-popover"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Clock3, Eye, MessageSquare, Plus, RefreshCw, Search, SlidersHorizontal, Star } from "lucide-react"
+import { CheckCircle2, Clock3, MessageSquare, RefreshCw, Star } from "lucide-react"
 import Link from "next/link"
 
-export default async function FeedbackPage({ searchParams }: { searchParams: Promise<{ new?: string }> }) {
+export default async function FeedbackPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
   const staff = session.user.role !== "CUSTOMER"
-  const { new: creating } = await searchParams
 
   const [feedback, organizations] = await Promise.all([
     prisma.feedback.findMany({
@@ -72,56 +73,43 @@ export default async function FeedbackPage({ searchParams }: { searchParams: Pro
           </p>
         </div>
         {!staff && (
-          <Link href="/dashboard/feedback?new=1" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
-            <Plus className="h-4 w-4" />
-            New Feedback
-          </Link>
-        )}
-      </section>
-
-      {!staff && creating === "1" && (
-        <form action={submitFeedback} className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm">
-          <h2 className="font-serif text-lg font-semibold">Submit Feedback</h2>
-          {organizations.length > 0 && (
+          <SubmissionPopover
+            triggerLabel="New Feedback"
+            title="Submit feedback"
+            description="Rate your experience with an organization. Their staff can review your feedback and reply."
+            submitLabel="Submit Feedback"
+            successMessage="Feedback submitted"
+            action={submitFeedback}
+          >
+            <OrganizationSelect organizations={organizations} />
             <div className="space-y-1.5">
-              <Label htmlFor="tenantId">Target Organization</Label>
+              <Label htmlFor="rating">Rating</Label>
               <select
-                id="tenantId"
-                name="tenantId"
-                required
+                id="rating"
+                name="rating"
+                defaultValue="5"
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                <option value="">-- Choose an Organization --</option>
-                {organizations.map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name} {org.sector ? `(${org.sector})` : ""}
-                  </option>
-                ))}
+                <option value="5">⭐⭐⭐⭐⭐ 5 — Excellent</option>
+                <option value="4">⭐⭐⭐⭐ 4 — Good</option>
+                <option value="3">⭐⭐⭐ 3 — Average</option>
+                <option value="2">⭐⭐ 2 — Poor</option>
+                <option value="1">⭐ 1 — Very poor</option>
               </select>
             </div>
-          )}
-          <div className="space-y-1.5">
-            <Label htmlFor="rating">Rating</Label>
-            <select id="rating" name="rating" defaultValue="5" className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-              <option value="5">⭐⭐⭐⭐⭐ 5 — Excellent</option>
-              <option value="4">⭐⭐⭐⭐ 4 — Good</option>
-              <option value="3">⭐⭐⭐ 3 — Average</option>
-              <option value="2">⭐⭐ 2 — Poor</option>
-              <option value="1">⭐ 1 — Very poor</option>
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="message">Your Feedback</Label>
-            <Textarea id="message" name="message" placeholder="Tell us about your experience in detail..." rows={4} required />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Link href="/dashboard/feedback" className="rounded-md border border-border px-4 py-2 text-sm font-medium">
-              Cancel
-            </Link>
-            <Button type="submit">Submit Feedback</Button>
-          </div>
-        </form>
-      )}
+            <div className="space-y-1.5">
+              <Label htmlFor="message">Your feedback</Label>
+              <Textarea
+                id="message"
+                name="message"
+                placeholder="Tell us about your experience in detail..."
+                rows={4}
+                required
+              />
+            </div>
+          </SubmissionPopover>
+        )}
+      </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => {

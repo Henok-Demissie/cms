@@ -4,43 +4,55 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import type { FormResult } from "@/lib/form-result"
 import { createCustomerNotification } from "@/lib/notifications"
 
-export async function submitFeedback(formData: FormData) {
+export async function submitFeedback(formData: FormData): Promise<FormResult> {
   const session = await auth()
-  if (!session?.user) redirect("/login")
-  if (session.user.role !== "CUSTOMER") throw new Error("Only customers can submit feedback.")
+  if (!session?.user) {
+    return { ok: false, error: "Your session has expired. Please sign in again." }
+  }
+  if (session.user.role !== "CUSTOMER") {
+    return { ok: false, error: "Only customers can submit feedback." }
+  }
 
   const message = formData.get("message")?.toString().trim()
   const rating = Number(formData.get("rating"))
   const targetTenantId = formData.get("tenantId")?.toString().trim()
 
-  if (!message) throw new Error("Feedback message is required.")
-
-  let tenant = null
-  if (targetTenantId) {
-    tenant = await prisma.tenant.findUnique({ where: { id: targetTenantId } })
+  if (!message) {
+    return { ok: false, error: "Please describe your experience before submitting." }
   }
-  if (!tenant) {
-    tenant = (await prisma.tenant.findFirst({ where: { subdomain: { not: "public" } } })) || (await prisma.tenant.findFirst())
-  }
-  if (!tenant) throw new Error("No organization found.")
 
-  await prisma.feedback.create({
-    data: {
-      tenantId: tenant.id,
-      customerId: session.user.id,
-      authorId: session.user.id,
-      authorName: session.user.name || null,
-      authorEmail: session.user.email || null,
-      message,
-      rating: Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : 5,
-      status: "NEW",
-    },
-  })
+  try {
+    let tenant = null
+    if (targetTenantId) {
+      tenant = await prisma.tenant.findUnique({ where: { id: targetTenantId } })
+    }
+    if (!tenant) {
+      tenant = (await prisma.tenant.findFirst({ where: { subdomain: { not: "public" } } })) || (await prisma.tenant.findFirst())
+    }
+    if (!tenant) return { ok: false, error: "No organization is available to receive feedback." }
+
+    await prisma.feedback.create({
+      data: {
+        tenantId: tenant.id,
+        customerId: session.user.id,
+        authorId: session.user.id,
+        authorName: session.user.name || null,
+        authorEmail: session.user.email || null,
+        message,
+        rating: Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : 5,
+        status: "NEW",
+      },
+    })
+  } catch (error) {
+    console.error("submitFeedback failed:", error)
+    return { ok: false, error: "Could not save your feedback. Please try again." }
+  }
 
   revalidatePath("/dashboard/feedback")
-  redirect("/dashboard/feedback")
+  return { ok: true, message: "Feedback submitted" }
 }
 
 export async function respondFeedback(id: string, formData: FormData) {

@@ -43,7 +43,7 @@ export default async function MyComplaintsPage() {
           <h1 className="font-serif text-2xl font-semibold">My Complaints</h1>
           <p className="mt-1 text-sm text-muted-foreground">View and track all your submitted complaints and staff responses</p>
         </div>
-        <Link href="/dashboard/complaints?new=1" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90">
+        <Link href="/dashboard/complaints" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90">
           <Plus className="h-4 w-4" />New Complaint
         </Link>
       </section>
@@ -144,7 +144,7 @@ export default async function MyComplaintsPage() {
               </span>
               <h3 className="mt-4 font-serif text-lg font-semibold">No Complaints Found</h3>
               <p className="mt-1 text-sm text-muted-foreground">Submit a new complaint to get started.</p>
-              <Link href="/dashboard/complaints?new=1" className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+              <Link href="/dashboard/complaints" className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
                 <Plus className="h-4 w-4" />Submit Complaint
               </Link>
             </div>
