@@ -3,30 +3,40 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { deleteComplaint } from "../actions"
+import { ComplaintSubmission } from "@/components/dashboard/complaint-submission"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { FileText, Plus, RefreshCw, Search } from "lucide-react"
+import { FileText, RefreshCw, Search } from "lucide-react"
 
 export default async function MyComplaintsPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
   if (session.user.role !== "CUSTOMER") redirect("/dashboard/complaints")
 
-  const complaints = await prisma.complaint.findMany({
-    where: {
-      OR: [
-        { customerId: session.user.id },
-        { customerEmail: session.user.email ?? undefined },
-        { customerName: session.user.name ?? undefined },
-      ],
-    },
-    include: {
-      tenant: { select: { id: true, name: true, subdomain: true } },
-      messages: { select: { id: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  })
+  const [complaints, organizations] = await Promise.all([
+    prisma.complaint.findMany({
+      where: {
+        OR: [
+          { customerId: session.user.id },
+          { customerEmail: session.user.email ?? undefined },
+          { customerName: session.user.name ?? undefined },
+        ],
+      },
+      include: {
+        tenant: { select: { id: true, name: true, subdomain: true } },
+        messages: { select: { id: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    // Needed by the submission form, which opens here rather than sending the
+    // customer over to the Complaint Center.
+    prisma.tenant.findMany({
+      where: { subdomain: { not: "public" } },
+      select: { id: true, name: true, subdomain: true, sector: true },
+      orderBy: { name: "asc" },
+    }),
+  ])
   // Complaint totals live on the dashboard's stat tabs, not here.
 
   return (
@@ -36,9 +46,7 @@ export default async function MyComplaintsPage() {
           <h1 className="font-serif text-2xl font-semibold">My Complaints</h1>
           <p className="mt-1 text-sm text-muted-foreground">View and track all your submitted complaints and staff responses</p>
         </div>
-        <Link href="/dashboard/complaints" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90">
-          <Plus className="h-4 w-4" />New Complaint
-        </Link>
+        <ComplaintSubmission triggerLabel="New Complaint" organizations={organizations} />
       </section>
       <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
@@ -121,9 +129,9 @@ export default async function MyComplaintsPage() {
               </span>
               <h3 className="mt-4 font-serif text-lg font-semibold">No Complaints Found</h3>
               <p className="mt-1 text-sm text-muted-foreground">Submit a new complaint to get started.</p>
-              <Link href="/dashboard/complaints" className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
-                <Plus className="h-4 w-4" />Submit Complaint
-              </Link>
+              <div className="mt-4 flex justify-center">
+                <ComplaintSubmission triggerLabel="Submit Complaint" organizations={organizations} />
+              </div>
             </div>
           </div>
         )}

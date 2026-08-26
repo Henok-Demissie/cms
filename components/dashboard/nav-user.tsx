@@ -1,9 +1,9 @@
 "use client"
 
-import Link from "next/link"
 import { Bell, LogOut, MoreVertical, Settings2, UserRound } from "lucide-react"
 import { signOut } from "next-auth/react"
 
+import { useAccountDrawer } from "@/components/dashboard/account-drawer"
 import { useNotificationsDrawer } from "@/components/dashboard/notifications-drawer"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -33,6 +33,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { enabled: notificationsEnabled, openDrawer } = useNotificationsDrawer()
+  const { openAccount, openSettings } = useAccountDrawer()
 
   const name = userName || "Account"
   const email = userEmail || "Signed in"
@@ -92,24 +93,19 @@ export function NavUser({
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/profile">
-                  <UserRound />
-                  Account
-                </Link>
+              {/* Account, Settings and Notifications all open drawers. The menu
+                  unmounts on select while vaul is mounting, so defer a frame to
+                  keep Radix's focus restore from stealing focus back. */}
+              <DropdownMenuItem onSelect={() => requestAnimationFrame(openAccount)}>
+                <UserRound />
+                Account
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">
-                  <Settings2 />
-                  Settings
-                </Link>
+              <DropdownMenuItem onSelect={() => requestAnimationFrame(openSettings)}>
+                <Settings2 />
+                Settings
               </DropdownMenuItem>
               {notificationsEnabled && (
-                <DropdownMenuItem
-                  // The menu unmounts on select while vaul is mounting the drawer;
-                  // deferring a frame keeps Radix's focus restore from stealing it back.
-                  onSelect={() => requestAnimationFrame(openDrawer)}
-                >
+                <DropdownMenuItem onSelect={() => requestAnimationFrame(openDrawer)}>
                   <Bell />
                   Notifications
                 </DropdownMenuItem>

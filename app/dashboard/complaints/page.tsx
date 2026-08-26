@@ -2,14 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { deleteComplaint } from "../actions";
-import { submitComplaint } from "./actions";
+import { ComplaintSubmission } from "@/components/dashboard/complaint-submission";
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button";
-import { OrganizationSelect, type OrgOption } from "@/components/dashboard/organization-select";
-import { SubmissionPopover } from "@/components/dashboard/submission-popover";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -22,39 +17,6 @@ import {
 } from "@/components/ui/table";
 import { prisma } from "@/lib/prisma";
 import { ArrowUpRight, Inbox, Search } from "lucide-react";
-
-/**
- * Complaint submission popover. Rendered from the page header and again from the
- * empty state, so it lives in a helper instead of being duplicated inline.
- */
-function ComplaintPopover({ triggerLabel, organizations }: { triggerLabel: string; organizations: OrgOption[] }) {
-  return (
-    <SubmissionPopover
-      triggerLabel={triggerLabel}
-      title="Submit a complaint"
-      description="Tell us what happened. Staff at the organization you pick will review your case and reply here."
-      submitLabel="Submit complaint"
-      successMessage="Complaint submitted"
-      action={submitComplaint}
-    >
-      <OrganizationSelect organizations={organizations} label="Select organization / company" />
-      <div className="space-y-1.5">
-        <Label htmlFor="title">Complaint title</Label>
-        <Input id="title" name="title" placeholder="e.g. Delayed service / payment issue" required />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          name="description"
-          placeholder="Describe the complaint in detail"
-          rows={4}
-          required
-        />
-      </div>
-    </SubmissionPopover>
-  );
-}
 
 function formatRelativeDate(date: Date) {
   const now = new Date();
@@ -166,7 +128,7 @@ export default async function ComplaintsPage() {
               : "Review incoming complaints for your organization, triage cases, and respond to customers."}
           </p>
         </div>
-        {isCustomer && <ComplaintPopover triggerLabel="New Complaint" organizations={organizations} />}
+        {isCustomer && <ComplaintSubmission triggerLabel="New Complaint" organizations={organizations} />}
       </div>
 
       {/* Table Section */}
@@ -202,7 +164,7 @@ export default async function ComplaintsPage() {
               </p>
               {isCustomer && (
                 <div className="mt-4 flex justify-center">
-                  <ComplaintPopover triggerLabel="Submit Complaint" organizations={organizations} />
+                  <ComplaintSubmission triggerLabel="Submit Complaint" organizations={organizations} />
                 </div>
               )}
             </div>
