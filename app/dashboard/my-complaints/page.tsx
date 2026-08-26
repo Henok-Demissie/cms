@@ -2,32 +2,46 @@ import Link from "next/link"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { paginate, readPageParams, type PageSearchParams } from "@/lib/pagination"
 import { deleteComplaint } from "../actions"
 import { ComplaintSubmission } from "@/components/dashboard/complaint-submission"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
+import { ListPagination } from "@/components/dashboard/list-pagination"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { FileText, RefreshCw, Search } from "lucide-react"
 
-export default async function MyComplaintsPage() {
+export default async function MyComplaintsPage({
+  searchParams,
+}: {
+  searchParams: Promise<PageSearchParams>
+}) {
   const session = await auth()
   if (!session?.user) redirect("/login")
   if (session.user.role !== "CUSTOMER") redirect("/dashboard/complaints")
 
+  const where = {
+    OR: [
+      { customerId: session.user.id },
+      { customerEmail: session.user.email ?? undefined },
+      { customerName: session.user.name ?? undefined },
+    ],
+  }
+
+  // Count first so the requested page can be clamped before it is queried.
+  const totalCount = await prisma.complaint.count({ where })
+  const pagination = paginate(totalCount, readPageParams(await searchParams))
+
   const [complaints, organizations] = await Promise.all([
     prisma.complaint.findMany({
-      where: {
-        OR: [
-          { customerId: session.user.id },
-          { customerEmail: session.user.email ?? undefined },
-          { customerName: session.user.name ?? undefined },
-        ],
-      },
+      where,
       include: {
         tenant: { select: { id: true, name: true, subdomain: true } },
         messages: { select: { id: true } },
       },
       orderBy: { createdAt: "desc" },
+      skip: pagination.skip,
+      take: pagination.take,
     }),
     // Needed by the submission form, which opens here rather than sending the
     // customer over to the Complaint Center.
@@ -52,7 +66,7 @@ export default async function MyComplaintsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
           <div>
             <h2 className="font-serif text-lg font-semibold">Complaints List</h2>
-            <p className="text-xs text-muted-foreground">{complaints.length} complaints found</p>
+            <p className="text-xs text-muted-foreground">{totalCount} complaints found</p>
           </div>
           <div className="flex w-full items-center gap-2 sm:w-auto">
             <div className="flex h-9 flex-1 items-center gap-2 rounded-md border border-input bg-background px-3 text-xs text-muted-foreground sm:w-80">
@@ -66,7 +80,6 @@ export default async function MyComplaintsPage() {
         </div>
         {complaints.length ? (
           <Table>
-            <TableCaption>A list of your submitted complaints across organizations.</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>Complaint</TableHead>
@@ -114,12 +127,6 @@ export default async function MyComplaintsPage() {
                 </TableRow>
               ))}
             </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={6}>Total complaints</TableCell>
-                <TableCell className="text-right">{complaints.length}</TableCell>
-              </TableRow>
-            </TableFooter>
           </Table>
         ) : (
           <div className="grid min-h-72 place-items-center p-8 text-center">
@@ -135,6 +142,9 @@ export default async function MyComplaintsPage() {
             </div>
           </div>
         )}
+
+        {/* Replaces the old caption and "Total complaints" footer row. */}
+        <ListPagination {...pagination} />
       </section>
     </div>
   )

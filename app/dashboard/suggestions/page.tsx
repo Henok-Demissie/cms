@@ -1,9 +1,11 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { paginate, readPageParams, type PageSearchParams } from "@/lib/pagination"
 import { submitSuggestion, respondSuggestion } from "./actions"
 import { deleteSuggestion } from "../actions"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
+import { ListPagination } from "@/components/dashboard/list-pagination"
 import { OrganizationSelect } from "@/components/dashboard/organization-select"
 import { SubmissionPopover } from "@/components/dashboard/submission-popover"
 import { Button } from "@/components/ui/button"
@@ -14,26 +16,38 @@ import { Badge } from "@/components/ui/badge"
 import { Clock3, Lightbulb, RefreshCw, Search } from "lucide-react"
 import Link from "next/link"
 
-export default async function SuggestionsPage() {
+export default async function SuggestionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<PageSearchParams>
+}) {
   const session = await auth()
   if (!session?.user) redirect("/login")
   const staff = session.user.role !== "CUSTOMER"
 
+  const where = staff
+    ? { tenantId: session.user.tenantId }
+    : {
+        OR: [
+          { customerId: session.user.id },
+          { authorId: session.user.id },
+          { authorEmail: session.user.email ?? undefined },
+        ],
+      }
+
+  // Count first so the requested page can be clamped before it is queried.
+  const totalCount = await prisma.suggestion.count({ where })
+  const pagination = paginate(totalCount, readPageParams(await searchParams))
+
   const [suggestions, organizations] = await Promise.all([
     prisma.suggestion.findMany({
-      where: staff
-        ? { tenantId: session.user.tenantId }
-        : {
-            OR: [
-              { customerId: session.user.id },
-              { authorId: session.user.id },
-              { authorEmail: session.user.email ?? undefined },
-            ],
-          },
+      where,
       include: {
         tenant: { select: { id: true, name: true, subdomain: true, sector: true } },
       },
       orderBy: { createdAt: "desc" },
+      skip: pagination.skip,
+      take: pagination.take,
     }),
     !staff
       ? prisma.tenant.findMany({
@@ -178,6 +192,8 @@ export default async function SuggestionsPage() {
             </div>
           </div>
         )}
+
+        <ListPagination {...pagination} />
       </section>
     </div>
   )

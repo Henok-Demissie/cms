@@ -4,17 +4,17 @@ import { auth } from "@/auth";
 import { deleteComplaint } from "../actions";
 import { ComplaintSubmission } from "@/components/dashboard/complaint-submission";
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button";
+import { ListPagination } from "@/components/dashboard/list-pagination";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { paginate, readPageParams, type PageSearchParams } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 import { ArrowUpRight, Inbox, Search } from "lucide-react";
 
@@ -72,7 +72,11 @@ function getPriorityConfig(priority: string) {
   }
 }
 
-export default async function ComplaintsPage() {
+export default async function ComplaintsPage({
+  searchParams,
+}: {
+  searchParams: Promise<PageSearchParams>;
+}) {
   const session = await auth();
 
   if (!session?.user) {
@@ -81,19 +85,26 @@ export default async function ComplaintsPage() {
 
   const isCustomer = session.user.role === "CUSTOMER";
 
+  const where = isCustomer
+    ? {
+        OR: [
+          { customerId: session.user.id },
+          { customerEmail: session.user.email ?? undefined },
+          { customerName: session.user.name ?? undefined },
+        ],
+      }
+    : { tenantId: session.user.tenantId };
+
+  // Count first so the requested page can be clamped before it is queried.
+  const totalCount = await prisma.complaint.count({ where });
+  const pagination = paginate(totalCount, readPageParams(await searchParams));
+
   const [complaints, organizations] = await Promise.all([
     prisma.complaint.findMany({
-      where: isCustomer
-        ? {
-            OR: [
-              { customerId: session.user.id },
-              { customerEmail: session.user.email ?? undefined },
-              { customerName: session.user.name ?? undefined },
-            ],
-          }
-        : { tenantId: session.user.tenantId },
+      where,
       orderBy: { createdAt: "desc" },
-      take: 50,
+      skip: pagination.skip,
+      take: pagination.take,
       include: {
         tenant: { select: { id: true, name: true, subdomain: true, sector: true } },
         messages: { select: { id: true } },
@@ -107,9 +118,6 @@ export default async function ComplaintsPage() {
         })
       : Promise.resolve([]),
   ]);
-
-  // Complaint totals live on the dashboard's stat tabs, not here.
-  const totalCount = complaints.length;
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-5 md:p-6">
@@ -171,9 +179,6 @@ export default async function ComplaintsPage() {
           </div>
         ) : (
           <Table>
-            <TableCaption>
-              Showing the {Math.min(complaints.length, 50)} most recent complaints.
-            </TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[80px] pl-5">#</TableHead>
@@ -263,18 +268,12 @@ export default async function ComplaintsPage() {
                 );
               })}
             </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={7} className="pl-5">
-                  Total
-                </TableCell>
-                <TableCell className="pr-5 text-right">
-                  {complaints.length} complaint{complaints.length !== 1 ? "s" : ""}
-                </TableCell>
-              </TableRow>
-            </TableFooter>
           </Table>
         )}
+
+        {/* Replaces the old caption and "Total" footer row — the range label
+            already reports both the page and the overall count. */}
+        <ListPagination {...pagination} />
       </section>
     </div>
   );

@@ -1,9 +1,11 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { paginate, readPageParams, type PageSearchParams } from "@/lib/pagination"
 import { submitFeedback, respondFeedback } from "./actions"
 import { deleteFeedback } from "../actions"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
+import { ListPagination } from "@/components/dashboard/list-pagination"
 import { OrganizationSelect } from "@/components/dashboard/organization-select"
 import { SubmissionPopover } from "@/components/dashboard/submission-popover"
 import { Button } from "@/components/ui/button"
@@ -14,26 +16,38 @@ import { Badge } from "@/components/ui/badge"
 import { Clock3, MessageSquare, RefreshCw } from "lucide-react"
 import Link from "next/link"
 
-export default async function FeedbackPage() {
+export default async function FeedbackPage({
+  searchParams,
+}: {
+  searchParams: Promise<PageSearchParams>
+}) {
   const session = await auth()
   if (!session?.user) redirect("/login")
   const staff = session.user.role !== "CUSTOMER"
 
+  const where = staff
+    ? { tenantId: session.user.tenantId }
+    : {
+        OR: [
+          { customerId: session.user.id },
+          { authorId: session.user.id },
+          { authorEmail: session.user.email ?? undefined },
+        ],
+      }
+
+  // Count first so the requested page can be clamped before it is queried.
+  const totalCount = await prisma.feedback.count({ where })
+  const pagination = paginate(totalCount, readPageParams(await searchParams))
+
   const [feedback, organizations] = await Promise.all([
     prisma.feedback.findMany({
-      where: staff
-        ? { tenantId: session.user.tenantId }
-        : {
-            OR: [
-              { customerId: session.user.id },
-              { authorId: session.user.id },
-              { authorEmail: session.user.email ?? undefined },
-            ],
-          },
+      where,
       include: {
         tenant: { select: { id: true, name: true, subdomain: true, sector: true } },
       },
       orderBy: { createdAt: "desc" },
+      skip: pagination.skip,
+      take: pagination.take,
     }),
     !staff
       ? prisma.tenant.findMany({
@@ -104,7 +118,7 @@ export default async function FeedbackPage() {
               <Clock3 className="h-5 w-5 text-primary" />
               {staff ? "Organization Feedback" : "Feedback History"}
             </h2>
-            <p className="mt-1 text-xs text-muted-foreground">{feedback.length} entries</p>
+            <p className="mt-1 text-xs text-muted-foreground">{totalCount} entries</p>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/dashboard/feedback" className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs font-medium">
@@ -179,6 +193,8 @@ export default async function FeedbackPage() {
             </div>
           </div>
         )}
+
+        <ListPagination {...pagination} />
       </section>
     </div>
   )

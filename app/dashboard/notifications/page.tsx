@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Bell, Check, CheckCheck, Clock, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { paginate, readPageParams, type PageSearchParams } from "@/lib/pagination";
 import {
   markAllNotificationsReadAction,
   markNotificationReadAction,
@@ -11,8 +12,13 @@ import {
   NotificationIcon,
   notificationTargetUrl,
 } from "@/components/dashboard/notification-meta";
+import { ListPagination } from "@/components/dashboard/list-pagination";
 
-export default async function NotificationsPage() {
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<PageSearchParams>;
+}) {
   const session = await auth();
   if (!session?.user) {
     redirect("/login");
@@ -23,13 +29,23 @@ export default async function NotificationsPage() {
     redirect("/dashboard");
   }
 
-  const notifications = await prisma.notification.findMany({
-    where: { customerId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+  const where = { customerId: session.user.id };
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  // Both counts are queries of their own: the unread tally has to cover every
+  // notification, not just the ones on the page being rendered.
+  const [totalCount, unreadCount] = await Promise.all([
+    prisma.notification.count({ where }),
+    prisma.notification.count({ where: { ...where, read: false } }),
+  ]);
+
+  const pagination = paginate(totalCount, readPageParams(await searchParams));
+
+  const notifications = await prisma.notification.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    skip: pagination.skip,
+    take: pagination.take,
+  });
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-7">
@@ -128,6 +144,12 @@ export default async function NotificationsPage() {
           })}
         </div>
       )}
+
+      {/* This list has no card frame of its own, so the pager brings one. */}
+      <ListPagination
+        {...pagination}
+        className="rounded-xl border border-border bg-card"
+      />
     </div>
   );
 }
