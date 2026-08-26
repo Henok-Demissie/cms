@@ -37,7 +37,7 @@ export default async function DashboardLayout({
   const customerId = isCustomer ? session?.user?.id : undefined
 
   // Started before the notifications await below so both queries are in flight
-  // together. Feeds the Account and Settings drawers.
+  // together. Feeds the Account panel and the account menu's language picker.
   const accountPromise = session?.user?.id
     ? isCustomer
       ? prisma.customer.findUnique({

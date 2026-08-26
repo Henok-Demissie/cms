@@ -25,8 +25,8 @@ export function AppearanceSetting() {
   const isDark = mounted ? resolvedTheme === "dark" : true
 
   return (
-    // A bare row: both call sites already sit under an "Appearance" heading with
-    // its own description, so the icon, the label and the switch are enough.
+    // A bare row: the icon, the label and the switch already say what this is, so
+    // it needs no heading of its own in either the account menu or the settings page.
     <div className="flex items-center justify-between gap-4 py-0.5">
       <Label
         htmlFor="appearance-mode"

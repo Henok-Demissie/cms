@@ -4,7 +4,6 @@ import * as React from "react"
 import Link from "next/link"
 import { signOut } from "next-auth/react"
 import {
-  Bell,
   CalendarDays,
   ChevronRight,
   Globe,
@@ -12,14 +11,10 @@ import {
   Mail,
   Pencil,
   Phone,
-  Settings2,
   Shield,
   UserRound,
 } from "lucide-react"
 
-import { AppearanceSetting } from "@/components/dashboard/appearance-setting"
-import { LanguageSetting } from "@/components/dashboard/language-setting"
-import { useNotificationsDrawer } from "@/components/dashboard/notifications-drawer"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -30,10 +25,10 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { languageLabel, type LanguageCode } from "@/lib/languages"
+import { DEFAULT_LANGUAGE, languageLabel, type LanguageCode } from "@/lib/languages"
 import { cn } from "@/lib/utils"
 
-/** Everything the two panels render, resolved on the server once per dashboard load. */
+/** Everything the panel renders, resolved on the server once per dashboard load. */
 export type AccountPanelData = {
   name: string
   email: string
@@ -45,19 +40,24 @@ export type AccountPanelData = {
   joined: string | null
 }
 
-type Panel = "account" | "settings"
-
 type AccountPanelContextValue = {
   openAccount: () => void
-  openSettings: () => void
+  /**
+   * The signed-in account's saved locale. The account menu's EN/AM picker needs
+   * it, and this provider already holds the record it comes from.
+   */
+  language: LanguageCode
 }
 
 const AccountPanelContext = React.createContext<AccountPanelContextValue | null>(null)
 
 /**
- * Opens the Account and Settings panels. Both open centred on the screen, the
- * same overlay complaints and suggestions use, so the account menu never
- * navigates away.
+ * Opens the Account panel and reads the saved locale.
+ *
+ * The panel opens centred on the screen, the same overlay complaints and
+ * suggestions use, so the account menu never navigates away. Day/night and
+ * language are not in here — they live inline in the account menu, since they
+ * were the only two things the old Settings panel held.
  */
 export function useAccountPanel() {
   const context = React.useContext(AccountPanelContext)
@@ -83,20 +83,22 @@ export function AccountPanelProvider({
   account: AccountPanelData | null
   children: React.ReactNode
 }) {
-  const [panel, setPanel] = React.useState<Panel | null>(null)
+  const [open, setOpen] = React.useState(false)
 
   const value = React.useMemo<AccountPanelContextValue>(
     () => ({
-      openAccount: () => setPanel("account"),
-      openSettings: () => setPanel("settings"),
+      openAccount: () => setOpen(true),
+      // Falls back when there is no account record to read, so the menu's picker
+      // still renders a selected side.
+      language: account?.language ?? DEFAULT_LANGUAGE,
     }),
-    [],
+    [account?.language],
   )
 
   return (
     <AccountPanelContext.Provider value={value}>
       {children}
-      {account && <AccountPanel account={account} panel={panel} onPanelChange={setPanel} />}
+      {account && <AccountPanel account={account} open={open} onOpenChange={setOpen} />}
     </AccountPanelContext.Provider>
   )
 }
@@ -121,17 +123,15 @@ function DetailRow({
 
 function AccountPanel({
   account,
-  panel,
-  onPanelChange,
+  open,
+  onOpenChange,
 }: {
   account: AccountPanelData
-  panel: Panel | null
-  onPanelChange: (panel: Panel | null) => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
-  const { enabled: notificationsEnabled, unreadCount, openDrawer } = useNotificationsDrawer()
   const contentRef = React.useRef<HTMLDivElement>(null)
 
-  const settings = panel === "settings"
   const initials =
     account.name
       .split(" ")
@@ -141,20 +141,8 @@ function AccountPanel({
       .join("")
       .toUpperCase() || "AB"
 
-  function handleNotifications() {
-    onPanelChange(null)
-    // Let this overlay finish closing before the notifications drawer mounts, so
-    // focus is not handed between two of them at once.
-    window.setTimeout(openDrawer, 220)
-  }
-
   return (
-    <Dialog
-      open={panel !== null}
-      onOpenChange={(next) => {
-        if (!next) onPanelChange(null)
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Centred, and only as wide as these rows need: as a bottom sheet it
           stretched the full viewport for a handful of controls. */}
       <DialogContent
@@ -164,8 +152,8 @@ function AccountPanel({
         // No corner X: the footer already has Close.
         showCloseButton={false}
         // Radix focuses the first control on open, which lands a focus ring on a
-        // language segment as if it had just been picked. Park focus on the panel
-        // itself so it still traps and Escape still closes.
+        // row as if it had just been picked. Park focus on the panel itself so it
+        // still traps and Escape still closes.
         onOpenAutoFocus={(event) => {
           event.preventDefault()
           contentRef.current?.focus()
@@ -173,17 +161,11 @@ function AccountPanel({
       >
         <div className="border-b border-border px-4 py-3">
           <DialogTitle className="flex items-center gap-2">
-            {settings ? (
-              <Settings2 className="h-4 w-4 text-primary" />
-            ) : (
-              <UserRound className="h-4 w-4 text-primary" />
-            )}
-            {settings ? "Settings" : "Account"}
+            <UserRound className="h-4 w-4 text-primary" />
+            Account
           </DialogTitle>
           <DialogDescription className="mt-0.5">
-            {settings
-              ? "Language and day / night mode."
-              : "Your identity, contact details and session."}
+            Your identity, contact details and session.
           </DialogDescription>
         </div>
 
@@ -204,80 +186,38 @@ function AccountPanel({
             </Badge>
           </div>
 
-          {settings ? (
-            <>
-              {/* No "Language" or "Appearance" headings: the two language names
-                  and the night mode row already say what they are. */}
-              <LanguageSetting defaultValue={account.language} />
-              <AppearanceSetting />
+          <div className="grid gap-2">
+            <DetailRow icon={Mail} label="Email" value={account.email} />
+            <DetailRow icon={Phone} label="Phone" value={account.phone || "Not added"} />
+            <DetailRow icon={Shield} label="Role" value={roleLabel(account.role)} />
+            <DetailRow icon={Globe} label="Language" value={languageLabel(account.language)} />
+            {account.joined && (
+              <DetailRow icon={CalendarDays} label="Member since" value={account.joined} />
+            )}
+          </div>
 
-              <button
-                type="button"
-                onClick={() => onPanelChange("account")}
-                className={rowClassName}
-              >
-                <UserRound className="h-4 w-4 text-muted-foreground" />
-                <span className="flex-1">Account</span>
+          {/* No Settings or Notifications rows: day/night and language are in the
+              account menu now, and the header bell is the one way to notifications. */}
+          <div className="grid gap-2">
+            {/* Name and phone are only editable on the full page, so keep a
+                way in from here. */}
+            <DialogClose asChild>
+              <Link href="/dashboard/profile" className={rowClassName}>
+                <Pencil className="h-4 w-4 text-muted-foreground" />
+                <span className="flex-1">Edit full profile</span>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="grid gap-2">
-                <DetailRow icon={Mail} label="Email" value={account.email} />
-                <DetailRow icon={Phone} label="Phone" value={account.phone || "Not added"} />
-                <DetailRow icon={Shield} label="Role" value={roleLabel(account.role)} />
-                <DetailRow icon={Globe} label="Language" value={languageLabel(account.language)} />
-                {account.joined && (
-                  <DetailRow icon={CalendarDays} label="Member since" value={account.joined} />
-                )}
-              </div>
+              </Link>
+            </DialogClose>
 
-              <div className="grid gap-2">
-                <button
-                  type="button"
-                  onClick={() => onPanelChange("settings")}
-                  className={rowClassName}
-                >
-                  <Settings2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="flex-1">Settings</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </button>
-
-                {notificationsEnabled && (
-                  <button type="button" onClick={handleNotifications} className={rowClassName}>
-                    <Bell className="h-4 w-4 text-muted-foreground" />
-                    <span className="flex-1">Notifications</span>
-                    {unreadCount > 0 && (
-                      <Badge className="h-5 min-w-5 justify-center px-1.5 text-[10px]">
-                        {unreadCount}
-                      </Badge>
-                    )}
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                )}
-
-                {/* Name and phone are only editable on the full page, so keep a
-                    way in from here. */}
-                <DialogClose asChild>
-                  <Link href="/dashboard/profile" className={rowClassName}>
-                    <Pencil className="h-4 w-4 text-muted-foreground" />
-                    <span className="flex-1">Edit full profile</span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </Link>
-                </DialogClose>
-
-                <button
-                  type="button"
-                  onClick={() => void signOut({ callbackUrl: "/" })}
-                  className={cn(rowClassName, "text-destructive hover:bg-destructive/10")}
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span className="flex-1">Log out</span>
-                </button>
-              </div>
-            </>
-          )}
+            <button
+              type="button"
+              onClick={() => void signOut({ callbackUrl: "/" })}
+              className={cn(rowClassName, "text-destructive hover:bg-destructive/10")}
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="flex-1">Log out</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex justify-end border-t border-border px-4 py-3">

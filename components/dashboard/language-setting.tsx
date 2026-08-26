@@ -20,9 +20,15 @@ import { cn } from "@/lib/utils"
 export function LanguageSetting({
   defaultValue,
   className,
+  compact = false,
 }: {
   defaultValue: LanguageCode
   className?: string
+  /**
+   * Shows the two-letter codes instead of the full language names. For tight
+   * spots like the account menu, where "EN" and "AM" are the whole label.
+   */
+  compact?: boolean
 }) {
   const [value, setValue] = useState<LanguageCode>(defaultValue)
   const [pending, startTransition] = useTransition()
@@ -62,7 +68,8 @@ export function LanguageSetting({
             key={language.value}
             value={language.value}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5",
+              "flex items-center justify-center gap-1.5 rounded-md",
+              compact ? "px-2 py-1" : "px-3 py-1.5",
               // 13px rather than 12: Amharic script needs the extra size to stay
               // legible, and the unselected side needs real contrast to be read
               // as a choice rather than as disabled.
@@ -74,7 +81,7 @@ export function LanguageSetting({
               pending && "cursor-progress",
             )}
           >
-            {language.short}
+            {compact ? language.value : language.short}
             {active && pending && <Loader2 className="h-3 w-3 animate-spin" />}
           </RadioGroupPrimitive.Item>
         )

@@ -1,15 +1,15 @@
 "use client"
 
-import { Bell, LogOut, MoreVertical, Settings2, UserRound } from "lucide-react"
+import { LogOut, MoreVertical, UserRound } from "lucide-react"
 import { signOut } from "next-auth/react"
 
 import { useAccountPanel } from "@/components/dashboard/account-panel"
-import { useNotificationsDrawer } from "@/components/dashboard/notifications-drawer"
+import { AppearanceSetting } from "@/components/dashboard/appearance-setting"
+import { LanguageSetting } from "@/components/dashboard/language-setting"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -32,8 +32,7 @@ export function NavUser({
   userImage?: string | null
 }) {
   const { isMobile } = useSidebar()
-  const { enabled: notificationsEnabled, openDrawer } = useNotificationsDrawer()
-  const { openAccount, openSettings } = useAccountPanel()
+  const { openAccount, language } = useAccountPanel()
 
   const name = userName || "Account"
   const email = userEmail || "Signed in"
@@ -92,25 +91,29 @@ export function NavUser({
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuGroup>
-              {/* Account, Settings and Notifications all open drawers. The menu
-                  unmounts on select while vaul is mounting, so defer a frame to
-                  keep Radix's focus restore from stealing focus back. */}
-              <DropdownMenuItem onSelect={() => requestAnimationFrame(openAccount)}>
-                <UserRound />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => requestAnimationFrame(openSettings)}>
-                <Settings2 />
-                Settings
-              </DropdownMenuItem>
-              {notificationsEnabled && (
-                <DropdownMenuItem onSelect={() => requestAnimationFrame(openDrawer)}>
-                  <Bell />
-                  Notifications
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuGroup>
+            {/* No Notifications row: the header bell is the one way in, and it
+                carries the unread count. Account opens a drawer, so defer a frame
+                — the menu unmounts on select while the overlay is mounting, and
+                Radix's focus restore would otherwise steal focus back. */}
+            <DropdownMenuItem onSelect={() => requestAnimationFrame(openAccount)}>
+              <UserRound />
+              Account
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            {/* Day/night and language sit in the menu itself rather than behind a
+                Settings panel: they are one-tap preferences, and the panel held
+                nothing else. Not DropdownMenuItems — selecting one would close the
+                menu before the change could be seen — so the menu's own arrow-key
+                and typeahead handling has to be kept off these controls. */}
+            <div
+              className="space-y-1.5 px-2 py-1.5"
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <AppearanceSetting />
+              <LanguageSetting defaultValue={language} compact />
+            </div>
 
             <DropdownMenuSeparator />
 
