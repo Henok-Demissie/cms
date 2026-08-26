@@ -161,6 +161,8 @@ function AccountPanel({
         ref={contentRef}
         tabIndex={-1}
         className="w-[min(92vw,26rem)] p-0"
+        // No corner X: the footer already has Close.
+        showCloseButton={false}
         // Radix focuses the first control on open, which lands a focus ring on a
         // language segment as if it had just been picked. Park focus on the panel
         // itself so it still traps and Escape still closes.
@@ -169,7 +171,7 @@ function AccountPanel({
           contentRef.current?.focus()
         }}
       >
-        <div className="border-b border-border px-4 py-3 pr-10">
+        <div className="border-b border-border px-4 py-3">
           <DialogTitle className="flex items-center gap-2">
             {settings ? (
               <Settings2 className="h-4 w-4 text-primary" />

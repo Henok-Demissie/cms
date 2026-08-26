@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     question: "What happens after a complaint is submitted?",
-    answer: "Every complaint enters your workspace with a clear status. Your team can review it, assign responsibility, add internal notes, and keep the customer informed until the case is resolved.",
+    answer: "Every complaint enters your workspace with a clear status. Your team can review it, assign responsibility, add internal notes, and keep the customer informed until the complaint is resolved.",
   },
   {
     question: "Can different team members have different access?",

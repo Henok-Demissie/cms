@@ -92,7 +92,7 @@ export function StatsTabs({
     {
       label: "Total complaints",
       value: complaints.total,
-      hint: "All cases on record",
+      hint: "All complaints on record",
       trend: "Total",
       icon: FileText,
       tone: "text-primary bg-primary/10",
@@ -108,13 +108,13 @@ export function StatsTabs({
     {
       label: "In progress",
       value: complaints.inProgress,
-      hint: "Active cases",
+      hint: "Active complaints",
       trend: "Handling",
       icon: TrendingUp,
       tone: "text-amber-400 bg-amber-400/10",
     },
     {
-      label: "Resolved cases",
+      label: "Resolved complaints",
       value: complaints.resolved,
       hint: "Closed successfully",
       trend: `${complaints.resolutionRate}% rate`,

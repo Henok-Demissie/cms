@@ -62,8 +62,11 @@ export function AdminComplaintsDashboard({
   const total = chartData.reduce((sum, point) => sum + point.complaints, 0);
 
   return (
-    <div className="grid gap-3 lg:grid-cols-5">
-      <Card className="lg:col-span-3">
+    // Two equal halves rather than 3/5 + 2/5: the chart and the recent list are
+    // peers, so they get the same width. Grid stretch keeps them the same height
+    // whichever one has more content.
+    <div className="grid gap-3 lg:grid-cols-2">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 py-3">
           <div>
             <CardTitle className="text-sm font-medium">Complaint volume</CardTitle>
@@ -71,7 +74,8 @@ export function AdminComplaintsDashboard({
           </div>
           <span className="rounded bg-primary/10 px-2 py-1 text-xs font-medium text-primary">{total} total</span>
         </CardHeader>
-        <CardContent className="px-2 pb-3 pt-0">
+        {/* Grows so the footnote sits at the bottom of whichever card is taller. */}
+        <CardContent className="flex flex-1 flex-col px-2 pb-3 pt-0">
           <ChartContainer config={chartConfig} className="h-[180px] w-full">
             <AreaChart
               accessibilityLayer
@@ -105,13 +109,13 @@ export function AdminComplaintsDashboard({
               />
             </AreaChart>
           </ChartContainer>
-          <p className="flex items-center gap-1 px-2 text-[10px] text-muted-foreground">
+          <p className="mt-auto flex items-center gap-1 px-2 pt-1 text-[10px] text-muted-foreground">
             Updated in real time <TrendingUp className="size-3 text-primary" />
           </p>
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-2">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between px-4 py-3">
           <CardTitle className="text-sm font-medium">Recent complaints</CardTitle>
           <Link href={viewAllHref} className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline">

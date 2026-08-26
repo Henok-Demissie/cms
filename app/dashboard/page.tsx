@@ -132,7 +132,7 @@ export default async function DashboardPage() {
                 <strong>
                   {unreadNotifications} new notification{unreadNotifications > 1 ? "s" : ""}
                 </strong>{" "}
-                regarding your cases.
+                regarding your complaints.
               </span>
             </div>
             <Link

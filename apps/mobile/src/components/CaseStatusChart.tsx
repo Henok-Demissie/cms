@@ -4,7 +4,7 @@ import { useTheme, useThemedStyles } from '../contexts/ThemeContext';
 import type { Palette } from '../theme';
 
 /**
- * Donut of the tenant's case mix, drawn with react-native-svg.
+ * Donut of the tenant's complaint mix, drawn with react-native-svg.
  *
  * Not victory-native: the installed v41 is the Skia rewrite, which exports
  * CartesianChart/Pie and needs @shopify/react-native-skia. The old VictoryPie
@@ -17,8 +17,8 @@ export type CaseStatusChartProps = {
   ongoing: number;
   resolved: number;
   /**
-   * Every case for the tenant. The three buckets above do not have to add up to
-   * it — withdrawn and rejected cases are counted in neither — so the remainder
+   * Every complaint for the tenant. The three buckets above do not have to add
+   * up to it — withdrawn and rejected ones are counted in neither — so the remainder
    * becomes its own slice and the ring stays honest about the total.
    */
   total: number;
@@ -61,7 +61,7 @@ export function CaseStatusChart({ newCount, ongoing, resolved, total }: CaseStat
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Case status distribution</Text>
+      <Text style={styles.title}>Complaint status distribution</Text>
 
       <View style={styles.chartWrapper}>
         <Svg width={SIZE} height={SIZE}>
@@ -93,12 +93,12 @@ export function CaseStatusChart({ newCount, ongoing, resolved, total }: CaseStat
 
         <View style={styles.centerLabel} pointerEvents="none">
           <Text style={styles.centerValue}>{total}</Text>
-          <Text style={styles.centerCaption}>{total === 1 ? 'case' : 'cases'}</Text>
+          <Text style={styles.centerCaption}>{total === 1 ? 'complaint' : 'complaints'}</Text>
         </View>
       </View>
 
       {counted === 0 ? (
-        <Text style={styles.empty}>No cases yet.</Text>
+        <Text style={styles.empty}>No complaints yet.</Text>
       ) : (
         <View style={styles.legendContainer}>
           {slices.map((slice) => (

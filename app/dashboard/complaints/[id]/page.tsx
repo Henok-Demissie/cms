@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { assignComplaintToMe, closeComplaint, reactToComplaint, replyToComplaint } from "./actions"
 import { deleteComplaint } from "../../actions"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
+import { EditComplaintDialog } from "@/components/dashboard/edit-complaint-dialog"
 import { BackButton } from "@/components/back-button"
 import {
   Card,
@@ -179,13 +180,33 @@ export default async function ComplaintDetailPage({ params }: Props) {
               </div>
             )}
 
-            {/* Erasing the case removes its whole conversation with it — the
+            {/* The author may still correct a complaint nobody has picked up —
+                the same rule the server and the phone app both enforce. */}
+            {!isStaff && complaint.status === "NEW" && complaint.messages.length === 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 p-3">
+                <div>
+                  <p className="text-sm font-medium">Correct this complaint</p>
+                  <p className="text-xs text-muted-foreground">
+                    No one from {complaint.tenant.name} has replied yet, so the title and
+                    description can still be changed.
+                  </p>
+                </div>
+                <EditComplaintDialog
+                  id={complaint.id}
+                  title={complaint.title}
+                  description={complaint.description}
+                  variant="button"
+                />
+              </div>
+            )}
+
+            {/* Erasing the complaint removes its whole conversation with it — the
                 messages and reactions cascade on the foreign key. */}
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
               <div>
                 <p className="text-sm font-medium">Erase this complaint</p>
                 <p className="text-xs text-muted-foreground">
-                  Permanently deletes the case and every message on it. This cannot be undone.
+                  Permanently deletes the complaint and every message on it. This cannot be undone.
                 </p>
               </div>
               <DeleteSubmissionButton
@@ -198,7 +219,7 @@ export default async function ComplaintDetailPage({ params }: Props) {
             </div>
 
             <div className="rounded-lg border border-border p-3">
-              <h3 className="font-semibold">Case conversation & Staff Responses</h3>
+              <h3 className="font-semibold">Complaint conversation & Staff Responses</h3>
               <div className="mt-3 space-y-2">
                 {complaint.messages.length ? (
                   complaint.messages.map((item) => {
@@ -252,7 +273,7 @@ export default async function ComplaintDetailPage({ params }: Props) {
               <div className="flex flex-wrap gap-2">
                 <form action={reactToComplaint.bind(null, complaint.id, "ACKNOWLEDGED")}>
                   <Button type="submit" variant="outline" disabled={acknowledged}>
-                    {acknowledged ? "Acknowledged" : "Acknowledge case"}
+                    {acknowledged ? "Acknowledged" : "Acknowledge complaint"}
                   </Button>
                 </form>
                 <form action={reactToComplaint.bind(null, complaint.id, "PRIORITY")}>

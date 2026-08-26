@@ -11,9 +11,9 @@ const testimonials = [
   },
   {
     name: "Clear ownership and progress",
-    role: "Case management",
+    role: "Complaint management",
     content:
-      "Assign cases to the right person, track updates, and make sure nothing gets lost between teams.",
+      "Assign complaints to the right person, track updates, and make sure nothing gets lost between teams.",
   },
   {
     name: "Better service decisions",

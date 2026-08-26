@@ -11,8 +11,8 @@ import type { Palette } from '../theme';
 const compliments = [
   "You're making a difference every day ✨",
   "Your voice matters – track your submissions 🌟",
-  "Every case resolved is a step forward 🚀",
-  "Fast and transparent case management 🌈",
+  "Every complaint resolved is a step forward 🚀",
+  "Fast and transparent complaint management 🌈",
 ];
 
 export function DashboardScreen() {
@@ -70,7 +70,7 @@ export function DashboardScreen() {
           />
           <Ionicons name="sparkles" size={24} color={palette.primary} />
           <Text style={styles.complimentText}>
-            {isCustomer ? randomCompliment : `Managing cases and feedback for ${orgName}`}
+            {isCustomer ? randomCompliment : `Managing complaints and feedback for ${orgName}`}
           </Text>
         </Animated.View>
 
@@ -78,7 +78,7 @@ export function DashboardScreen() {
         <Animated.View entering={FadeInDown.duration(600).delay(200)} style={styles.metricsRow}>
           <View style={styles.metricItem}>
             <Text style={styles.metricValue}>{total}</Text>
-            <Text style={styles.metricLabel}>{isCustomer ? 'Total Sent' : 'Total Cases'}</Text>
+            <Text style={styles.metricLabel}>{isCustomer ? 'Total Sent' : 'Total Complaints'}</Text>
           </View>
           <View style={styles.metricItem}>
             <Text style={[styles.metricValue, { color: palette.info }]}>{active}</Text>
@@ -98,7 +98,7 @@ export function DashboardScreen() {
 
         {/* Secondary Sub-Metrics for Complaints, Suggestions, Feedback */}
         <Animated.View entering={FadeInDown.duration(600).delay(220)} style={styles.subMetricsRow}>
-          <Pressable style={styles.subMetricCard} onPress={() => navigation.navigate('Cases')}>
+          <Pressable style={styles.subMetricCard} onPress={() => navigation.navigate('Complaints')}>
             <Ionicons name="folder-open-outline" size={18} color={palette.primary} />
             <Text style={styles.subMetricCount}>{dashboard.metrics.complaints ?? total}</Text>
             <Text style={styles.subMetricTitle}>Complaints</Text>
@@ -131,8 +131,8 @@ export function DashboardScreen() {
         {dashboard.complaints && dashboard.complaints.length > 0 && (
           <Animated.View entering={FadeInDown.duration(600).delay(280)} style={styles.recentSection}>
             <View style={styles.recentHeader}>
-              <Text style={styles.recentTitle}>{isCustomer ? 'My Recent Submissions' : 'Recent Cases'}</Text>
-              <Pressable onPress={() => navigation.navigate('Cases')}>
+              <Text style={styles.recentTitle}>{isCustomer ? 'My Recent Submissions' : 'Recent Complaints'}</Text>
+              <Pressable onPress={() => navigation.navigate('Complaints')}>
                 <Text style={styles.viewAllText}>View all →</Text>
               </Pressable>
             </View>
@@ -140,7 +140,7 @@ export function DashboardScreen() {
               <Pressable
                 key={item.id}
                 style={styles.recentCard}
-                onPress={() => navigation.navigate('Cases')}
+                onPress={() => navigation.navigate('Complaints')}
               >
                 <View style={styles.recentCardTop}>
                   <Text style={styles.recentCardTitle} numberOfLines={1}>
@@ -165,14 +165,14 @@ export function DashboardScreen() {
 
         {/* Quick Action Button */}
         <Animated.View entering={FadeInDown.duration(600).delay(300)}>
-          <Pressable style={styles.actionBtn} onPress={() => navigation.navigate('Cases')}>
+          <Pressable style={styles.actionBtn} onPress={() => navigation.navigate('Complaints')}>
             <LinearGradient
               colors={palette.primaryFill}
               style={styles.actionGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.actionText}>{isCustomer ? 'Submit / Track Cases' : 'Manage All Cases'}</Text>
+              <Text style={styles.actionText}>{isCustomer ? 'Submit / Track Complaints' : 'Manage All Complaints'}</Text>
               <Ionicons name="arrow-forward" size={20} color={palette.onPrimary} />
             </LinearGradient>
           </Pressable>

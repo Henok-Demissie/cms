@@ -83,6 +83,9 @@ export function SubmissionPopover({
 
       <DialogContent
         className={cn("w-[min(92vw,28rem)] p-0", className)}
+        // No corner X: the footer already has Cancel, and two ways to dismiss the
+        // same form is one too many.
+        showCloseButton={false}
         // Radix would otherwise pull focus to the dialog root; the first field is better.
         onOpenAutoFocus={(event) => {
           event.preventDefault()
@@ -93,7 +96,7 @@ export function SubmissionPopover({
         }}
       >
         <form ref={formRef} onSubmit={handleSubmit}>
-          <div className="border-b border-border px-4 py-3 pr-10">
+          <div className="border-b border-border px-4 py-3">
             <DialogTitle>{title}</DialogTitle>
             {description && <DialogDescription className="mt-0.5">{description}</DialogDescription>}
           </div>

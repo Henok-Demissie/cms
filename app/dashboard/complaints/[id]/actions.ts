@@ -15,7 +15,7 @@ function refreshComplaintPages(id: string) {
 }
 
 function requireStaff(role: string) {
-  if (role === "CUSTOMER") throw new Error("Only staff can manage complaint cases.")
+  if (role === "CUSTOMER") throw new Error("Only staff can manage complaints.")
 }
 
 export async function assignComplaintToMe(id: string) {

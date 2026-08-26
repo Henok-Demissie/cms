@@ -12,6 +12,7 @@ import {
 import { deleteComplaint } from "../actions"
 import { ComplaintSubmission } from "@/components/dashboard/complaint-submission"
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button"
+import { EditComplaintDialog } from "@/components/dashboard/edit-complaint-dialog"
 import { ListPagination } from "@/components/dashboard/list-pagination"
 import { ListSearch } from "@/components/dashboard/list-search"
 import { Badge } from "@/components/ui/badge"
@@ -100,11 +101,15 @@ export default async function MyComplaintsPage({
                 <TableHead>Priority</TableHead>
                 <TableHead>Staff Messages</TableHead>
                 <TableHead className="text-right">Submitted</TableHead>
-                <TableHead className="text-right">Delete</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {complaints.map((complaint) => (
+              {complaints.map((complaint) => {
+                // Same rule the server enforces: still editable while nobody
+                // from the organization has picked it up.
+                const canEdit = complaint.status === "NEW" && complaint.messages.length === 0
+                return (
                 <TableRow key={complaint.id}>
                   <TableCell className="max-w-80 whitespace-normal">
                     <Link href={`/dashboard/complaints/${complaint.id}`} className="font-medium hover:text-primary hover:underline">
@@ -130,14 +135,24 @@ export default async function MyComplaintsPage({
                     {new Date(complaint.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    <DeleteSubmissionButton
-                      id={complaint.id}
-                      action={deleteComplaint}
-                      itemLabel="complaint"
-                    />
+                    <div className="inline-flex items-start gap-1.5">
+                      {canEdit && (
+                        <EditComplaintDialog
+                          id={complaint.id}
+                          title={complaint.title}
+                          description={complaint.description}
+                        />
+                      )}
+                      <DeleteSubmissionButton
+                        id={complaint.id}
+                        action={deleteComplaint}
+                        itemLabel="complaint"
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                )
+              })}
             </TableBody>
           </Table>
         ) : (

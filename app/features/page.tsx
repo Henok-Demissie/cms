@@ -4,7 +4,7 @@ export default function FeaturesPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-semibold mb-4">Features</h1>
         <p className="text-base text-muted-foreground leading-relaxed">
-          Explore the features that make AbetBay powerful for complaint intake, SLA tracking, case management, and analytics.
+          Explore the features that make AbetBay powerful for complaint intake, SLA tracking, complaint management, and analytics.
         </p>
       </div>
     </main>

@@ -43,13 +43,13 @@ import {
 
 const Tab = createBottomTabNavigator();
 
-/** A withdrawn or closed case is read-only for everyone. */
+/** A withdrawn or closed complaint is read-only for everyone. */
 const CLOSED_STATUSES = ['RESOLVED', 'CLOSED'];
 
 // ==========================================
-// 1. CASES / COMPLAINTS SCREEN
+// 1. COMPLAINTS SCREEN
 // ==========================================
-function CasesScreen() {
+function ComplaintsScreen() {
   const { user, token, refreshDashboard } = useAuth();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -94,7 +94,7 @@ function CasesScreen() {
         setSelectedOrgId(orgsData[0].id);
       }
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Failed to load cases');
+      Alert.alert('Error', err?.message || 'Failed to load complaints');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -175,7 +175,7 @@ function CasesScreen() {
     }
   };
 
-  // The server allows an edit only while the case is untouched — still NEW with
+  // The server allows an edit only while the complaint is untouched — still NEW with
   // no replies — so the buttons follow the same rule instead of failing on tap.
   const isWithdrawn = selectedComplaint?.status === 'WITHDRAWN';
   const canEdit =
@@ -227,7 +227,7 @@ function CasesScreen() {
     const id = selectedComplaint.id;
     Alert.alert(
       'Withdraw this complaint?',
-      'The organization keeps the record, but the case is closed and nobody can reply to it anymore.',
+      'The organization keeps the record, but the complaint is closed and nobody can reply to it anymore.',
       [
         { text: 'Keep it', style: 'cancel' },
         {
@@ -269,12 +269,12 @@ function CasesScreen() {
       <View style={styles.tabHeader}>
         <View>
           <Text style={styles.tabHeaderTag}>{isCustomer ? 'CUSTOMER PORTAL' : 'STAFF WORKSPACE'}</Text>
-          <Text style={styles.tabHeaderTitle}>{isCustomer ? 'My Complaints' : 'Incoming Cases'}</Text>
+          <Text style={styles.tabHeaderTitle}>{isCustomer ? 'My Complaints' : 'Incoming Complaints'}</Text>
         </View>
         {isCustomer && (
           <Pressable style={styles.headerActionBtn} onPress={() => setCreateModalVisible(true)}>
             <Ionicons name="add" size={18} color={palette.onPrimary} />
-            <Text style={styles.headerActionBtnText}>New Case</Text>
+            <Text style={styles.headerActionBtnText}>New Complaint</Text>
           </Pressable>
         )}
       </View>
@@ -291,9 +291,9 @@ function CasesScreen() {
           {complaints.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Ionicons name="folder-open-outline" size={48} color={palette.muted} />
-              <Text style={styles.emptyTitle}>No cases found</Text>
+              <Text style={styles.emptyTitle}>No complaints found</Text>
               <Text style={styles.emptySub}>
-                {isCustomer ? 'Tap "+ New Case" to submit a complaint to any organization.' : 'No cases submitted to your organization yet.'}
+                {isCustomer ? 'Tap "+ New Complaint" to submit a complaint to any organization.' : 'No complaints submitted to your organization yet.'}
               </Text>
             </View>
           ) : (
@@ -421,10 +421,10 @@ function CasesScreen() {
             </View>
 
             {editMode ? (
-              /* ---------- EDIT FORM (customer, untouched case only) ---------- */
+              /* ---------- EDIT FORM (customer, untouched complaint only) ---------- */
               <ScrollView style={styles.modalBody}>
                 <Text style={styles.editHint}>
-                  You can still change this case because no one from the organization has replied yet.
+                  You can still change this complaint because no one from the organization has replied yet.
                 </Text>
 
                 <Text style={styles.fieldLabel}>Complaint Title</Text>
@@ -518,7 +518,7 @@ function CasesScreen() {
 
                 {isCustomer && !canEdit && !isWithdrawn && (
                   <Text style={styles.lockedHint}>
-                    This case is already being handled, so the original text can no longer be edited.
+                    This complaint is already being handled, so the original text can no longer be edited.
                   </Text>
                 )}
 
@@ -562,7 +562,7 @@ function CasesScreen() {
                     {/* Staff Status Selector */}
                     {!isCustomer && (
                       <View style={styles.statusSelectorRow}>
-                        <Text style={styles.fieldLabel}>Update Case Status:</Text>
+                        <Text style={styles.fieldLabel}>Update Complaint Status:</Text>
                         <View style={styles.statusPills}>
                           {['IN_PROGRESS', 'RESOLVED', 'CLOSED'].map((st) => (
                             <Pressable
@@ -1101,7 +1101,7 @@ function NotificationsScreen() {
               <Ionicons name="notifications-outline" size={48} color={palette.muted} />
               <Text style={styles.emptyTitle}>No notifications</Text>
               <Text style={styles.emptySub}>
-                When company staff replies to your cases, you will receive notifications here.
+                When company staff replies to your complaints, you will receive notifications here.
               </Text>
             </View>
           ) : (
@@ -1286,7 +1286,7 @@ export function BottomTabNavigator() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
           if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-          else if (route.name === 'Cases') iconName = focused ? 'folder-open' : 'folder-outline';
+          else if (route.name === 'Complaints') iconName = focused ? 'folder-open' : 'folder-outline';
           else if (route.name === 'Suggestions') iconName = focused ? 'bulb' : 'bulb-outline';
           else if (route.name === 'Alerts') iconName = focused ? 'notifications' : 'notifications-outline';
           else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
@@ -1299,7 +1299,8 @@ export function BottomTabNavigator() {
       })}
     >
       <Tab.Screen name="Home" component={DashboardScreen} />
-      <Tab.Screen name="Cases" component={CasesScreen} />
+      {/* The route name is what the tab bar shows, so it is the visible label too. */}
+      <Tab.Screen name="Complaints" component={ComplaintsScreen} />
       <Tab.Screen name="Suggestions" component={SuggestionsScreen} />
       {isCustomer && (
         <Tab.Screen name="Alerts" component={NotificationsScreen} />
@@ -1574,7 +1575,7 @@ const makeStyles = (p: Palette) =>
       fontWeight: '600',
       color: p.primary,
     },
-    // Owner (customer) actions on their own case
+    // Owner (customer) actions on their own complaint
     ownerActionsRow: {
       flexDirection: 'row',
       gap: 10,

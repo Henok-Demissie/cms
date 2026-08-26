@@ -149,7 +149,7 @@ export async function POST(
 }
 
 /**
- * Customer edits their own complaint. Only allowed while the case is untouched —
+ * Customer edits their own complaint. Only allowed while it is untouched —
  * still NEW and with no replies — so staff never see the text change underneath
  * a conversation they have already started.
  */

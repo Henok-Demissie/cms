@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { deleteComplaint } from "../actions";
 import { ComplaintSubmission } from "@/components/dashboard/complaint-submission";
 import { DeleteSubmissionButton } from "@/components/dashboard/delete-submission-button";
+import { EditComplaintDialog } from "@/components/dashboard/edit-complaint-dialog";
 import { ListPagination } from "@/components/dashboard/list-pagination";
 import { ListSearch } from "@/components/dashboard/list-search";
 import { Badge } from "@/components/ui/badge";
@@ -153,7 +154,7 @@ export default async function ComplaintsPage({
           <p className="mt-1 text-sm text-muted-foreground">
             {isCustomer
               ? "Submit a complaint to an organization and follow its resolution."
-              : "Review incoming complaints for your organization, triage cases, and respond to customers."}
+              : "Review incoming complaints for your organization, triage them, and respond to customers."}
           </p>
         </div>
         {isCustomer && <ComplaintSubmission triggerLabel="New Complaint" organizations={organizations} />}
@@ -214,12 +215,16 @@ export default async function ComplaintsPage({
                 <TableHead>Priority</TableHead>
                 <TableHead>Responses</TableHead>
                 <TableHead className="text-right">Submitted</TableHead>
-                <TableHead className="pr-5 text-right">Delete</TableHead>
+                <TableHead className="pr-5 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {complaints.map((complaint) => {
                 const statusConfig = getStatusConfig(complaint.status);
+                // Same rule the server enforces: the author may still correct a
+                // complaint nobody has picked up yet.
+                const canEdit =
+                  isCustomer && complaint.status === "NEW" && complaint.messages.length === 0;
                 return (
                   <TableRow key={complaint.id} className="group">
                     <TableCell className="pl-5 font-mono text-xs text-muted-foreground">
@@ -280,11 +285,20 @@ export default async function ComplaintsPage({
                       </span>
                     </TableCell>
                     <TableCell className="pr-5 text-right">
-                      <DeleteSubmissionButton
-                        id={complaint.id}
-                        action={deleteComplaint}
-                        itemLabel="complaint"
-                      />
+                      <div className="inline-flex items-start gap-1.5">
+                        {canEdit && (
+                          <EditComplaintDialog
+                            id={complaint.id}
+                            title={complaint.title}
+                            description={complaint.description}
+                          />
+                        )}
+                        <DeleteSubmissionButton
+                          id={complaint.id}
+                          action={deleteComplaint}
+                          itemLabel="complaint"
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

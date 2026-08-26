@@ -21,7 +21,7 @@ export function ComplaintSubmission({
     <SubmissionPopover
       triggerLabel={triggerLabel}
       title="Submit a complaint"
-      description="Tell us what happened. Staff at the organization you pick will review your case and reply here."
+      description="Tell us what happened. Staff at the organization you pick will review your complaint and reply here."
       submitLabel="Submit complaint"
       successMessage="Complaint submitted"
       action={submitComplaint}
