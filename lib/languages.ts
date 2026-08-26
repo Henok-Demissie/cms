@@ -1,7 +1,11 @@
-/** Locales the dashboard offers. Mirrors the values stored in `language`. */
+/**
+ * Locales the dashboard offers. Mirrors the values stored in `language`.
+ *
+ * `short` is what the segmented picker shows; `label` is for prose and detail rows.
+ */
 export const SUPPORTED_LANGUAGES = [
-  { value: "EN", label: "English", description: "Use English across the dashboard." },
-  { value: "AM", label: "አማርኛ (Amharic)", description: "በአማርኛ ቋንቋ ይጠቀሙ።" },
+  { value: "EN", short: "English", label: "English", description: "Use English across the dashboard." },
+  { value: "AM", short: "አማርኛ", label: "አማርኛ (Amharic)", description: "በአማርኛ ቋንቋ ይጠቀሙ።" },
 ] as const
 
 export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["value"]

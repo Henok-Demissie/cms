@@ -1,7 +1,7 @@
 import type React from "react"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import { Globe, Palette, UserCog } from "lucide-react"
+import { UserCog } from "lucide-react"
 
 import { AccountSetting } from "@/components/dashboard/account-setting"
 import { AppearanceSetting } from "@/components/dashboard/appearance-setting"
@@ -72,21 +72,13 @@ export default async function SettingsPage() {
       </header>
 
       <div className="grid w-full max-w-3xl gap-4">
-        <SettingsSection
-          icon={Globe}
-          title="Language"
-          description="The language saved on your account."
-        >
-          <LanguageSetting defaultValue={language} />
-        </SettingsSection>
-
-        <SettingsSection
-          icon={Palette}
-          title="Appearance"
-          description="Switch the dashboard between day and night mode."
-        >
+        {/* No "Language" / "Appearance" headings: the two language names and the
+            night mode row are self-describing, and the page header above already
+            says what this card is for. */}
+        <section className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <LanguageSetting defaultValue={language} className="sm:max-w-sm" />
           <AppearanceSetting />
-        </SettingsSection>
+        </section>
 
         <SettingsSection icon={UserCog} title="Account" description="Your profile and session.">
           <AccountSetting

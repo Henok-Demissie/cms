@@ -10,7 +10,6 @@ import {
   Globe,
   LogOut,
   Mail,
-  Palette,
   Pencil,
   Phone,
   Settings2,
@@ -25,19 +24,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer"
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { languageLabel, type LanguageCode } from "@/lib/languages"
 import { cn } from "@/lib/utils"
 
 /** Everything the two panels render, resolved on the server once per dashboard load. */
-export type AccountDrawerData = {
+export type AccountPanelData = {
   name: string
   email: string
   image?: string | null
@@ -50,21 +47,22 @@ export type AccountDrawerData = {
 
 type Panel = "account" | "settings"
 
-type AccountDrawerContextValue = {
+type AccountPanelContextValue = {
   openAccount: () => void
   openSettings: () => void
 }
 
-const AccountDrawerContext = React.createContext<AccountDrawerContextValue | null>(null)
+const AccountPanelContext = React.createContext<AccountPanelContextValue | null>(null)
 
 /**
- * Opens the Account and Settings panels. Both live in the drawer that the
- * notifications panel uses, so the account menu never navigates away.
+ * Opens the Account and Settings panels. Both open centred on the screen, the
+ * same overlay complaints and suggestions use, so the account menu never
+ * navigates away.
  */
-export function useAccountDrawer() {
-  const context = React.useContext(AccountDrawerContext)
+export function useAccountPanel() {
+  const context = React.useContext(AccountPanelContext)
   if (!context) {
-    throw new Error("useAccountDrawer must be used inside <AccountDrawerProvider>")
+    throw new Error("useAccountPanel must be used inside <AccountPanelProvider>")
   }
   return context
 }
@@ -78,19 +76,16 @@ function roleLabel(role: string) {
 const rowClassName =
   "flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
 
-/** The sheet spans the viewport, so centre a column inside it on wide screens. */
-const columnClassName = "mx-auto w-full max-w-lg"
-
-export function AccountDrawerProvider({
+export function AccountPanelProvider({
   account,
   children,
 }: {
-  account: AccountDrawerData | null
+  account: AccountPanelData | null
   children: React.ReactNode
 }) {
   const [panel, setPanel] = React.useState<Panel | null>(null)
 
-  const value = React.useMemo<AccountDrawerContextValue>(
+  const value = React.useMemo<AccountPanelContextValue>(
     () => ({
       openAccount: () => setPanel("account"),
       openSettings: () => setPanel("settings"),
@@ -99,16 +94,10 @@ export function AccountDrawerProvider({
   )
 
   return (
-    <AccountDrawerContext.Provider value={value}>
+    <AccountPanelContext.Provider value={value}>
       {children}
-      {account && (
-        <AccountDrawer
-          account={account}
-          panel={panel}
-          onPanelChange={setPanel}
-        />
-      )}
-    </AccountDrawerContext.Provider>
+      {account && <AccountPanel account={account} panel={panel} onPanelChange={setPanel} />}
+    </AccountPanelContext.Provider>
   )
 }
 
@@ -130,43 +119,17 @@ function DetailRow({
   )
 }
 
-function PanelSection({
-  icon: Icon,
-  title,
-  description,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  title: string
-  description: string
-  children: React.ReactNode
-}) {
-  return (
-    <section>
-      <div className="flex items-center gap-2.5">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
-          <Icon className="h-4 w-4" />
-        </span>
-        <div>
-          <h3 className="text-sm font-semibold leading-tight">{title}</h3>
-          <p className="text-xs text-muted-foreground">{description}</p>
-        </div>
-      </div>
-      <div className="mt-3">{children}</div>
-    </section>
-  )
-}
-
-function AccountDrawer({
+function AccountPanel({
   account,
   panel,
   onPanelChange,
 }: {
-  account: AccountDrawerData
+  account: AccountPanelData
   panel: Panel | null
   onPanelChange: (panel: Panel | null) => void
 }) {
   const { enabled: notificationsEnabled, unreadCount, openDrawer } = useNotificationsDrawer()
+  const contentRef = React.useRef<HTMLDivElement>(null)
 
   const settings = panel === "settings"
   const initials =
@@ -180,40 +143,49 @@ function AccountDrawer({
 
   function handleNotifications() {
     onPanelChange(null)
-    // Two vaul drawers must not overlap, so let this one finish its exit
-    // animation before the notifications drawer mounts.
-    window.setTimeout(openDrawer, 260)
+    // Let this overlay finish closing before the notifications drawer mounts, so
+    // focus is not handed between two of them at once.
+    window.setTimeout(openDrawer, 220)
   }
 
   return (
-    <Drawer
+    <Dialog
       open={panel !== null}
       onOpenChange={(next) => {
         if (!next) onPanelChange(null)
       }}
     >
-      {/* Bottom sheet with a swipe handle on every screen size, so these two
-          panels read differently from the side drawer notifications use. */}
-      <DrawerContent showHandle>
-        <DrawerHeader>
-          <div className={cn(columnClassName, "flex flex-col gap-1")}>
-            <DrawerTitle className="flex items-center gap-2">
-              {settings ? (
-                <Settings2 className="h-4 w-4 text-primary" />
-              ) : (
-                <UserRound className="h-4 w-4 text-primary" />
-              )}
-              {settings ? "Settings" : "Account"}
-            </DrawerTitle>
-            <DrawerDescription>
-              {settings
-                ? "Pick your language and switch between day and night mode."
-                : "Your identity, contact details and session."}
-            </DrawerDescription>
-          </div>
-        </DrawerHeader>
+      {/* Centred, and only as wide as these rows need: as a bottom sheet it
+          stretched the full viewport for a handful of controls. */}
+      <DialogContent
+        ref={contentRef}
+        tabIndex={-1}
+        className="w-[min(92vw,26rem)] p-0"
+        // Radix focuses the first control on open, which lands a focus ring on a
+        // language segment as if it had just been picked. Park focus on the panel
+        // itself so it still traps and Escape still closes.
+        onOpenAutoFocus={(event) => {
+          event.preventDefault()
+          contentRef.current?.focus()
+        }}
+      >
+        <div className="border-b border-border px-4 py-3 pr-10">
+          <DialogTitle className="flex items-center gap-2">
+            {settings ? (
+              <Settings2 className="h-4 w-4 text-primary" />
+            ) : (
+              <UserRound className="h-4 w-4 text-primary" />
+            )}
+            {settings ? "Settings" : "Account"}
+          </DialogTitle>
+          <DialogDescription className="mt-0.5">
+            {settings
+              ? "Language and day / night mode."
+              : "Your identity, contact details and session."}
+          </DialogDescription>
+        </div>
 
-        <div className={cn(columnClassName, "min-h-0 flex-1 space-y-4 overflow-y-auto p-4")}>
+        <div className="max-h-[65vh] space-y-3 overflow-y-auto px-4 py-3">
           <div className="flex items-center gap-3 rounded-lg border border-border p-3">
             <Avatar className="size-10 rounded-lg">
               {account.image ? <AvatarImage src={account.image} alt={account.name} /> : null}
@@ -232,21 +204,10 @@ function AccountDrawer({
 
           {settings ? (
             <>
-              <PanelSection
-                icon={Globe}
-                title="Language"
-                description="The language saved on your account."
-              >
-                <LanguageSetting defaultValue={account.language} />
-              </PanelSection>
-
-              <PanelSection
-                icon={Palette}
-                title="Appearance"
-                description="Switch between day and night mode."
-              >
-                <AppearanceSetting />
-              </PanelSection>
+              {/* No "Language" or "Appearance" headings: the two language names
+                  and the night mode row already say what they are. */}
+              <LanguageSetting defaultValue={account.language} />
+              <AppearanceSetting />
 
               <button
                 type="button"
@@ -295,14 +256,14 @@ function AccountDrawer({
                 )}
 
                 {/* Name and phone are only editable on the full page, so keep a
-                    way in now that the footer is just a close button. */}
-                <DrawerClose asChild>
+                    way in from here. */}
+                <DialogClose asChild>
                   <Link href="/dashboard/profile" className={rowClassName}>
                     <Pencil className="h-4 w-4 text-muted-foreground" />
                     <span className="flex-1">Edit full profile</span>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </Link>
-                </DrawerClose>
+                </DialogClose>
 
                 <button
                   type="button"
@@ -317,12 +278,14 @@ function AccountDrawer({
           )}
         </div>
 
-        <DrawerFooter>
-          <DrawerClose asChild>
-            <Button className={columnClassName}>Close</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+        <div className="flex justify-end border-t border-border px-4 py-3">
+          <DialogClose asChild>
+            <Button type="button" variant="outline" size="sm">
+              Close
+            </Button>
+          </DialogClose>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

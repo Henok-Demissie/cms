@@ -3,7 +3,7 @@
 import { Bell, LogOut, MoreVertical, Settings2, UserRound } from "lucide-react"
 import { signOut } from "next-auth/react"
 
-import { useAccountDrawer } from "@/components/dashboard/account-drawer"
+import { useAccountPanel } from "@/components/dashboard/account-panel"
 import { useNotificationsDrawer } from "@/components/dashboard/notifications-drawer"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -33,7 +33,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { enabled: notificationsEnabled, openDrawer } = useNotificationsDrawer()
-  const { openAccount, openSettings } = useAccountDrawer()
+  const { openAccount, openSettings } = useAccountPanel()
 
   const name = userName || "Account"
   const email = userEmail || "Signed in"

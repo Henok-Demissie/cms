@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/sidebar"
 import type { NotificationItem } from "@/components/dashboard/notification-meta"
 import {
-  AccountDrawerProvider,
-  type AccountDrawerData,
-} from "@/components/dashboard/account-drawer"
+  AccountPanelProvider,
+  type AccountPanelData,
+} from "@/components/dashboard/account-panel"
 import {
   NotificationsBell,
   NotificationsDrawerProvider,
@@ -62,7 +62,7 @@ export default async function DashboardLayout({
 
   const accountRecord = await accountPromise
 
-  const account: AccountDrawerData | null = accountRecord
+  const account: AccountPanelData | null = accountRecord
     ? {
         name: accountRecord.name || session?.user?.name || "Account",
         email: accountRecord.email || session?.user?.email || "Signed in",
@@ -102,7 +102,7 @@ export default async function DashboardLayout({
         unreadCount={unreadCount}
         enabled={Boolean(customerId)}
       >
-        <AccountDrawerProvider account={account}>
+        <AccountPanelProvider account={account}>
           <AppSidebar
             role={session?.user?.role ?? "CUSTOMER"}
             userName={session?.user?.name}
@@ -128,7 +128,7 @@ export default async function DashboardLayout({
             </header>
             <main className="compact flex flex-1 flex-col">{children}</main>
           </SidebarInset>
-        </AccountDrawerProvider>
+        </AccountPanelProvider>
       </NotificationsDrawerProvider>
     </SidebarProvider>
   )

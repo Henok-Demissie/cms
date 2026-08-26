@@ -1,20 +1,29 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { updateLanguage } from "@/app/dashboard/settings/actions"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SUPPORTED_LANGUAGES, type LanguageCode } from "@/lib/languages"
 import { cn } from "@/lib/utils"
 
 /**
  * Locale picker that saves on selection. The choice is persisted to the account's
  * `language` field; dashboard copy itself is not translated yet.
+ *
+ * A segmented pill rather than two description cards: the two language names are
+ * the whole choice, so nothing needs a heading or a sentence of explanation.
+ * Radix keeps the radio roles and arrow-key handling that plain buttons lack.
  */
-export function LanguageSetting({ defaultValue }: { defaultValue: LanguageCode }) {
+export function LanguageSetting({
+  defaultValue,
+  className,
+}: {
+  defaultValue: LanguageCode
+  className?: string
+}) {
   const [value, setValue] = useState<LanguageCode>(defaultValue)
   const [pending, startTransition] = useTransition()
 
@@ -35,31 +44,41 @@ export function LanguageSetting({ defaultValue }: { defaultValue: LanguageCode }
   }
 
   return (
-    <RadioGroup value={value} onValueChange={handleChange} disabled={pending} className="gap-3">
+    <RadioGroupPrimitive.Root
+      value={value}
+      onValueChange={handleChange}
+      disabled={pending}
+      // The visible heading is gone, so the group needs its name from here.
+      aria-label="Language"
+      className={cn(
+        "grid grid-cols-2 gap-1 rounded-lg border border-border bg-muted/40 p-1",
+        className,
+      )}
+    >
       {SUPPORTED_LANGUAGES.map((language) => {
         const active = value === language.value
         return (
-          <Label
+          <RadioGroupPrimitive.Item
             key={language.value}
-            htmlFor={`language-${language.value}`}
+            value={language.value}
             className={cn(
-              "flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 transition-colors",
-              "hover:bg-accent/40",
-              active && "border-primary/50 bg-primary/5",
-              pending && "cursor-progress opacity-70",
+              "flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5",
+              // 13px rather than 12: Amharic script needs the extra size to stay
+              // legible, and the unselected side needs real contrast to be read
+              // as a choice rather than as disabled.
+              "text-[13px] font-medium outline-none transition-colors",
+              "focus-visible:ring-2 focus-visible:ring-ring/50",
+              active
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-foreground/70 hover:text-foreground",
+              pending && "cursor-progress",
             )}
           >
-            <RadioGroupItem value={language.value} id={`language-${language.value}`} className="mt-0.5" />
-            <span className="grid gap-0.5">
-              <span className="flex items-center gap-2 text-sm font-medium leading-none">
-                {language.label}
-                {active && pending && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
-              </span>
-              <span className="text-xs font-normal text-muted-foreground">{language.description}</span>
-            </span>
-          </Label>
+            {language.short}
+            {active && pending && <Loader2 className="h-3 w-3 animate-spin" />}
+          </RadioGroupPrimitive.Item>
         )
       })}
-    </RadioGroup>
+    </RadioGroupPrimitive.Root>
   )
 }
