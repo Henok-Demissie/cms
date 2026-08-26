@@ -11,6 +11,7 @@ import {
   LogOut,
   Mail,
   Palette,
+  Pencil,
   Phone,
   Settings2,
   Shield,
@@ -22,7 +23,7 @@ import { LanguageSetting } from "@/components/dashboard/language-setting"
 import { useNotificationsDrawer } from "@/components/dashboard/notifications-drawer"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Drawer,
   DrawerClose,
@@ -32,7 +33,6 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer"
-import { useIsMobile } from "@/hooks/use-mobile"
 import { languageLabel, type LanguageCode } from "@/lib/languages"
 import { cn } from "@/lib/utils"
 
@@ -77,6 +77,9 @@ function roleLabel(role: string) {
 
 const rowClassName =
   "flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+
+/** The sheet spans the viewport, so centre a column inside it on wide screens. */
+const columnClassName = "mx-auto w-full max-w-lg"
 
 export function AccountDrawerProvider({
   account,
@@ -163,7 +166,6 @@ function AccountDrawer({
   panel: Panel | null
   onPanelChange: (panel: Panel | null) => void
 }) {
-  const isMobile = useIsMobile()
   const { enabled: notificationsEnabled, unreadCount, openDrawer } = useNotificationsDrawer()
 
   const settings = panel === "settings"
@@ -189,26 +191,29 @@ function AccountDrawer({
       onOpenChange={(next) => {
         if (!next) onPanelChange(null)
       }}
-      direction={isMobile ? "bottom" : "right"}
     >
-      <DrawerContent showHandle={isMobile} className="max-h-[90vh]">
+      {/* Bottom sheet with a swipe handle on every screen size, so these two
+          panels read differently from the side drawer notifications use. */}
+      <DrawerContent showHandle>
         <DrawerHeader>
-          <DrawerTitle className="flex items-center gap-2">
-            {settings ? (
-              <Settings2 className="h-4 w-4 text-primary" />
-            ) : (
-              <UserRound className="h-4 w-4 text-primary" />
-            )}
-            {settings ? "Settings" : "Account"}
-          </DrawerTitle>
-          <DrawerDescription>
-            {settings
-              ? "Pick your language and switch between day and night mode."
-              : "Your identity, contact details and session."}
-          </DrawerDescription>
+          <div className={cn(columnClassName, "flex flex-col gap-1")}>
+            <DrawerTitle className="flex items-center gap-2">
+              {settings ? (
+                <Settings2 className="h-4 w-4 text-primary" />
+              ) : (
+                <UserRound className="h-4 w-4 text-primary" />
+              )}
+              {settings ? "Settings" : "Account"}
+            </DrawerTitle>
+            <DrawerDescription>
+              {settings
+                ? "Pick your language and switch between day and night mode."
+                : "Your identity, contact details and session."}
+            </DrawerDescription>
+          </div>
         </DrawerHeader>
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+        <div className={cn(columnClassName, "min-h-0 flex-1 space-y-4 overflow-y-auto p-4")}>
           <div className="flex items-center gap-3 rounded-lg border border-border p-3">
             <Avatar className="size-10 rounded-lg">
               {account.image ? <AvatarImage src={account.image} alt={account.name} /> : null}
@@ -289,6 +294,16 @@ function AccountDrawer({
                   </button>
                 )}
 
+                {/* Name and phone are only editable on the full page, so keep a
+                    way in now that the footer is just a close button. */}
+                <DrawerClose asChild>
+                  <Link href="/dashboard/profile" className={rowClassName}>
+                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                    <span className="flex-1">Edit full profile</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
+                </DrawerClose>
+
                 <button
                   type="button"
                   onClick={() => void signOut({ callbackUrl: "/" })}
@@ -304,12 +319,7 @@ function AccountDrawer({
 
         <DrawerFooter>
           <DrawerClose asChild>
-            <Link
-              href={settings ? "/dashboard/settings" : "/dashboard/profile"}
-              className={cn(buttonVariants({ variant: "outline" }))}
-            >
-              {settings ? "Open the settings page" : "Edit full profile"}
-            </Link>
+            <Button className={columnClassName}>Close</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
