@@ -2,9 +2,9 @@
 import { auth } from "@/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, Plus, RefreshCw } from "lucide-react";
+import { Bell } from "lucide-react";
 import { AdminComplaintsDashboard } from "@/components/dashboard/admin-complaints-dashboard";
-import { DashboardStats } from "@/components/dashboard/dashboard-stats";
+import { StatsTabs } from "@/components/dashboard/stats-tabs";
 import { prisma } from "@/lib/prisma";
 import { getUnreadNotificationCount } from "@/lib/notifications";
 
@@ -70,7 +70,13 @@ export default async function DashboardPage() {
       ongoing,
       solved,
       totalSuggestions,
+      newSuggestions,
+      reviewingSuggestions,
+      acceptedSuggestions,
       totalFeedback,
+      pendingFeedback,
+      respondedFeedback,
+      feedbackRating,
       unreadNotifications,
     ] = await Promise.all([
       prisma.complaint.findMany({
@@ -99,62 +105,24 @@ export default async function DashboardPage() {
         where: { ...customerFilter, status: { in: ["RESOLVED", "CLOSED"] } },
       }),
       prisma.suggestion.count({ where: authorFilter }),
+      prisma.suggestion.count({ where: { ...authorFilter, status: "NEW" } }),
+      prisma.suggestion.count({ where: { ...authorFilter, status: "IN_REVIEW" } }),
+      prisma.suggestion.count({ where: { ...authorFilter, status: "ACCEPTED" } }),
       prisma.feedback.count({ where: authorFilter }),
+      prisma.feedback.count({ where: { ...authorFilter, status: "NEW", response: null } }),
+      // "Responded" covers both an explicit REVIEWED status and any written reply.
+      prisma.feedback.count({
+        where: { AND: [authorFilter, { OR: [{ status: "REVIEWED" }, { NOT: { response: null } }] }] },
+      }),
+      prisma.feedback.aggregate({ where: authorFilter, _avg: { rating: true } }),
       getUnreadNotificationCount(session.user.id),
     ]);
 
     const resolutionRate = totalComplaints > 0 ? Math.round((solved / totalComplaints) * 100) : 100;
     const chartData = buildMonthlyChartData(allComplaints);
 
-    const hour = new Date().getHours();
-    const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
-    const firstName = session.user.name?.split(" ")[0] ?? "there";
-
     return (
       <div className="flex flex-1 flex-col gap-3 p-3 md:gap-4 md:p-4">
-        <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-primary">
-                Customer Portal
-              </p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                {greeting}, {firstName} <span aria-hidden="true">👋</span>
-              </h1>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Your complaints, suggestions, and feedback across every organization you have contacted.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link
-                href="/dashboard/notifications"
-                className="relative grid h-9 w-9 place-items-center rounded-md border border-border text-muted-foreground transition-all duration-200 hover:border-primary/50 hover:bg-accent hover:text-primary"
-                aria-label="Notifications"
-              >
-                <Bell className="h-4 w-4" />
-                {unreadNotifications > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-                    {unreadNotifications}
-                  </span>
-                )}
-              </Link>
-              <Link
-                href="/dashboard"
-                aria-label="Refresh dashboard"
-                className="grid h-9 w-9 place-items-center rounded-md border border-border text-muted-foreground transition-all duration-200 hover:rotate-180 hover:border-primary/50 hover:bg-accent hover:text-primary"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/dashboard/complaints"
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-              >
-                <Plus className="h-3.5 w-3.5" /> New Complaint
-              </Link>
-            </div>
-          </div>
-        </div>
-
         {unreadNotifications > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm">
             <div className="flex items-center gap-2">
@@ -176,14 +144,26 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        <DashboardStats
-          active={active}
-          ongoing={ongoing}
-          solved={solved}
-          totalComplaints={totalComplaints}
-          suggestionsCount={totalSuggestions}
-          feedbackCount={totalFeedback}
-          resolutionRate={resolutionRate}
+        <StatsTabs
+          complaints={{
+            total: totalComplaints,
+            new: active,
+            inProgress: ongoing,
+            resolved: solved,
+            resolutionRate,
+          }}
+          suggestions={{
+            total: totalSuggestions,
+            new: newSuggestions,
+            inReview: reviewingSuggestions,
+            accepted: acceptedSuggestions,
+          }}
+          feedback={{
+            total: totalFeedback,
+            pending: pendingFeedback,
+            responded: respondedFeedback,
+            averageRating: feedbackRating._avg.rating,
+          }}
         />
 
         <AdminComplaintsDashboard
@@ -208,7 +188,12 @@ export default async function DashboardPage() {
     solved,
     totalSuggestions,
     pendingSuggestions,
+    reviewingSuggestions,
+    acceptedSuggestions,
     totalFeedback,
+    pendingFeedback,
+    respondedFeedback,
+    feedbackRating,
     recentComplaints,
     allComplaints,
   ] = await Promise.all([
@@ -223,7 +208,15 @@ export default async function DashboardPage() {
     }),
     prisma.suggestion.count({ where: { tenantId } }),
     prisma.suggestion.count({ where: { tenantId, status: "NEW" } }),
+    prisma.suggestion.count({ where: { tenantId, status: "IN_REVIEW" } }),
+    prisma.suggestion.count({ where: { tenantId, status: "ACCEPTED" } }),
     prisma.feedback.count({ where: { tenantId } }),
+    prisma.feedback.count({ where: { tenantId, status: "NEW", response: null } }),
+    // "Responded" covers both an explicit REVIEWED status and any written reply.
+    prisma.feedback.count({
+      where: { tenantId, OR: [{ status: "REVIEWED" }, { NOT: { response: null } }] },
+    }),
+    prisma.feedback.aggregate({ where: { tenantId }, _avg: { rating: true } }),
     prisma.complaint.findMany({
       where: { tenantId },
       orderBy: { createdAt: "desc" },
@@ -271,14 +264,26 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <DashboardStats
-        active={active}
-        ongoing={ongoing}
-        solved={solved}
-        totalComplaints={totalComplaints}
-        suggestionsCount={totalSuggestions}
-        feedbackCount={totalFeedback}
-        resolutionRate={resolutionRate}
+      <StatsTabs
+        complaints={{
+          total: totalComplaints,
+          new: active,
+          inProgress: ongoing,
+          resolved: solved,
+          resolutionRate,
+        }}
+        suggestions={{
+          total: totalSuggestions,
+          new: pendingSuggestions,
+          inReview: reviewingSuggestions,
+          accepted: acceptedSuggestions,
+        }}
+        feedback={{
+          total: totalFeedback,
+          pending: pendingFeedback,
+          responded: respondedFeedback,
+          averageRating: feedbackRating._avg.rating,
+        }}
       />
 
       <AdminComplaintsDashboard

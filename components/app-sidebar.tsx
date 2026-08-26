@@ -65,7 +65,8 @@ export function AppSidebar({
 
   return (
     <Sidebar side="left" collapsible="offcanvas" className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-      <SidebarHeader className="border-b border-sidebar-border px-4 py-5">
+      {/* Height matches the dashboard header's h-16 so the two bottom borders line up. */}
+      <SidebarHeader className="h-16 shrink-0 justify-center border-b border-sidebar-border px-4">
         <div className="flex items-center gap-2.5">
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-sidebar-primary text-xs font-bold text-sidebar-primary-foreground shadow-[0_8px_20px_-8px_var(--sidebar-primary)] transition-transform duration-200 hover:scale-105">
             AB

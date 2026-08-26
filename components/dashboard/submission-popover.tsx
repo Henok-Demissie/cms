@@ -5,12 +5,18 @@ import { Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import type { FormResult } from "@/lib/form-result"
 import { cn } from "@/lib/utils"
 
 type SubmissionPopoverProps = {
-  /** Label on the button that opens the popover. */
+  /** Label on the button that opens the form. */
   triggerLabel: string
   title: string
   description?: string
@@ -22,6 +28,10 @@ type SubmissionPopoverProps = {
   className?: string
 }
 
+/**
+ * Submission form that opens centred on the screen instead of anchored to its
+ * button, so complaints, suggestions and feedback all use the same overlay.
+ */
 export function SubmissionPopover({
   triggerLabel,
   title,
@@ -63,18 +73,17 @@ export function SubmissionPopover({
   }
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
         <Button type="button" className="gap-2">
           <Plus className="h-4 w-4" />
           {triggerLabel}
         </Button>
-      </PopoverTrigger>
+      </DialogTrigger>
 
-      <PopoverContent
-        align="end"
-        className={cn("w-[min(92vw,26rem)] p-0", className)}
-        // Radix would otherwise pull focus to the popover root; the first field is better.
+      <DialogContent
+        className={cn("w-[min(92vw,28rem)] p-0", className)}
+        // Radix would otherwise pull focus to the dialog root; the first field is better.
         onOpenAutoFocus={(event) => {
           event.preventDefault()
           const first = formRef.current?.querySelector<HTMLElement>(
@@ -84,11 +93,9 @@ export function SubmissionPopover({
         }}
       >
         <form ref={formRef} onSubmit={handleSubmit}>
-          <div className="border-b border-border px-4 py-3">
-            <h3 className="text-sm font-semibold">{title}</h3>
-            {description && (
-              <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
-            )}
+          <div className="border-b border-border px-4 py-3 pr-10">
+            <DialogTitle>{title}</DialogTitle>
+            {description && <DialogDescription className="mt-0.5">{description}</DialogDescription>}
           </div>
 
           <div className="max-h-[60vh] space-y-3 overflow-y-auto px-4 py-3">{children}</div>
@@ -118,7 +125,7 @@ export function SubmissionPopover({
             </Button>
           </div>
         </form>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   )
 }

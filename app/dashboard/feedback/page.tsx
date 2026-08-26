@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Clock3, MessageSquare, RefreshCw, Star } from "lucide-react"
+import { Clock3, MessageSquare, RefreshCw } from "lucide-react"
 import Link from "next/link"
 
 export default async function FeedbackPage() {
@@ -43,20 +43,6 @@ export default async function FeedbackPage() {
         })
       : Promise.resolve([]),
   ])
-
-  const stats = [
-    { label: "Total Feedback", value: feedback.length, icon: MessageSquare, tone: "text-muted-foreground" },
-    { label: "New / Pending", value: feedback.filter((f) => f.status === "NEW").length, icon: Clock3, tone: "text-primary" },
-    { label: "Reviewed / Responded", value: feedback.filter((f) => f.status === "REVIEWED" || f.response).length, icon: CheckCircle2, tone: "text-emerald-500" },
-    {
-      label: "Average Rating",
-      value: feedback.length
-        ? (feedback.reduce((acc, f) => acc + (f.rating || 5), 0) / feedback.length).toFixed(1) + " / 5"
-        : "5.0 / 5",
-      icon: Star,
-      tone: "text-amber-500",
-    },
-  ]
 
   return (
     <div className="flex flex-1 flex-col gap-5 bg-background p-4 md:p-7">
@@ -109,21 +95,6 @@ export default async function FeedbackPage() {
             </div>
           </SubmissionPopover>
         )}
-      </section>
-
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <article key={stat.label} className="flex min-h-28 items-center justify-between rounded-xl border border-border bg-card p-5 shadow-sm">
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="mt-1 font-serif text-2xl font-semibold">{stat.value}</p>
-              </div>
-              <Icon className={`h-7 w-7 ${stat.tone}`} />
-            </article>
-          )
-        })}
       </section>
 
       <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">

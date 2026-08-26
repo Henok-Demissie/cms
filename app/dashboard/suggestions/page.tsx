@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Clock3, Lightbulb, RefreshCw, Search } from "lucide-react"
+import { Clock3, Lightbulb, RefreshCw, Search } from "lucide-react"
 import Link from "next/link"
 
 export default async function SuggestionsPage() {
@@ -43,13 +43,6 @@ export default async function SuggestionsPage() {
         })
       : Promise.resolve([]),
   ])
-
-  const stats = [
-    { label: "Total", value: suggestions.length, icon: Lightbulb, tone: "text-primary" },
-    { label: "New", value: suggestions.filter((item) => item.status === "NEW").length, icon: Clock3, tone: "text-primary" },
-    { label: "Under Review", value: suggestions.filter((item) => item.status === "IN_REVIEW").length, icon: Search, tone: "text-amber-500" },
-    { label: "Accepted", value: suggestions.filter((item) => item.status === "ACCEPTED").length, icon: CheckCircle2, tone: "text-emerald-500" },
-  ]
 
   return (
     <div className="flex flex-1 flex-col gap-5 bg-background p-4 md:p-7">
@@ -94,21 +87,6 @@ export default async function SuggestionsPage() {
             </div>
           </SubmissionPopover>
         )}
-      </section>
-
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <article key={stat.label} className="min-h-28 rounded-xl border border-border bg-card p-5 shadow-sm">
-              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Icon className={`h-4 w-4 ${stat.tone}`} />
-                {stat.label}
-              </p>
-              <p className={`mt-8 font-serif text-2xl font-semibold ${stat.tone}`}>{stat.value}</p>
-            </article>
-          )
-        })}
       </section>
 
       <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">

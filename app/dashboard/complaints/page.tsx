@@ -21,15 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { prisma } from "@/lib/prisma";
-import {
-  AlertCircle,
-  ArrowUpRight,
-  CheckCircle2,
-  FileText,
-  Inbox,
-  Loader2,
-  Search,
-} from "lucide-react";
+import { ArrowUpRight, Inbox, Search } from "lucide-react";
 
 /**
  * Complaint submission popover. Rendered from the page header and again from the
@@ -154,17 +146,8 @@ export default async function ComplaintsPage() {
       : Promise.resolve([]),
   ]);
 
+  // Complaint totals live on the dashboard's stat tabs, not here.
   const totalCount = complaints.length;
-  const newCount = complaints.filter((c) => c.status === "NEW").length;
-  const inProgressCount = complaints.filter((c) => ["IN_PROGRESS", "IN_REVIEW", "ASSIGNED"].includes(c.status)).length;
-  const resolvedCount = complaints.filter((c) => ["RESOLVED", "CLOSED"].includes(c.status)).length;
-
-  const stats = [
-    { label: "Total", value: totalCount, icon: FileText, tone: "text-primary bg-primary/15" },
-    { label: "New", value: newCount, icon: AlertCircle, tone: "text-blue-400 bg-blue-400/15" },
-    { label: "In Progress", value: inProgressCount, icon: Loader2, tone: "text-amber-400 bg-amber-400/15" },
-    { label: "Resolved", value: resolvedCount, icon: CheckCircle2, tone: "text-emerald-400 bg-emerald-400/15" },
-  ];
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-5 md:p-6">
@@ -185,27 +168,6 @@ export default async function ComplaintsPage() {
         </div>
         {isCustomer && <ComplaintPopover triggerLabel="New Complaint" organizations={organizations} />}
       </div>
-
-      {/* Stats Cards */}
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <article
-              key={stat.label}
-              className="flex items-center justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/20"
-            >
-              <div>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <p className="mt-1 font-serif text-2xl font-semibold">{stat.value}</p>
-              </div>
-              <span className={`grid h-10 w-10 place-items-center rounded-xl ${stat.tone}`}>
-                <Icon className="h-5 w-5" />
-              </span>
-            </article>
-          );
-        })}
-      </section>
 
       {/* Table Section */}
       <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
