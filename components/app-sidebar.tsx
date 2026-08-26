@@ -2,21 +2,19 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, BookOpen, CircleHelp, ClipboardList, Lightbulb, LayoutDashboard, MessageSquareHeart, MessageSquareText, Send, Settings2, UserRound, type LucideIcon } from "lucide-react"
+import { BookOpen, CircleHelp, ClipboardList, Lightbulb, LayoutDashboard, MessageSquareHeart, MessageSquareText, type LucideIcon } from "lucide-react"
 import type { UserRole } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 import { NavUser } from "@/components/dashboard/nav-user"
-import { useNotificationsDrawer } from "@/components/dashboard/notifications-drawer"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
-
-const NOTIFICATIONS_HREF = "/dashboard/notifications"
 
 type NavItem = { title: string; href: string; icon: LucideIcon; badge?: string }
 
+// Notifications, profile and settings live in the account menu in the footer, so
+// the nav groups below deliberately don't repeat them.
 const customerGroups: { label: string; items: NavItem[] }[] = [
   { label: "Overview", items: [{ title: "Dashboard", href: "/dashboard", icon: LayoutDashboard }] },
   { label: "Services", items: [
-    { title: "Submit Complaint", href: "/dashboard/complaints", icon: Send, badge: "Primary" },
     { title: "My Complaints", href: "/dashboard/my-complaints", icon: ClipboardList },
     { title: "Suggestions", href: "/dashboard/suggestions", icon: Lightbulb },
     { title: "Feedback", href: "/dashboard/feedback", icon: MessageSquareHeart },
@@ -25,22 +23,14 @@ const customerGroups: { label: string; items: NavItem[] }[] = [
     { title: "Service Catalog", href: "/dashboard/service-catalog", icon: BookOpen },
     { title: "Help & FAQ", href: "/dashboard/help", icon: CircleHelp },
   ] },
-  { label: "Account", items: [
-    { title: "Notifications", href: NOTIFICATIONS_HREF, icon: Bell },
-    { title: "My Profile", href: "/dashboard/profile", icon: UserRound },
-    { title: "Settings", href: "/dashboard/settings", icon: Settings2 },
-  ] },
 ]
 
-// Notifications belong to Customer accounts only, so the staff nav omits them.
 const staffGroups: { label: string; items: NavItem[] }[] = [
   { label: "Overview", items: [{ title: "Dashboard", href: "/dashboard", icon: LayoutDashboard }] },
   { label: "Workspace", items: [
     { title: "Complaints", href: "/dashboard/complaints", icon: MessageSquareText, badge: "Review" },
     { title: "Suggestions", href: "/dashboard/suggestions", icon: Lightbulb, badge: "Review" },
     { title: "Feedback", href: "/dashboard/feedback", icon: MessageSquareHeart },
-    { title: "My Profile", href: "/dashboard/profile", icon: UserRound },
-    { title: "Settings", href: "/dashboard/settings", icon: Settings2 },
   ] },
 ]
 
@@ -57,17 +47,7 @@ export function AppSidebar({
 }) {
   const pathname = usePathname()
   const customer = role === "CUSTOMER"
-  const { unreadCount, enabled: notificationsEnabled, openDrawer } = useNotificationsDrawer()
-
-  const groups = (customer ? customerGroups : staffGroups).map((group) => ({
-    ...group,
-    items: group.items.map((item) => {
-      if (item.href === NOTIFICATIONS_HREF && unreadCount > 0) {
-        return { ...item, badge: `${unreadCount}` }
-      }
-      return item
-    }),
-  }))
+  const groups = customer ? customerGroups : staffGroups
 
   const itemClassName =
     "h-9 rounded-lg px-2.5 text-sidebar-foreground transition-[transform,colors,box-shadow] duration-200 ease-out hover:translate-x-1 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:shadow-[0_8px_20px_-10px_var(--sidebar-primary)]"
@@ -107,20 +87,6 @@ export function AppSidebar({
                 {group.items.map((item) => {
                   const Icon = item.icon
                   const active = item.href === "/dashboard" ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
-
-                  // Notifications open the drawer rather than navigating; the full
-                  // page stays reachable from the drawer's "View all" action.
-                  if (item.href === NOTIFICATIONS_HREF && notificationsEnabled) {
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton onClick={openDrawer} className={itemClassName}>
-                          <Icon className="h-4 w-4 transition-transform duration-200 group-hover/menu-button:scale-110" />
-                          <span className="flex-1 text-[13px]">{item.title}</span>
-                          {item.badge && renderBadge(item.badge, false)}
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  }
 
                   return (
                     <SidebarMenuItem key={item.href}>
