@@ -1,15 +1,15 @@
 "use client"
 
-import { LogOut, MoreVertical, UserRound } from "lucide-react"
+import { LogOut, MoreVertical, Settings2, UserRound } from "lucide-react"
 import { signOut } from "next-auth/react"
 
 import { useAccountPanel } from "@/components/dashboard/account-panel"
 import { AppearanceSetting } from "@/components/dashboard/appearance-setting"
-import { LanguageSetting } from "@/components/dashboard/language-setting"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -32,7 +32,7 @@ export function NavUser({
   userImage?: string | null
 }) {
   const { isMobile } = useSidebar()
-  const { openAccount, language } = useAccountPanel()
+  const { openAccount, openSettings } = useAccountPanel()
 
   const name = userName || "Account"
   const email = userEmail || "Signed in"
@@ -92,27 +92,29 @@ export function NavUser({
             <DropdownMenuSeparator />
 
             {/* No Notifications row: the header bell is the one way in, and it
-                carries the unread count. Account opens a drawer, so defer a frame
-                — the menu unmounts on select while the overlay is mounting, and
-                Radix's focus restore would otherwise steal focus back. */}
-            <DropdownMenuItem onSelect={() => requestAnimationFrame(openAccount)}>
-              <UserRound />
-              Account
-            </DropdownMenuItem>
+                carries the unread count. Both of these open an overlay, so defer a
+                frame — the menu unmounts on select while the overlay is mounting,
+                and Radix's focus restore would otherwise steal focus back. */}
+            <DropdownMenuGroup>
+              <DropdownMenuItem onSelect={() => requestAnimationFrame(openAccount)}>
+                <UserRound />
+                Account
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => requestAnimationFrame(openSettings)}>
+                <Settings2 />
+                Settings
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
 
             <DropdownMenuSeparator />
 
-            {/* Day/night and language sit in the menu itself rather than behind a
-                Settings panel: they are one-tap preferences, and the panel held
-                nothing else. Not DropdownMenuItems — selecting one would close the
-                menu before the change could be seen — so the menu's own arrow-key
-                and typeahead handling has to be kept off these controls. */}
-            <div
-              className="space-y-1.5 px-2 py-1.5"
-              onKeyDown={(event) => event.stopPropagation()}
-            >
+            {/* Day/night stays in the menu rather than going into Settings: it is
+                one tap and the result is the whole screen, so a panel in between
+                only gets in the way. Not a DropdownMenuItem — selecting one closes
+                the menu before the flip can be seen — so the menu's own arrow-key
+                and typeahead handling has to be kept off the switch. */}
+            <div className="px-2 py-1.5" onKeyDown={(event) => event.stopPropagation()}>
               <AppearanceSetting />
-              <LanguageSetting defaultValue={language} compact />
             </div>
 
             <DropdownMenuSeparator />
