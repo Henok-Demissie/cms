@@ -20,15 +20,6 @@ yarn-error.log*
 # env files
 .env*
 
-# local database
-/prisma/dev.db
-/prisma/dev.db.backup-*
-
-# python backend
-backend/.venv/
-__pycache__/
-*.py[cod]
-
 # vercel
 .vercel
 
