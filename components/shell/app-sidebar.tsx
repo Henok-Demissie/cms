@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   ArrowLeft,
+  ClipboardList,
   Code2,
   Gift,
   Headset,
@@ -15,94 +16,113 @@ import {
   Store,
   User,
   Wallet,
-  ClipboardList,
 } from "lucide-react"
 import { Logo } from "@/components/brand/logo"
-import { cn } from "@/lib/utils"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+} from "@/components/ui/sidebar"
+import { formatGhs, wallet } from "@/lib/data"
 
-const mainNav = [
+const platform = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/buy", label: "Buy Data", icon: ShoppingCart },
-  { href: "/dashboard/orders", label: "Orders", icon: ClipboardList },
+  { href: "/dashboard/orders", label: "Orders", icon: ClipboardList, badge: "3" },
   { href: "/dashboard/wallet", label: "Wallet", icon: Wallet },
   { href: "/dashboard/transactions", label: "Transactions", icon: Receipt },
+]
+
+const grow = [
   { href: "/dashboard/refer", label: "Refer & Earn", icon: Gift },
   { href: "/dashboard/agent", label: "Agent Store", icon: Store },
   { href: "/developers", label: "Developer API", icon: Code2 },
 ]
 
-const secondaryNav = [
+const account = [
   { href: "/dashboard/profile", label: "Profile", icon: User },
   { href: "/dashboard/track", label: "Track Order", icon: Search },
   { href: "/dashboard/support", label: "Support", icon: Headset },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
 
-function NavItem({
-  href,
-  label,
-  icon: Icon,
-  active,
-  onNavigate,
-}: {
-  href: string
-  label: string
-  icon: typeof LayoutDashboard
-  active: boolean
-  onNavigate?: () => void
-}) {
-  return (
-    <Link
-      href={href}
-      onClick={onNavigate}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[15px] font-semibold transition-colors",
-        active
-          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
-      )}
-    >
-      {active && (
-        <span
-          aria-hidden="true"
-          className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-primary"
-        />
-      )}
-      <Icon className={cn("size-[18px] shrink-0", active ? "text-brand-emerald" : "text-muted-foreground")} />
-      <span>{label}</span>
-    </Link>
-  )
-}
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; badge?: string }
 
-export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
+export function AppSidebar() {
   const pathname = usePathname()
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(href + "/")
 
+  const renderGroup = (label: string, items: NavItem[]) => (
+    <SidebarGroup>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton asChild isActive={isActive(item.href)} tooltip={item.label}>
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+              {item.badge && <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>}
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  )
+
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar">
-      <div className="flex h-16 items-center border-b border-sidebar-border px-5 lg:hidden">
-        <Logo size="sm" />
-      </div>
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4" aria-label="Main">
-        {mainNav.map((item) => (
-          <NavItem key={item.href} {...item} active={isActive(item.href)} onNavigate={onNavigate} />
-        ))}
-        <div className="my-3 h-px bg-sidebar-border" role="separator" />
-        {secondaryNav.map((item) => (
-          <NavItem key={item.href} {...item} active={isActive(item.href)} onNavigate={onNavigate} />
-        ))}
-      </nav>
-      <div className="border-t border-sidebar-border p-3">
-        <Link
-          href="/"
-          className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[15px] font-semibold text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
-        >
-          <ArrowLeft className="size-[18px] text-muted-foreground" />
-          Back to Home
-        </Link>
-      </div>
-    </aside>
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="h-16 justify-center border-b border-sidebar-border px-4 group-data-[collapsible=icon]:px-2">
+        <div className="group-data-[collapsible=icon]:hidden">
+          <Logo href="/dashboard" size="sm" />
+        </div>
+        <div className="hidden group-data-[collapsible=icon]:block">
+          <Logo href="/dashboard" size="sm" markOnly />
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent>
+        {renderGroup("Platform", platform)}
+        {renderGroup("Grow", grow)}
+        {renderGroup("Account", account)}
+      </SidebarContent>
+
+      <SidebarFooter className="border-t border-sidebar-border">
+        <div className="brand-gradient-soft rounded-lg border border-primary/20 p-3 group-data-[collapsible=icon]:hidden">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Wallet balance</p>
+          <p className="mt-0.5 text-lg font-extrabold tabular-nums">{formatGhs(wallet.balance)}</p>
+          <Link
+            href="/dashboard/wallet"
+            className="mt-1 inline-block text-xs font-semibold text-brand-emerald hover:underline"
+          >
+            Top up wallet
+          </Link>
+        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Back to home">
+              <Link href="/">
+                <ArrowLeft />
+                <span>Back to Home</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
   )
 }

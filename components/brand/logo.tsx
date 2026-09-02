@@ -5,10 +5,11 @@ interface LogoProps {
   href?: string
   size?: "sm" | "md" | "lg"
   showTagline?: boolean
+  markOnly?: boolean
   className?: string
 }
 
-export function Logo({ href = "/", size = "md", showTagline = true, className }: LogoProps) {
+export function Logo({ href = "/", size = "md", showTagline = true, markOnly = false, className }: LogoProps) {
   const mark = size === "lg" ? "size-11" : size === "sm" ? "size-8" : "size-9"
   const word = size === "lg" ? "text-2xl" : size === "sm" ? "text-base" : "text-lg"
 
@@ -30,16 +31,18 @@ export function Logo({ href = "/", size = "md", showTagline = true, className }:
           <circle cx="18" cy="6" r="2.6" fill="currentColor" />
         </svg>
       </span>
-      <span className="flex flex-col leading-none">
-        <span className={cn("font-extrabold tracking-tight text-foreground", word)}>
-          Data<span className="brand-gradient-text">Sell</span>
-        </span>
-        {showTagline && (
-          <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Buy data. Save more.
+      {!markOnly && (
+        <span className="flex flex-col leading-none">
+          <span className={cn("font-extrabold tracking-tight text-foreground", word)}>
+            Data<span className="brand-gradient-text">Sell</span>
           </span>
-        )}
-      </span>
+          {showTagline && (
+            <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Buy data. Save more.
+            </span>
+          )}
+        </span>
+      )}
     </Link>
   )
 }

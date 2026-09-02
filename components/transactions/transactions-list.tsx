@@ -2,15 +2,23 @@
 
 import { useMemo, useState } from "react"
 import { ArrowDownToLine, Gift, Receipt, RotateCcw, Search, ShoppingCart } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { EmptyState } from "@/components/brand/empty-state"
 import { StatusBadge } from "@/components/brand/status-badge"
+import { cn } from "@/lib/utils"
 import { formatDate, formatGhs, formatTime, transactions, type Transaction } from "@/lib/data"
 
-const filters: { id: "all" | Transaction["kind"]; label: string; icon: typeof Receipt }[] = [
-  { id: "all", label: "All", icon: Receipt },
-  { id: "order", label: "Orders", icon: ShoppingCart },
-  { id: "topup", label: "Top-ups", icon: ArrowDownToLine },
+type Filter = "all" | Transaction["kind"]
+
+const filters: { id: Filter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "order", label: "Orders" },
+  { id: "topup", label: "Top-ups" },
+  { id: "refund", label: "Refunds" },
+  { id: "referral", label: "Referrals" },
 ]
 
 const kindIcon: Record<Transaction["kind"], typeof Receipt> = {
@@ -21,7 +29,7 @@ const kindIcon: Record<Transaction["kind"], typeof Receipt> = {
 }
 
 export function TransactionsList() {
-  const [filter, setFilter] = useState<(typeof filters)[number]["id"]>("all")
+  const [filter, setFilter] = useState<Filter>("all")
   const [q, setQ] = useState("")
 
   const list = useMemo(
@@ -36,69 +44,98 @@ export function TransactionsList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" className="flex gap-2">
-          {filters.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              role="tab"
-              aria-selected={filter === id}
-              onClick={() => setFilter(id)}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
-                filter === id ? "brand-gradient brand-glow text-brand-deep" : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Icon className="size-3.5" aria-hidden />
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="relative w-full sm:w-64">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-          <Input
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)} className="min-w-0">
+          <TabsList className="w-full justify-start overflow-x-auto md:w-fit">
+            {filters.map(({ id, label }) => (
+              <TabsTrigger key={id} value={id}>
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        <InputGroup className="md:w-72">
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+          <InputGroupInput
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search reference, order ID"
+            placeholder="Search reference or description"
             aria-label="Search transactions"
-            className="h-11 rounded-xl bg-muted pl-10"
           />
-        </div>
+        </InputGroup>
       </div>
 
-      {list.length === 0 ? (
-        <EmptyState icon={Receipt} title="No transactions found" description="New transactions will appear here." />
-      ) : (
-        <ul className="card-shadow divide-y divide-border rounded-2xl border border-border bg-card">
-          {list.map((t) => {
-            const Icon = kindIcon[t.kind]
-            const credit = t.amount > 0
-            return (
-              <li key={t.id} className="flex items-center gap-3 px-5 py-4">
-                <span
-                  className={`flex size-10 items-center justify-center rounded-full ${
-                    credit ? "bg-success/10 text-brand-emerald" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  <Icon className="size-4" aria-hidden />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{t.label}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    <span className="font-mono">{t.reference}</span> · {formatDate(t.createdAt)} {formatTime(t.createdAt)}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <span className={`text-sm font-bold ${credit ? "text-brand-emerald" : ""}`}>
-                    {credit ? "+" : "−"}
-                    {formatGhs(t.amount)}
-                  </span>
-                  <StatusBadge status={t.status} />
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+      <Card className="card-shadow overflow-hidden py-0">
+        <CardContent className="px-0">
+          {list.length === 0 ? (
+            <EmptyState icon={Receipt} title="No transactions found" description="New transactions will appear here." />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="pl-6">Description</TableHead>
+                  <TableHead className="hidden md:table-cell">Reference</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden pr-6 text-right sm:table-cell">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {list.map((t) => {
+                  const Icon = kindIcon[t.kind]
+                  const credit = t.amount > 0
+                  return (
+                    <TableRow key={t.id}>
+                      <TableCell className="pl-6">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={cn(
+                              "flex size-9 shrink-0 items-center justify-center rounded-lg",
+                              credit ? "bg-success/10 text-brand-emerald" : "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            <Icon className="size-4" aria-hidden />
+                          </span>
+                          <span className="truncate font-semibold">{t.label}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden font-mono text-xs text-muted-foreground md:table-cell">
+                        {t.reference}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <div className="flex flex-col text-muted-foreground">
+                          <span>{formatDate(t.createdAt)}</span>
+                          <span className="text-xs">{formatTime(t.createdAt)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col items-start gap-1">
+                          <StatusBadge status={t.status} />
+                          <span className={cn("text-xs font-semibold tabular-nums sm:hidden", credit && "text-brand-emerald")}>
+                            {credit ? "+" : "−"}
+                            {formatGhs(Math.abs(t.amount))}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          "hidden pr-6 text-right font-semibold tabular-nums sm:table-cell",
+                          credit && "text-brand-emerald",
+                        )}
+                      >
+                        {credit ? "+" : "−"}
+                        {formatGhs(Math.abs(t.amount))}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

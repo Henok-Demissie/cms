@@ -1,37 +1,30 @@
 import Link from "next/link"
-import { ClipboardList, Gift, MessageCircle, Search } from "lucide-react"
+import { ClipboardList, Gift, Headset, Search } from "lucide-react"
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item"
 
 const actions = [
-  { href: "/dashboard/orders", label: "Orders", icon: ClipboardList },
-  { href: "/dashboard/refer", label: "Free data", icon: Gift, highlight: true },
-  { href: "/dashboard/support", label: "Support", icon: MessageCircle },
-  { href: "/dashboard/track", label: "Track", icon: Search },
+  { href: "/dashboard/orders", label: "Orders", desc: "Track deliveries", icon: ClipboardList },
+  { href: "/dashboard/refer", label: "Free data", desc: "Invite & earn", icon: Gift, highlight: true },
+  { href: "/dashboard/support", label: "Support", desc: "We reply fast", icon: Headset },
+  { href: "/dashboard/track", label: "Track", desc: "Find any order", icon: Search },
 ]
 
 export function QuickActions() {
   return (
-    <nav aria-label="Quick actions" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {actions.map(({ href, label, icon: Icon, highlight }) => (
-        <Link
-          key={href}
-          href={href}
-          className={`card-shadow group relative flex flex-col items-center gap-2.5 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:border-brand-green/50 ${
-            highlight ? "brand-gradient-soft border-brand-green/40" : "border-border bg-card"
-          }`}
-        >
-          {highlight && (
-            <span className="absolute right-3 top-3 size-2 rounded-full bg-brand-green" aria-hidden />
-          )}
-          <span
-            className={`flex size-11 items-center justify-center rounded-full ${
-              highlight ? "brand-gradient text-brand-deep" : "bg-muted text-brand-emerald"
-            }`}
-          >
-            <Icon className="size-5" aria-hidden />
-          </span>
-          <span className="text-xs font-semibold text-foreground">{label}</span>
-        </Link>
+    <ItemGroup className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Quick actions">
+      {actions.map((a) => (
+        <Item key={a.href} asChild variant="outline" className="card-shadow bg-card transition-colors hover:border-primary/40">
+          <Link href={a.href}>
+            <ItemMedia variant="icon" className={a.highlight ? "brand-gradient border-0 text-brand-deep" : "text-brand-emerald"}>
+              <a.icon />
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>{a.label}</ItemTitle>
+              <ItemDescription>{a.desc}</ItemDescription>
+            </ItemContent>
+          </Link>
+        </Item>
       ))}
-    </nav>
+    </ItemGroup>
   )
 }

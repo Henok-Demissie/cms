@@ -1,6 +1,13 @@
 import type { LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
-import { cn } from "@/lib/utils"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 
 interface EmptyStateProps {
   icon: LucideIcon
@@ -12,15 +19,15 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div className={cn("flex flex-col items-center justify-center gap-4 px-6 py-14 text-center", className)}>
-      <div className="brand-gradient-soft grid size-16 place-items-center rounded-2xl border border-primary/20">
-        <Icon className="size-7 text-brand-emerald" aria-hidden="true" />
-      </div>
-      <div className="flex flex-col gap-1">
-        <p className="text-base font-bold">{title}</p>
-        {description && <p className="max-w-xs text-sm text-muted-foreground text-pretty">{description}</p>}
-      </div>
-      {action}
-    </div>
+    <Empty className={className}>
+      <EmptyHeader>
+        <EmptyMedia variant="icon" className="brand-gradient-soft border border-primary/20 text-brand-emerald">
+          <Icon />
+        </EmptyMedia>
+        <EmptyTitle>{title}</EmptyTitle>
+        {description && <EmptyDescription>{description}</EmptyDescription>}
+      </EmptyHeader>
+      {action && <EmptyContent>{action}</EmptyContent>}
+    </Empty>
   )
 }

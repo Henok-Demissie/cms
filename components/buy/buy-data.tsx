@@ -1,10 +1,18 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Activity, Clock, HelpCircle, Phone, Signal, Zap } from "lucide-react"
+import Link from "next/link"
+import { Clock, HelpCircle, Phone, Signal, Zap } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { bundles, checkers, formatGhs, networks, type Bundle, type ServiceTab } from "@/lib/data"
+import { ButtonGroup } from "@/components/ui/button-group"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { bundles, checkers, formatGhs, networks, type Bundle, type NetworkId, type ServiceTab } from "@/lib/data"
 import { BundleCard } from "./bundle-card"
 import { CheckoutSheet } from "./checkout-sheet"
 
@@ -18,174 +26,189 @@ const tabs: { id: ServiceTab; label: string; icon?: typeof Zap }[] = [
 
 export function BuyData() {
   const [tab, setTab] = useState<ServiceTab>("mtn")
-  const [flexa, setFlexa] = useState(false)
-  const [airtimeNet, setAirtimeNet] = useState(networks[0].id)
+  const [plan, setPlan] = useState<"regular" | "flexa">("regular")
+  const [airtimeNet, setAirtimeNet] = useState<NetworkId>(networks[0].id)
   const [airtimeAmt, setAirtimeAmt] = useState("")
   const [selected, setSelected] = useState<{ title: string; price: number; network?: string } | null>(null)
 
   const visible = useMemo<Bundle[]>(() => {
     if (tab === "airtime" || tab === "checkers") return []
-    return bundles.filter((b) => b.network === tab && (tab !== "mtn" || !!b.flexa === flexa))
-  }, [tab, flexa])
+    return bundles.filter((b) => b.network === tab && (tab !== "mtn" || !!b.flexa === (plan === "flexa")))
+  }, [tab, plan])
+
+  const networkName = (id: string) => networks.find((n) => n.id === id)?.name
 
   return (
-    <div className="flex flex-col gap-4">
-      <div role="tablist" aria-label="Service" className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1 sm:grid-cols-5">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            role="tab"
-            aria-selected={tab === id}
-            onClick={() => setTab(id)}
-            className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
-              tab === id ? "brand-gradient brand-glow text-brand-deep" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {Icon && <Icon className="size-3.5" aria-hidden />}
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {tab === "mtn" && (
-        <div className="grid grid-cols-2 gap-1 rounded-2xl border border-border bg-card p-1">
-          <button
-            onClick={() => setFlexa(false)}
-            aria-pressed={!flexa}
-            className={`rounded-xl py-3 text-sm font-semibold transition-colors ${
-              !flexa ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Regular MTN
-          </button>
-          <button
-            onClick={() => setFlexa(true)}
-            aria-pressed={flexa}
-            className={`flex flex-col items-center rounded-xl py-2 text-sm font-semibold transition-colors ${
-              flexa ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <Zap className="size-3.5 text-brand-emerald" aria-hidden /> MTN Flexa
-            </span>
-            <span className="text-[10px] uppercase tracking-wider text-brand-emerald">every number</span>
-          </button>
-        </div>
-      )}
-
-      {tab !== "checkers" && (
-        <div className="flex items-center gap-3 rounded-2xl border border-brand-green/30 bg-success/8 px-4 py-3">
-          <span className="pulse-dot size-2 rounded-full bg-brand-green" aria-hidden />
-          <span className="flex size-8 items-center justify-center rounded-full bg-card text-brand-emerald">
-            <Clock className="size-4" aria-hidden />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">Delivering in 5–30 minutes</p>
-            <p className="truncate text-xs text-muted-foreground">Orders are flowing normally — safe and tracked</p>
-          </div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-[10px] font-bold text-brand-emerald">
-            <Activity className="size-3" aria-hidden /> LIVE
-          </span>
-        </div>
-      )}
-
-      {tab !== "checkers" && tab !== "airtime" && (
-        <a href="/dashboard/support" className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-emerald hover:underline">
-          <HelpCircle className="size-3.5" aria-hidden /> Why does my data sometimes take longer?
-        </a>
-      )}
-
-      {visible.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {visible.map((b) => (
-            <BundleCard
-              key={b.id}
-              bundle={b}
-              onSelect={() =>
-                setSelected({
-                  title: `${networks.find((n) => n.id === b.network)?.name} ${b.sizeGb}GB · ${b.validityDays} days`,
-                  price: b.price,
-                  network: b.network,
-                })
-              }
-            />
+    <div className="flex flex-col gap-5">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as ServiceTab)} className="gap-5">
+        <TabsList className="h-auto w-full flex-wrap justify-start sm:w-fit">
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <TabsTrigger key={id} value={id} className="flex-none px-4 py-1.5">
+              {Icon && <Icon />}
+              {label}
+            </TabsTrigger>
           ))}
-        </div>
-      )}
+        </TabsList>
 
-      {tab === "airtime" && (
-        <div className="card-shadow rounded-2xl border border-border bg-card p-5">
-          <h2 className="title-bar text-sm font-bold">Airtime top-up</h2>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            {networks.map((n) => (
-              <button
-                key={n.id}
-                onClick={() => setAirtimeNet(n.id)}
-                aria-pressed={airtimeNet === n.id}
-                className={`rounded-xl border py-3 text-sm font-semibold transition-colors ${
-                  airtimeNet === n.id ? "border-brand-green bg-success/10 text-foreground" : "border-border text-muted-foreground"
-                }`}
+        {tab !== "checkers" && (
+          <Alert className="border-primary/30 bg-success/8">
+            <Clock className="text-brand-emerald" />
+            <AlertTitle className="flex items-center gap-2">
+              Delivering in 5–30 minutes
+              <Badge variant="outline" className="gap-1 border-primary/40 text-brand-emerald">
+                <span className="pulse-dot size-1.5 rounded-full bg-brand-green" aria-hidden />
+                Live
+              </Badge>
+            </AlertTitle>
+            <AlertDescription>
+              Orders are flowing normally — every bundle is tracked end-to-end.{" "}
+              {tab !== "airtime" && (
+                <Link href="/dashboard/support" className="inline-flex items-center gap-1 font-medium text-brand-emerald hover:underline">
+                  <HelpCircle className="size-3.5" aria-hidden /> Why can delivery take longer?
+                </Link>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {(["mtn", "telecel", "airteltigo"] as const).map((net) => (
+          <TabsContent key={net} value={net} className="flex flex-col gap-5">
+            {net === "mtn" && (
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                value={plan}
+                onValueChange={(v) => v && setPlan(v as "regular" | "flexa")}
+                className="w-full sm:w-auto"
+                aria-label="MTN plan type"
               >
-                {n.name}
-              </button>
-            ))}
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="airtime-amt" className="text-xs font-semibold text-muted-foreground">
-                Amount (GHS)
-              </label>
-              <Input
-                id="airtime-amt"
-                inputMode="decimal"
-                placeholder="e.g. 10"
-                value={airtimeAmt}
-                onChange={(e) => setAirtimeAmt(e.target.value)}
-                className="h-11"
-              />
-            </div>
-            <div className="flex flex-wrap items-end gap-2">
-              {[5, 10, 20, 50].map((v) => (
-                <Button key={v} type="button" variant="outline" size="sm" onClick={() => setAirtimeAmt(String(v))}>
-                  {v}
-                </Button>
+                <ToggleGroupItem value="regular" className="flex-1 px-4 sm:flex-none">
+                  Regular MTN
+                </ToggleGroupItem>
+                <ToggleGroupItem value="flexa" className="flex-1 gap-1.5 px-4 sm:flex-none">
+                  <Zap className="text-brand-emerald" />
+                  MTN Flexa
+                  <span className="hidden text-xs font-normal text-muted-foreground sm:inline">· every number</span>
+                </ToggleGroupItem>
+              </ToggleGroup>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {visible.map((b) => (
+                <BundleCard
+                  key={b.id}
+                  bundle={b}
+                  onSelect={() =>
+                    setSelected({
+                      title: `${networkName(b.network)}${b.flexa ? " Flexa" : ""} ${b.sizeGb}GB · ${b.validityDays} days`,
+                      price: b.price,
+                      network: b.network,
+                    })
+                  }
+                />
               ))}
             </div>
-          </div>
-          <Button
-            className="brand-gradient brand-glow mt-4 h-11 w-full font-bold text-brand-deep hover:opacity-90"
-            disabled={!airtimeAmt || Number(airtimeAmt) <= 0}
-            onClick={() =>
-              setSelected({
-                title: `${networks.find((n) => n.id === airtimeNet)?.name} airtime`,
-                price: Number(airtimeAmt),
-                network: airtimeNet,
-              })
-            }
-          >
-            Continue
-          </Button>
-        </div>
-      )}
+          </TabsContent>
+        ))}
 
-      {tab === "checkers" && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {checkers.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setSelected({ title: c.name, price: c.price })}
-              className="card-shadow group flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:border-brand-green/50"
-            >
-              <span className="w-fit rounded-md bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                {c.org} · {c.year}
-              </span>
-              <span className="text-base font-bold">{c.name}</span>
-              <span className="brand-gradient-text text-lg font-extrabold">{formatGhs(c.price)}</span>
-              <span className="text-xs text-muted-foreground">Serial &amp; PIN delivered instantly via SMS</span>
-            </button>
-          ))}
-        </div>
-      )}
+        <TabsContent value="airtime">
+          <Card className="card-shadow max-w-xl">
+            <CardHeader>
+              <CardTitle>Airtime top-up</CardTitle>
+              <CardDescription>Instant credit to any Ghanaian number.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel>Network</FieldLabel>
+                  <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    value={airtimeNet}
+                    onValueChange={(v) => v && setAirtimeNet(v as NetworkId)}
+                    className="w-full"
+                    aria-label="Network"
+                  >
+                    {networks.map((n) => (
+                      <ToggleGroupItem key={n.id} value={n.id} className="flex-1">
+                        {n.name}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="airtime-amt">Amount</FieldLabel>
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <InputGroupText>GHS</InputGroupText>
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      id="airtime-amt"
+                      inputMode="decimal"
+                      placeholder="10.00"
+                      value={airtimeAmt}
+                      onChange={(e) => setAirtimeAmt(e.target.value)}
+                    />
+                  </InputGroup>
+                  <FieldDescription>Minimum GHS 1.00. Quick picks:</FieldDescription>
+                  <ButtonGroup>
+                    {[5, 10, 20, 50].map((v) => (
+                      <Button key={v} type="button" variant="outline" size="sm" onClick={() => setAirtimeAmt(String(v))}>
+                        {v}
+                      </Button>
+                    ))}
+                  </ButtonGroup>
+                </Field>
+              </FieldGroup>
+            </CardContent>
+            <CardFooter>
+              <Button
+                className="brand-gradient brand-glow w-full font-bold text-brand-deep hover:opacity-90"
+                disabled={!airtimeAmt || Number(airtimeAmt) <= 0}
+                onClick={() =>
+                  setSelected({
+                    title: `${networkName(airtimeNet)} airtime · ${formatGhs(Number(airtimeAmt))}`,
+                    price: Number(airtimeAmt),
+                    network: airtimeNet,
+                  })
+                }
+              >
+                Continue
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="checkers">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {checkers.map((c) => (
+              <Card
+                key={c.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelected({ title: c.name, price: c.price })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    setSelected({ title: c.name, price: c.price })
+                  }
+                }}
+                className="card-shadow cursor-pointer transition-all outline-none hover:-translate-y-0.5 hover:border-primary/50 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <CardHeader>
+                  <Badge variant="secondary" className="w-fit uppercase tracking-wider">
+                    {c.org} · {c.year}
+                  </Badge>
+                  <CardTitle className="mt-2">{c.name}</CardTitle>
+                  <CardDescription>Serial &amp; PIN delivered instantly via SMS</CardDescription>
+                </CardHeader>
+                <CardFooter>
+                  <span className="brand-gradient-text text-lg font-extrabold tabular-nums">{formatGhs(c.price)}</span>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <CheckoutSheet item={selected} onClose={() => setSelected(null)} />
     </div>

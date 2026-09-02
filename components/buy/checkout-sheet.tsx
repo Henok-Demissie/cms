@@ -1,10 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle2, Wallet } from "lucide-react"
+import Link from "next/link"
+import { AlertCircle, CheckCircle2, Wallet } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from "@/components/ui/item"
+import { Separator } from "@/components/ui/separator"
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Spinner } from "@/components/ui/spinner"
+import { cn } from "@/lib/utils"
 import { formatGhs, wallet } from "@/lib/data"
 
 interface Item {
@@ -15,76 +23,134 @@ interface Item {
 
 export function CheckoutSheet({ item, onClose }: { item: Item | null; onClose: () => void }) {
   const [phone, setPhone] = useState("")
-  const [done, setDone] = useState(false)
+  const [touched, setTouched] = useState(false)
+  const [status, setStatus] = useState<"idle" | "paying" | "done">("idle")
   const insufficient = item ? wallet.balance < item.price : false
+  const validPhone = phone.replace(/\D/g, "").length >= 10
+  const invalid = touched && !validPhone
 
   const close = () => {
     onClose()
     setTimeout(() => {
-      setDone(false)
+      setStatus("idle")
       setPhone("")
+      setTouched(false)
     }, 250)
+  }
+
+  const pay = () => {
+    setStatus("paying")
+    setTimeout(() => setStatus("done"), 900)
   }
 
   return (
     <Sheet open={!!item} onOpenChange={(o) => !o && close()}>
-      <SheetContent side="right" className="w-full sm:max-w-md">
-        {item && !done && (
+      <SheetContent side="right" className="flex w-full flex-col sm:max-w-md">
+        {item && status !== "done" && (
           <>
             <SheetHeader>
               <SheetTitle>Confirm purchase</SheetTitle>
-              <SheetDescription>{item.title}</SheetDescription>
+              <SheetDescription>Review the details and pay from your wallet.</SheetDescription>
             </SheetHeader>
-            <div className="flex flex-col gap-5 px-4">
-              <div className="brand-gradient-soft rounded-2xl border border-brand-green/30 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total</p>
-                <p className="mt-1 text-3xl font-extrabold">{formatGhs(item.price)}</p>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="phone" className="text-xs font-semibold text-muted-foreground">
-                  Recipient phone number
-                </label>
-                <Input
-                  id="phone"
-                  inputMode="tel"
-                  placeholder="024 000 0000"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="h-11"
-                />
-              </div>
-              <div className="flex items-center justify-between rounded-xl border border-border px-4 py-3 text-sm">
-                <span className="inline-flex items-center gap-2 text-muted-foreground">
-                  <Wallet className="size-4 text-brand-emerald" aria-hidden /> Wallet balance
+
+            <div className="flex flex-1 flex-col gap-5 px-4">
+              <Item variant="outline" className="brand-gradient-soft border-primary/30">
+                <ItemContent>
+                  <ItemDescription>Item</ItemDescription>
+                  <ItemTitle className="text-base">{item.title}</ItemTitle>
+                </ItemContent>
+                <span className="text-2xl font-extrabold tabular-nums">{formatGhs(item.price)}</span>
+              </Item>
+
+              <FieldGroup>
+                <Field data-invalid={invalid || undefined}>
+                  <FieldLabel htmlFor="phone">Recipient phone number</FieldLabel>
+                  <Input
+                    id="phone"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="024 000 0000"
+                    value={phone}
+                    aria-invalid={invalid || undefined}
+                    onBlur={() => setTouched(true)}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                  <FieldDescription>
+                    {invalid ? "Enter a valid 10-digit Ghanaian number." : "The bundle is delivered to this number."}
+                  </FieldDescription>
+                </Field>
+              </FieldGroup>
+
+              <Separator />
+
+              <Item variant="outline">
+                <ItemMedia variant="icon" className="text-brand-emerald">
+                  <Wallet />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>Wallet balance</ItemTitle>
+                  <ItemDescription>Paid instantly, no card needed</ItemDescription>
+                </ItemContent>
+                <span className={cn("font-bold tabular-nums", insufficient && "text-destructive")}>
+                  {formatGhs(wallet.balance)}
                 </span>
-                <span className={`font-bold ${insufficient ? "text-destructive" : ""}`}>{formatGhs(wallet.balance)}</span>
-              </div>
+              </Item>
+
               {insufficient && (
-                <p className="text-xs text-destructive">Insufficient balance. Top up your wallet to continue.</p>
+                <Alert variant="destructive">
+                  <AlertCircle />
+                  <AlertTitle>Insufficient balance</AlertTitle>
+                  <AlertDescription>
+                    You need {formatGhs(item.price - wallet.balance)} more.{" "}
+                    <Link href="/dashboard/wallet" className="font-semibold underline">
+                      Top up your wallet
+                    </Link>{" "}
+                    to continue.
+                  </AlertDescription>
+                </Alert>
               )}
-              <Button
-                className="brand-gradient brand-glow h-11 font-bold text-brand-deep hover:opacity-90"
-                disabled={phone.replace(/\D/g, "").length < 10 || insufficient}
-                onClick={() => setDone(true)}
-              >
-                Pay {formatGhs(item.price)}
-              </Button>
             </div>
+
+            <SheetFooter>
+              <Button
+                className="brand-gradient brand-glow font-bold text-brand-deep hover:opacity-90"
+                disabled={!validPhone || insufficient || status === "paying"}
+                onClick={pay}
+              >
+                {status === "paying" && <Spinner data-icon="inline-start" />}
+                {status === "paying" ? "Processing…" : `Pay ${formatGhs(item.price)}`}
+              </Button>
+              <Button variant="ghost" onClick={close}>
+                Cancel
+              </Button>
+            </SheetFooter>
           </>
         )}
-        {item && done && (
-          <div className="flex flex-col items-center gap-4 px-4 pt-16 text-center">
-            <span className="brand-gradient brand-glow flex size-16 items-center justify-center rounded-full text-brand-deep">
-              <CheckCircle2 className="size-8" aria-hidden />
-            </span>
-            <SheetTitle>Order placed</SheetTitle>
-            <SheetDescription>
-              {item.title} is on its way to {phone}. Track it in Orders.
-            </SheetDescription>
-            <Button variant="outline" onClick={close} className="mt-2">
-              Done
-            </Button>
-          </div>
+
+        {item && status === "done" && (
+          <>
+            <SheetHeader className="sr-only">
+              <SheetTitle>Order placed</SheetTitle>
+              <SheetDescription>Your order was placed successfully.</SheetDescription>
+            </SheetHeader>
+            <Empty className="flex-1">
+              <EmptyHeader>
+                <EmptyMedia variant="icon" className="brand-gradient border-0 text-brand-deep">
+                  <CheckCircle2 />
+                </EmptyMedia>
+                <EmptyTitle>Order placed</EmptyTitle>
+                <EmptyDescription>
+                  {item.title} is on its way to {phone}. You can follow its progress in Orders.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent className="flex-row justify-center">
+                <Button asChild variant="outline">
+                  <Link href="/dashboard/orders">View orders</Link>
+                </Button>
+                <Button onClick={close}>Done</Button>
+              </EmptyContent>
+            </Empty>
+          </>
         )}
       </SheetContent>
     </Sheet>
