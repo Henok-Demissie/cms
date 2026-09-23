@@ -65,20 +65,23 @@ export function LiveBuyData({
               {n.name}
             </TabsTrigger>
           ))}
-          <TabsTrigger value="checkers" className="flex-none px-4 py-1.5 font-bold">
-            WASSCE Checkers
+          <TabsTrigger value="checkers" className="flex-none whitespace-nowrap px-3 py-1.5 font-bold">
+            Checkers
           </TabsTrigger>
         </TabsList>
 
 <Alert className="border-primary/30 bg-success/8 py-3">
             <Clock className="text-brand-emerald" />
-            <AlertTitle className="flex items-center gap-2">
+            <AlertTitle className="flex flex-wrap items-center gap-2">
               Live delivery
               <Badge variant="outline" className="gap-1 border-primary/40 text-brand-emerald">
                 <span className="pulse-dot size-1.5 rounded-full bg-brand-green" aria-hidden />
                 Live
               </Badge>
             </AlertTitle>
+            <AlertDescription className="mt-1 text-sm">
+              Most orders arrive within 30 minutes. MTN deliveries may take longer during busy periods.
+            </AlertDescription>
           </Alert>
 
         <TabsContent value="checkers" className="flex flex-col gap-5">
