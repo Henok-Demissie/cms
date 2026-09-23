@@ -34,7 +34,7 @@ export function Logo({ href = "/", size = "md", showTagline = true, markOnly = f
       {!markOnly && (
         <span className="flex flex-col leading-none">
           <span className={cn("font-extrabold tracking-tight text-foreground", word)}>
-            Data<span className="brand-gradient-text">Sell</span>
+            Data<span className="brand-gradient-text">Spots</span>
           </span>
           {showTagline && (
             <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
