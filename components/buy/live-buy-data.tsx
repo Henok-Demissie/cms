@@ -67,20 +67,16 @@ export function LiveBuyData({
           ))}
         </TabsList>
 
-        <Alert className="border-primary/30 bg-success/8">
-          <Clock className="text-brand-emerald" />
-          <AlertTitle className="flex items-center gap-2">
-            Live delivery via iDataGH
-            <Badge variant="outline" className="gap-1 border-primary/40 text-brand-emerald">
-              <span className="pulse-dot size-1.5 rounded-full bg-brand-green" aria-hidden />
-              Live
-            </Badge>
-          </AlertTitle>
-          <AlertDescription>
-            Bundles are delivered automatically by our network partner. Most land within minutes, but MTN can take a few
-            hours during heavy demand. Every order is tracked end-to-end and auto-refunded if it fails.
-          </AlertDescription>
-        </Alert>
+<Alert className="border-primary/30 bg-success/8 py-3">
+            <Clock className="text-brand-emerald" />
+            <AlertTitle className="flex items-center gap-2">
+              Live delivery
+              <Badge variant="outline" className="gap-1 border-primary/40 text-brand-emerald">
+                <span className="pulse-dot size-1.5 rounded-full bg-brand-green" aria-hidden />
+                Live
+              </Badge>
+            </AlertTitle>
+          </Alert>
 
         {NETWORKS.map((n) => (
           <TabsContent key={n.id} value={n.id} className="flex flex-col gap-5">

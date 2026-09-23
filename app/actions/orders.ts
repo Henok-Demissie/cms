@@ -131,7 +131,7 @@ export async function placeDataOrder(input: {
     return {
       ok: true,
       orderId,
-      message: "Order placed. iDataGH is delivering your data — MTN can take a while.",
+      message: "Order placed. Your data is being delivered — MTN can take a while.",
     }
   } catch (err) {
     // Provider rejected the order: refund and mark failed.
@@ -139,7 +139,7 @@ export async function placeDataOrder(input: {
     await refundOrder(userId, orderId, pkg.customerPrice, reason)
     revalidatePath("/")
     console.log("[v0] iDataGH place-order failed:", reason)
-    return { ok: false, message: `Order could not be delivered: ${reason}. You were refunded.` }
+    return { ok: false, message: `Order could not be delivered. You were refunded.` }
   }
 }
 
