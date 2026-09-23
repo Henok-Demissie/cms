@@ -107,7 +107,7 @@ export default function HomePage() {
             <p className="mt-1 text-sm opacity-80">Fund your wallet once, buy for any number, any network.</p>
           </div>
           <Button asChild size="lg" className="h-12 bg-brand-deep px-6 font-bold text-brand-deep-foreground hover:bg-brand-deep/90">
-            <Link href="/dashboard">Open DataSell</Link>
+            <Link href="/dashboard">Open DataSpots</Link>
           </Button>
         </section>
       </main>

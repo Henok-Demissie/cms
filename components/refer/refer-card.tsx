@@ -20,7 +20,7 @@ export function ReferCard() {
     }
   }
 
-  const share = `https://wa.me/?text=${encodeURIComponent(`Get cheap data on DataSell! Use my code ${user.referralCode} — ${link}`)}`
+  const share = `https://wa.me/?text=${encodeURIComponent(`Get cheap data on DataSpots! Use my code ${user.referralCode} — ${link}`)}`
   const qualified = referrals.filter((r) => r.status === "qualified").length
 
   return (

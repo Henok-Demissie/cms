@@ -13,7 +13,7 @@ export default function AgentPage() {
           <Store className="size-5" aria-hidden />
         </span>
         <div className="flex-1">
-          <h2 className="text-base font-bold">Become a DataSell agent</h2>
+          <h2 className="text-base font-bold">Become a DataSpots agent</h2>
           <p className="text-sm text-muted-foreground">
             One-time upgrade. Discounts apply to every bundle across MTN, Telecel and AirtelTigo.
           </p>

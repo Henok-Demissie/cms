@@ -7,9 +7,9 @@ const docs: Record<string, { title: string; body: string[] }> = {
   terms: {
     title: "Terms of Service",
     body: [
-      "DataSell sells prepaid mobile data, airtime and examination result checkers for Ghanaian networks. By funding a wallet or placing an order you agree to these terms.",
+      "DataSpots sells prepaid mobile data, airtime and examination result checkers for Ghanaian networks. By funding a wallet or placing an order you agree to these terms.",
       "Orders are final once delivered to the recipient number you entered. Please verify numbers before paying. Orders rejected by a network are refunded to your wallet automatically.",
-      "Wallet balances are non-withdrawable store credit and can only be spent on DataSell services. Data credit earned through referrals is not transferable.",
+      "Wallet balances are non-withdrawable store credit and can only be spent on DataSpots services. Data credit earned through referrals is not transferable.",
     ],
   },
   privacy: {
@@ -23,7 +23,7 @@ const docs: Record<string, { title: string; body: string[] }> = {
   disclaimer: {
     title: "Disclaimer",
     body: [
-      "DataSell is an independent reseller and is not affiliated with MTN Ghana, Telecel Ghana, AirtelTigo or WAEC.",
+      "DataSpots is an independent reseller and is not affiliated with MTN Ghana, Telecel Ghana, AirtelTigo or WAEC.",
       "Delivery times depend on network conditions. Most orders are delivered within 30 minutes; during congestion delivery can take up to 48 hours.",
     ],
   },

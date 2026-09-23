@@ -14,7 +14,7 @@ export function ReferralInviteCard({ code, link }: { code: string; link: string 
 
   async function shareLink() {
     if (navigator.share) {
-      await navigator.share({ title: "Join DataSell", text: "Join me on DataSell and get started with affordable data.", url: link })
+      await navigator.share({ title: "Join DataSpots", text: "Join me on DataSpots and get started with affordable data.", url: link })
       return
     }
     await copyLink()

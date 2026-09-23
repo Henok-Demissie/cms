@@ -77,7 +77,7 @@ export function SettingsPanels() {
 
   return (
     <>
-      <Panel icon={Palette} title="Appearance" subtitle="How DataSell looks on your device">
+      <Panel icon={Palette} title="Appearance" subtitle="How DataSpots looks on your device">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Theme</p>
         <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
           {(["light", "dark"] as const).map((t) => (
@@ -130,7 +130,7 @@ export function SettingsPanels() {
       </Panel>
 
       <Panel icon={Send} title="Integrations" subtitle="Link other apps to your account">
-        <Row icon={Send} title="Connect Telegram" text="Get order alerts in the DataSell bot." />
+        <Row icon={Send} title="Connect Telegram" text="Get order alerts in the DataSpots bot." />
       </Panel>
 
       <Panel icon={HelpCircle} title="Help & Support" subtitle="We are here for you">
@@ -139,14 +139,14 @@ export function SettingsPanels() {
       </Panel>
 
       <Panel icon={FileText} title="Legal & Privacy" subtitle="The fine print and how we handle your data">
-        <Row icon={FileText} title="Terms of Service" text="Rules for using DataSell." href="/legal/terms" />
+        <Row icon={FileText} title="Terms of Service" text="Rules for using DataSpots." href="/legal/terms" />
         <Row icon={FileText} title="Privacy Policy" text="How we collect and use data." href="/legal/privacy" />
         <Row icon={FileText} title="Disclaimer" text="Service limitations and more." href="/legal/disclaimer" />
       </Panel>
 
       <section className="brand-gradient-soft card-shadow flex items-center justify-between rounded-2xl border border-brand-green/30 p-5">
         <div>
-          <p className="text-sm font-bold">DataSell</p>
+          <p className="text-sm font-bold">DataSpots</p>
           <p className="text-xs text-muted-foreground">Affordable data bundles in Ghana — MTN, Telecel and AirtelTigo.</p>
         </div>
         <span className="rounded-full bg-card px-2.5 py-1 font-mono text-[10px] font-bold text-brand-emerald">v1.0</span>
