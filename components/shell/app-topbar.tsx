@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Bell, LogOut, Moon, Search, Settings, Sun, User } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -28,7 +28,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { CommandPalette } from "@/components/shell/command-palette"
-import { user } from "@/lib/data"
+import { authClient } from "@/lib/auth-client"
 import { useState } from "react"
 
 const titles: Record<string, string> = {
@@ -44,8 +44,10 @@ const titles: Record<string, string> = {
   settings: "Settings",
 }
 
-export function AppTopbar() {
+export function AppTopbar({ user }: { user: { name: string; email: string } }) {
+  const router = useRouter()
   const { theme, setTheme } = useTheme()
+  const initials = user.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()
   const pathname = usePathname()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const segment = pathname.split("/")[2]
@@ -130,7 +132,7 @@ export function AppTopbar() {
             <button type="button" aria-label="Account menu" className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <Avatar className="size-8">
                 <AvatarFallback className="brand-gradient text-xs font-extrabold text-brand-deep">
-                  {user.initials}
+                  {initials}
                 </AvatarFallback>
               </Avatar>
             </button>
@@ -139,11 +141,11 @@ export function AppTopbar() {
             <DropdownMenuLabel className="flex items-center gap-3 font-normal">
               <Avatar className="size-9">
                 <AvatarFallback className="brand-gradient text-sm font-extrabold text-brand-deep">
-                  {user.initials}
+                  {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-col">
-                <span className="truncate text-sm font-semibold">{user.fullName}</span>
+                <span className="truncate text-sm font-semibold">{user.name}</span>
                 <span className="truncate text-xs text-muted-foreground">{user.email}</span>
               </div>
             </DropdownMenuLabel>
@@ -162,10 +164,14 @@ export function AppTopbar() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link href="/">
-                  <LogOut /> Sign out
-                </Link>
+              <DropdownMenuItem
+                onSelect={async () => {
+                  await authClient.signOut()
+                  router.replace("/sign-in")
+                  router.refresh()
+                }}
+              >
+                <LogOut /> Sign out
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useMemo, useState, useTransition, type CSSProperties } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { AlertCircle, AlertTriangle, CheckCircle2, Clock, ShieldCheck, Wallet } from "lucide-react"
@@ -30,10 +30,10 @@ export interface ClientPackage {
 
 export type PackagesByNetwork = Record<NetworkId, ClientPackage[]>
 
-const NETWORKS: { id: NetworkId; name: string }[] = [
-  { id: "mtn", name: "MTN" },
-  { id: "telecel", name: "Telecel" },
-  { id: "airteltigo", name: "AirtelTigo" },
+const NETWORKS: { id: NetworkId; name: string; color: string; foreground: string }[] = [
+  { id: "mtn", name: "MTN", color: "#ffcc00", foreground: "#1a1400" },
+  { id: "telecel", name: "Telecel", color: "#e60000", foreground: "#ffffff" },
+  { id: "airteltigo", name: "AirtelTigo", color: "#0a2a8a", foreground: "#ffffff" },
 ]
 
 interface Selected {
@@ -56,7 +56,12 @@ export function LiveBuyData({
       <Tabs value={tab} onValueChange={(v) => setTab(v as NetworkId)} className="gap-5">
         <TabsList className="h-auto w-full flex-wrap justify-start sm:w-fit">
           {NETWORKS.map((n) => (
-            <TabsTrigger key={n.id} value={n.id} className="flex-none px-4 py-1.5">
+            <TabsTrigger
+              key={n.id}
+              value={n.id}
+              className="flex-none border-2 border-transparent px-4 py-1.5 font-bold data-[state=active]:border-current"
+              style={{ "--network-color": n.color, color: tab === n.id ? n.foreground : n.color, backgroundColor: tab === n.id ? n.color : undefined } as CSSProperties}
+            >
               {n.name}
             </TabsTrigger>
           ))}
@@ -89,7 +94,7 @@ export function LiveBuyData({
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {packages[n.id].map((pkg) => (
-                  <Card key={pkg.packageId} className="card-shadow flex flex-col">
+                  <Card key={pkg.packageId} className="card-shadow flex flex-col border-t-4" style={{ borderTopColor: n.color }}>
                     <CardHeader>
                       <CardTitle className="flex items-baseline justify-between">
                         <span className="text-2xl font-extrabold tabular-nums">{pkg.dataSize}GB</span>
