@@ -33,7 +33,7 @@ export function DepositDialog() {
       return
     }
     startTransition(async () => {
-      const res = await topUpWallet(value)
+      const res = await topUpWallet()
       if (res.ok) {
         toast.success(res.message)
         setAmount("")

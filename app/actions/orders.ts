@@ -77,10 +77,10 @@ export async function placeDataOrder(input: {
 
     // Ensure a wallet row exists, then lock it for the balance check.
     await client.query(
-      `INSERT INTO wallets ("userId", balance) VALUES ($1, 0) ON CONFLICT ("userId") DO NOTHING`,
+      `INSERT INTO datasell_wallets ("userId", balance) VALUES ($1, 0) ON CONFLICT ("userId") DO NOTHING`,
       [userId],
     )
-    const walletRes = await client.query(`SELECT balance FROM wallets WHERE "userId" = $1 FOR UPDATE`, [userId])
+    const walletRes = await client.query(`SELECT balance FROM datasell_wallets WHERE "userId" = $1 FOR UPDATE`, [userId])
     const balance = Number(walletRes.rows[0].balance)
 
     if (balance < pkg.customerPrice) {
@@ -88,20 +88,20 @@ export async function placeDataOrder(input: {
       return { ok: false, message: "Insufficient wallet balance. Please top up and try again." }
     }
 
-    await client.query(`UPDATE wallets SET balance = balance - $1, "updatedAt" = now() WHERE "userId" = $2`, [
+    await client.query(`UPDATE datasell_wallets SET balance = balance - $1, "updatedAt" = now() WHERE "userId" = $2`, [
       pkg.customerPrice,
       userId,
     ])
 
     const orderRes = await client.query(
-      `INSERT INTO orders ("userId", network, volume, recipient, reference, "customerPrice", "costPrice", status)
+      `INSERT INTO datasell_orders ("userId", network, volume, recipient, reference, "customerPrice", "costPrice", status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'processing') RETURNING id`,
       [userId, input.network, `${pkg.dataSize}GB`, recipient, reference, pkg.customerPrice, pkg.costPrice],
     )
     orderId = orderRes.rows[0].id
 
     await client.query(
-      `INSERT INTO wallet_transactions ("userId", amount, type, description, "orderId")
+      `INSERT INTO datasell_wallet_transactions ("userId", amount, type, description, "orderId")
        VALUES ($1, $2, 'order', $3, $4)`,
       [userId, -pkg.customerPrice, `${input.network.toUpperCase()} ${pkg.dataSize}GB · ${recipient}`, orderId],
     )
@@ -147,16 +147,16 @@ async function refundOrder(userId: string, orderId: number, amount: number, reas
   const client = await pool.connect()
   try {
     await client.query("BEGIN")
-    await client.query(`UPDATE wallets SET balance = balance + $1, "updatedAt" = now() WHERE "userId" = $2`, [
+    await client.query(`UPDATE datasell_wallets SET balance = balance + $1, "updatedAt" = now() WHERE "userId" = $2`, [
       amount,
       userId,
     ])
     await client.query(
-      `UPDATE orders SET status = 'failed', "failureReason" = $1, "updatedAt" = now() WHERE id = $2`,
+      `UPDATE datasell_orders SET status = 'failed', "failureReason" = $1, "updatedAt" = now() WHERE id = $2`,
       [reason, orderId],
     )
     await client.query(
-      `INSERT INTO wallet_transactions ("userId", amount, type, description, "orderId")
+      `INSERT INTO datasell_wallet_transactions ("userId", amount, type, description, "orderId")
        VALUES ($1, $2, 'refund', $3, $4)`,
       [userId, amount, `Refund · ${reason}`, orderId],
     )
