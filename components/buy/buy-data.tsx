@@ -29,7 +29,7 @@ export function BuyData() {
   const [plan, setPlan] = useState<"regular" | "flexa">("regular")
   const [airtimeNet, setAirtimeNet] = useState<NetworkId>(networks[0].id)
   const [airtimeAmt, setAirtimeAmt] = useState("")
-  const [selected, setSelected] = useState<{ title: string; price: number; network?: string } | null>(null)
+  const [selected, setSelected] = useState<{ title: string; price: number; network?: NetworkId } | null>(null)
 
   const visible = useMemo<Bundle[]>(() => {
     if (tab === "airtime" || tab === "checkers") return []
@@ -54,14 +54,16 @@ export function BuyData() {
           <Alert className="border-primary/30 bg-success/8">
             <Clock className="text-brand-emerald" />
             <AlertTitle className="flex items-center gap-2">
-              Delivering in 5–30 minutes
+              {tab === "airtime" ? "Airtime is usually instant" : "Valid for up to 90 days"}
               <Badge variant="outline" className="gap-1 border-primary/40 text-brand-emerald">
                 <span className="pulse-dot size-1.5 rounded-full bg-brand-green" aria-hidden />
                 Live
               </Badge>
             </AlertTitle>
             <AlertDescription>
-              Orders are flowing normally — every bundle is tracked end-to-end.{" "}
+              {tab === "airtime"
+                ? "Credit is applied to the number right away and every order is tracked end-to-end."
+                : "These bundles last far longer than daily plans. Most deliver within minutes, but during heavy demand it can take a few hours — every order is tracked end-to-end until it lands."}{" "}
               {tab !== "airtime" && (
                 <Link href="/dashboard/support" className="inline-flex items-center gap-1 font-medium text-brand-emerald hover:underline">
                   <HelpCircle className="size-3.5" aria-hidden /> Why can delivery take longer?

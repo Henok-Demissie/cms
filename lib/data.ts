@@ -55,6 +55,13 @@ export const networks: { id: NetworkId; name: string; short: string; color: stri
   { id: "airteltigo", name: "AirtelTigo", short: "AT", color: "#0a2a8a", fg: "#ffffff" },
 ]
 
+// Ghana mobile number prefixes by network (used to catch wrong-network numbers before payment).
+export const networkPrefixes: Record<NetworkId, string[]> = {
+  mtn: ["024", "025", "053", "054", "055", "059"],
+  telecel: ["020", "050"],
+  airteltigo: ["026", "027", "056", "057"],
+}
+
 export const bundles: Bundle[] = [
   { id: "mtn-1", network: "mtn", sizeGb: 1, price: 4.1, validityDays: 90 },
   { id: "mtn-2", network: "mtn", sizeGb: 2, price: 9.13, validityDays: 90, popular: true },
@@ -294,3 +301,27 @@ export const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
 
 export const networkOf = (id: string) => networks.find((n) => n.id === id)
+
+// Reduce any entry (+233…, 233…, 0…) to a local 0XXXXXXXXX form.
+export function normalizeGhPhone(input: string): string {
+  let digits = input.replace(/\D/g, "")
+  if (digits.startsWith("233")) digits = "0" + digits.slice(3)
+  else if (digits.length === 9 && !digits.startsWith("0")) digits = "0" + digits
+  return digits
+}
+
+export function isValidGhPhone(input: string): boolean {
+  const d = normalizeGhPhone(input)
+  return d.length === 10 && d.startsWith("0")
+}
+
+// Detect the network from the number's 3-digit prefix, or null if unrecognized.
+export function detectNetwork(input: string): NetworkId | null {
+  const d = normalizeGhPhone(input)
+  if (d.length < 3) return null
+  const prefix = d.slice(0, 3)
+  for (const id of Object.keys(networkPrefixes) as NetworkId[]) {
+    if (networkPrefixes[id].includes(prefix)) return id
+  }
+  return null
+}
