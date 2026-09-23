@@ -21,7 +21,7 @@ html {
 }
 
 :root {
-  /* DataSell light — bright green brand on soft mint-tinted neutrals */
+  /* DataSpots light — bright green brand on soft mint-tinted neutrals */
   --background: oklch(0.975 0.006 150);
   --foreground: oklch(0.19 0.02 150);
   --card: oklch(1 0 0);
