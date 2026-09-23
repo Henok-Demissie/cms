@@ -43,9 +43,9 @@ export const user = {
 }
 
 export const wallet = {
-  balance: 142.5,
-  totalDeposited: 620,
-  walletPayments: 477.5,
+  balance: 0,
+  totalDeposited: 0,
+  walletPayments: 0,
   dataCredit: { earned: 12, used: 6, left: 6 },
 }
 
@@ -96,140 +96,11 @@ export const checkers = [
   { id: "shs-placement", name: "SHS Placement Checker", org: "GES", price: 20.0, year: 2025 },
 ]
 
-export const orders: Order[] = [
-  {
-    id: "DS-7F3K2Q",
-    type: "data",
-    network: "mtn",
-    label: "MTN 5GB · 90 days",
-    phone: "024 555 0198",
-    amount: 22.5,
-    status: "delivered",
-    createdAt: "2026-09-03T08:42:00Z",
-  },
-  {
-    id: "DS-7E9M1A",
-    type: "express",
-    network: "mtn",
-    label: "MTN Flexa 2GB · 30 days",
-    phone: "055 210 7743",
-    amount: 9.9,
-    status: "processing",
-    createdAt: "2026-09-02T19:10:00Z",
-  },
-  {
-    id: "DS-7D4R8Z",
-    type: "data",
-    network: "telecel",
-    label: "Telecel 10GB · 60 days",
-    phone: "020 118 9932",
-    amount: 41.0,
-    status: "delivered",
-    createdAt: "2026-09-01T14:05:00Z",
-  },
-  {
-    id: "DS-7C1T5V",
-    type: "airtime",
-    network: "airteltigo",
-    label: "AirtelTigo Airtime",
-    phone: "027 331 0025",
-    amount: 10.0,
-    status: "delivered",
-    createdAt: "2026-08-30T11:20:00Z",
-  },
-  {
-    id: "DS-7B8W3N",
-    type: "checkers",
-    network: "waec",
-    label: "WASSCE Result Checker",
-    phone: "024 555 0198",
-    amount: 26.0,
-    status: "delivered",
-    createdAt: "2026-08-28T09:00:00Z",
-  },
-  {
-    id: "DS-7A2X9L",
-    type: "data",
-    network: "airteltigo",
-    label: "AirtelTigo 2GB · 30 days",
-    phone: "027 331 0025",
-    amount: 7.8,
-    status: "failed",
-    createdAt: "2026-08-26T16:48:00Z",
-  },
-]
+export const orders: Order[] = []
 
-export const transactions: Transaction[] = [
-  {
-    id: "TX-1",
-    kind: "order",
-    label: "MTN 5GB · 024 555 0198",
-    amount: -22.5,
-    status: "success",
-    createdAt: "2026-09-03T08:42:00Z",
-    reference: "DS-7F3K2Q",
-  },
-  {
-    id: "TX-2",
-    kind: "topup",
-    label: "Wallet top-up · MTN MoMo",
-    amount: 100,
-    status: "success",
-    createdAt: "2026-09-03T08:39:00Z",
-    reference: "PAY-91A2C",
-  },
-  {
-    id: "TX-3",
-    kind: "order",
-    label: "MTN Flexa 2GB · 055 210 7743",
-    amount: -9.9,
-    status: "pending",
-    createdAt: "2026-09-02T19:10:00Z",
-    reference: "DS-7E9M1A",
-  },
-  {
-    id: "TX-4",
-    kind: "referral",
-    label: "Referral credit · Kwame joined",
-    amount: 1,
-    status: "success",
-    createdAt: "2026-09-01T18:22:00Z",
-    reference: "REF-XPB-01",
-  },
-  {
-    id: "TX-5",
-    kind: "order",
-    label: "Telecel 10GB · 020 118 9932",
-    amount: -41,
-    status: "success",
-    createdAt: "2026-09-01T14:05:00Z",
-    reference: "DS-7D4R8Z",
-  },
-  {
-    id: "TX-6",
-    kind: "refund",
-    label: "Refund · AirtelTigo 2GB failed",
-    amount: 7.8,
-    status: "success",
-    createdAt: "2026-08-26T17:02:00Z",
-    reference: "DS-7A2X9L",
-  },
-  {
-    id: "TX-7",
-    kind: "topup",
-    label: "Wallet top-up · Telecel Cash",
-    amount: 50,
-    status: "success",
-    createdAt: "2026-08-25T10:12:00Z",
-    reference: "PAY-77Q0F",
-  },
-]
+export const transactions: Transaction[] = []
 
-export const referrals = [
-  { name: "Kwame A.", joined: "2026-09-01", status: "qualified", earned: 1 },
-  { name: "Ama S.", joined: "2026-08-29", status: "qualified", earned: 1 },
-  { name: "Yaw B.", joined: "2026-08-27", status: "joined", earned: 0 },
-]
+export const referrals: { name: string; joined: string; status: string; earned: number }[] = []
 
 export const agentTiers = [
   {
@@ -257,20 +128,20 @@ export const agentTiers = [
 ]
 
 export const weeklySpend = [
-  { day: "Mon", spend: 22.5, orders: 1 },
+  { day: "Mon", spend: 0, orders: 0 },
   { day: "Tue", spend: 0, orders: 0 },
-  { day: "Wed", spend: 41, orders: 1 },
-  { day: "Thu", spend: 10, orders: 1 },
-  { day: "Fri", spend: 9.9, orders: 1 },
-  { day: "Sat", spend: 33.8, orders: 2 },
-  { day: "Sun", spend: 26, orders: 1 },
+  { day: "Wed", spend: 0, orders: 0 },
+  { day: "Thu", spend: 0, orders: 0 },
+  { day: "Fri", spend: 0, orders: 0 },
+  { day: "Sat", spend: 0, orders: 0 },
+  { day: "Sun", spend: 0, orders: 0 },
 ]
 
 export const devMetrics = {
-  balance: 142.5,
-  activeKeys: 2,
-  apiOrders30d: 318,
-  delivered30d: 311,
+  balance: 0,
+  activeKeys: 0,
+  apiOrders30d: 0,
+  delivered30d: 0,
   failed30d: 4,
   spend30d: 4127.4,
   requests30d: 2496,

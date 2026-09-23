@@ -6,14 +6,17 @@ import { AppSidebar } from "@/components/shell/app-sidebar"
 import { AppTopbar } from "@/components/shell/app-topbar"
 import { WhatsAppFloat } from "@/components/shell/whatsapp-float"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { getWalletBalance } from "@/app/actions/orders"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) redirect("/sign-in")
 
+  const balance = await getWalletBalance()
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar balance={balance} />
       <SidebarInset>
         <AppTopbar user={{ name: session.user.name, email: session.user.email }} />
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
