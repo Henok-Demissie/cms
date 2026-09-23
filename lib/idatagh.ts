@@ -70,8 +70,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const msg =
-      (body && typeof body === "object" && "message" in body && String((body as { message: unknown }).message)) ||
-      `iDataGH request failed (${res.status})`
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message: unknown }).message)
+        : `iDataGH request failed (${res.status})`
     throw new IdataError(msg, res.status, body)
   }
   return body as T

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { db, pool } from "@/lib/db"
 import { orders, wallets, walletTransactions } from "@/lib/db/schema"
 import { findRetailPackage } from "@/lib/pricing"
+import { mapProviderStatus } from "@/lib/status"
 import { placeOrder, getOrderStatus, IdataError, type IdataNetwork } from "@/lib/idatagh"
 import { and, desc, eq } from "drizzle-orm"
 import { headers } from "next/headers"
@@ -183,7 +184,7 @@ export async function syncOrderStatus(orderId: number) {
     const status = await getOrderStatus(order.providerOrderId)
     await db
       .update(orders)
-      .set({ providerStatus: status.order_status, status: mapStatus(status.order_status), updatedAt: new Date() })
+      .set({ providerStatus: status.order_status, status: mapProviderStatus(status.order_status), updatedAt: new Date() })
       .where(eq(orders.id, orderId))
     revalidatePath("/")
     return { ok: true, status: status.order_status }
@@ -192,9 +193,4 @@ export async function syncOrderStatus(orderId: number) {
   }
 }
 
-export function mapStatus(providerStatus: string): string {
-  const s = providerStatus.toLowerCase()
-  if (["completed", "success", "delivered"].includes(s)) return "delivered"
-  if (["failed", "rejected", "cancelled", "refunded"].includes(s)) return "failed"
-  return "processing"
-}
+

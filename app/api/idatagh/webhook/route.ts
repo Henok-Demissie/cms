@@ -1,6 +1,6 @@
 import { db, pool } from "@/lib/db"
 import { orders } from "@/lib/db/schema"
-import { mapStatus } from "@/app/actions/orders"
+import { mapProviderStatus } from "@/lib/status"
 import { eq } from "drizzle-orm"
 import crypto from "crypto"
 import { NextResponse } from "next/server"
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, note: "unknown order" })
   }
 
-  const newStatus = mapStatus(providerStatus)
+  const newStatus = mapProviderStatus(providerStatus)
 
   // If it failed and we haven't already refunded, refund the customer.
   if (newStatus === "failed" && order.status !== "failed") {
