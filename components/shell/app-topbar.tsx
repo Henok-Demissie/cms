@@ -167,7 +167,7 @@ export function AppTopbar({ user }: { user: { name: string; email: string } }) {
               <DropdownMenuItem
                 onSelect={async () => {
                   await authClient.signOut()
-                  router.replace("/sign-in")
+                  router.replace("/")
                   router.refresh()
                 }}
               >
