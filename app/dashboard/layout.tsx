@@ -16,7 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <SidebarProvider>
-      <AppSidebar balance={balance} />
+      <AppSidebar balance={balance} isOwner={session.user.email.toLowerCase() === "pboxtv9@gmail.com"} />
       <SidebarInset>
         <AppTopbar user={{ name: session.user.name, email: session.user.email }} />
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">

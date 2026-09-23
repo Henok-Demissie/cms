@@ -15,6 +15,7 @@ import {
   ShoppingCart,
   Store,
   User,
+  Users,
   Wallet,
 } from "lucide-react"
 import { Logo } from "@/components/brand/logo"
@@ -49,17 +50,17 @@ const grow = [
   { href: "/developers", label: "Developer API", icon: Code2 },
 ]
 
-const account = [
-  { href: "/dashboard/profile", label: "Profile", icon: User },
-  { href: "/dashboard/track", label: "Track Order", icon: Search },
-  { href: "/dashboard/support", label: "Support", icon: Headset },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
-]
-
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; badge?: string }
 
-export function AppSidebar({ balance }: { balance: number }) {
+export function AppSidebar({ balance, isOwner }: { balance: number; isOwner: boolean }) {
   const pathname = usePathname()
+  const account = [
+    ...(isOwner ? [{ href: "/dashboard/owners", label: "Owner accounts", icon: Users }] : []),
+    { href: "/dashboard/profile", label: "Profile", icon: User },
+    { href: "/dashboard/track", label: "Track Order", icon: Search },
+    { href: "/dashboard/support", label: "Support", icon: Headset },
+    { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  ]
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(href + "/")
 
