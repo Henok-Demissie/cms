@@ -5,10 +5,22 @@ import { EmptyState } from "@/components/brand/empty-state"
 import { StatusBadge } from "@/components/brand/status-badge"
 import { DepositDialog } from "@/components/wallet/deposit-dialog"
 import { Button } from "@/components/ui/button"
-import { formatDate, formatGhs, transactions, wallet } from "@/lib/data"
+import { formatDate, formatGhs } from "@/lib/data"
+import { getWalletBalance, getMyTransactions } from "@/app/actions/orders"
 
-export default function WalletPage() {
-  const recent = transactions.slice(0, 5)
+export const dynamic = "force-dynamic"
+
+export default async function WalletPage() {
+  const [balance, txns] = await Promise.all([getWalletBalance(), getMyTransactions()])
+
+  const totalDeposited = txns
+    .filter((t) => t.type === "topup")
+    .reduce((sum, t) => sum + Number(t.amount), 0)
+  const walletPayments = txns
+    .filter((t) => t.type === "order")
+    .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0)
+  const recent = txns.slice(0, 5)
+
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <PageHeader title="Wallet" subtitle="Balance & activity" />
@@ -20,7 +32,7 @@ export default function WalletPage() {
           </span>
           <p className="text-sm font-semibold">Available balance</p>
         </div>
-        <p className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">{formatGhs(wallet.balance)}</p>
+        <p className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">{formatGhs(balance)}</p>
         <div className="mt-6">
           <DepositDialog />
         </div>
@@ -32,13 +44,13 @@ export default function WalletPage() {
           <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <PlusCircle className="size-4 text-brand-emerald" aria-hidden /> Total deposited
           </p>
-          <p className="mt-2 text-2xl font-extrabold text-brand-emerald">{formatGhs(wallet.totalDeposited)}</p>
+          <p className="mt-2 text-2xl font-extrabold text-brand-emerald">{formatGhs(totalDeposited)}</p>
         </div>
         <div className="card-shadow rounded-2xl border border-border bg-card p-5">
           <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <MinusCircle className="size-4 text-destructive" aria-hidden /> Wallet payments
           </p>
-          <p className="mt-2 text-2xl font-extrabold">{formatGhs(wallet.walletPayments)}</p>
+          <p className="mt-2 text-2xl font-extrabold">{formatGhs(walletPayments)}</p>
         </div>
       </div>
 
@@ -63,28 +75,33 @@ export default function WalletPage() {
           <EmptyState icon={Wallet} title="No transactions yet" description="Deposits and payments will appear here." className="border-0 shadow-none" />
         ) : (
           <ul className="divide-y divide-border">
-            {recent.map((t) => (
-              <li key={t.id} className="flex items-center gap-3 px-5 py-3">
-                <span
-                  className={`flex size-9 items-center justify-center rounded-full ${
-                    t.amount > 0 ? "bg-success/10 text-brand-emerald" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {t.amount > 0 ? <PlusCircle className="size-4" aria-hidden /> : <MinusCircle className="size-4" aria-hidden />}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{t.label}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(t.createdAt)}</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <span className={`text-sm font-bold ${t.amount > 0 ? "text-brand-emerald" : ""}`}>
-                    {t.amount > 0 ? "+" : "−"}
-                    {formatGhs(t.amount)}
+            {recent.map((t) => {
+              const amount = Number(t.amount)
+              return (
+                <li key={t.id} className="flex items-center gap-3 px-5 py-3">
+                  <span
+                    className={`flex size-9 items-center justify-center rounded-full ${
+                      amount > 0 ? "bg-success/10 text-brand-emerald" : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {amount > 0 ? <PlusCircle className="size-4" aria-hidden /> : <MinusCircle className="size-4" aria-hidden />}
                   </span>
-                  <StatusBadge status={t.status} />
-                </div>
-              </li>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{t.description ?? t.type}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate((t.createdAt as unknown as Date).toISOString())}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`text-sm font-bold ${amount > 0 ? "text-brand-emerald" : ""}`}>
+                      {amount > 0 ? "+" : "−"}
+                      {formatGhs(amount)}
+                    </span>
+                    <StatusBadge status="success" />
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
       </section>

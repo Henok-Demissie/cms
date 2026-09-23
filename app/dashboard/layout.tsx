@@ -1,10 +1,16 @@
 import type React from "react"
+import { redirect } from "next/navigation"
+import { headers } from "next/headers"
+import { auth } from "@/lib/auth"
 import { AppSidebar } from "@/components/shell/app-sidebar"
 import { AppTopbar } from "@/components/shell/app-topbar"
 import { WhatsAppFloat } from "@/components/shell/whatsapp-float"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) redirect("/sign-in")
+
   return (
     <SidebarProvider>
       <AppSidebar />

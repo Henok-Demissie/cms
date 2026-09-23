@@ -1,90 +1,95 @@
 "use client"
 
-import { useState } from "react"
-import { ArrowDownToLine, Smartphone } from "lucide-react"
+import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { Plus } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { ButtonGroup } from "@/components/ui/button-group"
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
+import { Spinner } from "@/components/ui/spinner"
+import { topUpWallet } from "@/app/actions/wallet"
 
-const methods = ["MTN MoMo", "Telecel Cash", "AT Money"]
-
-export function DepositDialog({ variant = "hero" }: { variant?: "hero" | "solid" }) {
+export function DepositDialog() {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
   const [amount, setAmount] = useState("")
-  const [method, setMethod] = useState(methods[0])
+  const [pending, startTransition] = useTransition()
+
+  const submit = () => {
+    const value = Number(amount)
+    if (!value || value <= 0) {
+      toast.error("Enter an amount to add.")
+      return
+    }
+    startTransition(async () => {
+      const res = await topUpWallet(value)
+      if (res.ok) {
+        toast.success(res.message)
+        setAmount("")
+        setOpen(false)
+        router.refresh()
+      } else {
+        toast.error(res.message)
+      }
+    })
+  }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          size="lg"
-          className={
-            variant === "hero"
-              ? "h-12 w-full border border-brand-deep/15 bg-brand-deep/10 font-bold text-brand-deep hover:bg-brand-deep/15"
-              : "brand-gradient brand-glow h-11 font-bold text-brand-deep hover:opacity-90"
-          }
-        >
-          <ArrowDownToLine className="size-4" /> Deposit
+        <Button className="bg-brand-deep font-bold text-brand-lime hover:bg-brand-deep/90">
+          <Plus /> Top up wallet
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Top up wallet</DialogTitle>
-          <DialogDescription>Pay with mobile money. Funds arrive in seconds.</DialogDescription>
+          <DialogDescription>Add funds to your DataSell wallet to pay for bundles instantly.</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="deposit-amt" className="text-xs font-semibold text-muted-foreground">
-              Amount (GHS)
-            </label>
-            <Input
-              id="deposit-amt"
+        <Field>
+          <FieldLabel htmlFor="topup-amt">Amount</FieldLabel>
+          <InputGroup>
+            <InputGroupAddon>
+              <InputGroupText>GHS</InputGroupText>
+            </InputGroupAddon>
+            <InputGroupInput
+              id="topup-amt"
               inputMode="decimal"
-              placeholder="e.g. 50"
+              placeholder="50.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="h-11 text-lg font-bold"
             />
-            <div className="flex flex-wrap gap-2 pt-1">
-              {[10, 20, 50, 100, 200].map((v) => (
-                <Button key={v} type="button" size="sm" variant="outline" onClick={() => setAmount(String(v))}>
-                  {v}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <p className="text-xs font-semibold text-muted-foreground">Payment method</p>
-            <div className="grid grid-cols-3 gap-2">
-              {methods.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMethod(m)}
-                  aria-pressed={method === m}
-                  className={`flex flex-col items-center gap-1 rounded-xl border py-3 text-xs font-semibold transition-colors ${
-                    method === m ? "border-brand-green bg-success/10" : "border-border text-muted-foreground"
-                  }`}
-                >
-                  <Smartphone className="size-4" aria-hidden />
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
+          </InputGroup>
+          <FieldDescription>Quick picks:</FieldDescription>
+          <ButtonGroup>
+            {[10, 20, 50, 100].map((v) => (
+              <Button key={v} type="button" variant="outline" size="sm" onClick={() => setAmount(String(v))}>
+                {v}
+              </Button>
+            ))}
+          </ButtonGroup>
+        </Field>
+        <DialogFooter>
           <Button
-            className="brand-gradient brand-glow h-11 font-bold text-brand-deep hover:opacity-90"
-            disabled={!amount || Number(amount) <= 0}
+            className="brand-gradient brand-glow font-bold text-brand-deep hover:opacity-90"
+            disabled={pending}
+            onClick={submit}
           >
-            Deposit {amount ? `GHS ${Number(amount).toFixed(2)}` : ""}
+            {pending && <Spinner data-icon="inline-start" />}
+            {pending ? "Adding…" : "Add funds"}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
