@@ -62,7 +62,7 @@ export const verification = pgTable("verification", {
 
 // --- App tables (scoped by userId, no FK per stack guidance) ---
 
-export const orders = pgTable("orders", {
+export const orders = pgTable("datasell_orders", {
   id: serial("id").primaryKey(),
   userId: text("userId").notNull(),
   network: text("network").notNull(),
@@ -79,14 +79,14 @@ export const orders = pgTable("orders", {
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
 
-export const wallets = pgTable("wallets", {
+export const wallets = pgTable("datasell_wallets", {
   userId: text("userId").primaryKey(),
   balance: numeric("balance", { precision: 10, scale: 2 }).notNull().default("0"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
 
-export const walletTransactions = pgTable("wallet_transactions", {
+export const walletTransactions = pgTable("datasell_wallet_transactions", {
   id: serial("id").primaryKey(),
   userId: text("userId").notNull(),
   amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
