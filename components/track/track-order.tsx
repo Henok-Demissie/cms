@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { NetworkChip } from "@/components/brand/network-chip"
 import { StatusBadge } from "@/components/brand/status-badge"
-import { formatDate, formatGhs, formatTime, orders, type Order } from "@/lib/data"
+import { formatDate, formatGhs, formatTime, type Order } from "@/lib/data"
 
 const stages = ["Order placed", "Payment confirmed", "Sent to network", "Delivered"]
 const stageIndex: Record<Order["status"], number> = { pending: 1, processing: 2, delivered: 4, failed: 2 }
@@ -16,12 +16,8 @@ export function TrackOrder() {
   const [result, setResult] = useState<Order | null | undefined>(undefined)
 
   const search = () => {
-    const key = q.trim().toLowerCase().replace(/\s/g, "")
-    if (!key) return
-    const found = orders.find(
-      (o) => o.id.toLowerCase() === key || o.phone.replace(/\s/g, "") === key,
-    )
-    setResult(found ?? null)
+    if (!q.trim()) return
+    setResult(null)
   }
 
   return (
@@ -93,9 +89,6 @@ export function TrackOrder() {
         </section>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        Tip: try <button type="button" onClick={() => setQ(orders[0].id)} className="font-mono font-semibold text-brand-emerald hover:underline">{orders[0].id}</button>
-      </p>
     </div>
   )
 }
