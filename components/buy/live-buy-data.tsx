@@ -18,7 +18,7 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
-import { detectNetwork, formatGhs, isValidGhPhone, networkOf, normalizeGhPhone, type NetworkId } from "@/lib/data"
+import { checkers, detectNetwork, formatGhs, isValidGhPhone, networkOf, normalizeGhPhone, type NetworkId } from "@/lib/data"
 import { placeDataOrder } from "@/app/actions/orders"
 
 export interface ClientPackage {
@@ -48,7 +48,7 @@ export function LiveBuyData({
   packages: PackagesByNetwork
   walletBalance: number
 }) {
-  const [tab, setTab] = useState<NetworkId>("mtn")
+  const [tab, setTab] = useState<NetworkId | "checkers">("mtn")
   const [selected, setSelected] = useState<Selected | null>(null)
 
   return (
@@ -65,6 +65,9 @@ export function LiveBuyData({
               {n.name}
             </TabsTrigger>
           ))}
+          <TabsTrigger value="checkers" className="flex-none px-4 py-1.5 font-bold">
+            WASSCE Checkers
+          </TabsTrigger>
         </TabsList>
 
 <Alert className="border-primary/30 bg-success/8 py-3">
@@ -77,6 +80,27 @@ export function LiveBuyData({
               </Badge>
             </AlertTitle>
           </Alert>
+
+        <TabsContent value="checkers" className="flex flex-col gap-5">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {checkers.filter((checker) => checker.id === "waec-wassce").map((checker) => (
+              <Card key={checker.id} className="card-shadow flex flex-col border-t-4 border-t-[#08b957]">
+                <CardHeader>
+                  <CardTitle className="text-xl font-extrabold">{checker.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <p className="text-sm text-muted-foreground">{checker.org} · {checker.year}</p>
+                  <p className="mt-3 text-xl font-extrabold text-brand-emerald">{formatGhs(checker.price)}</p>
+                </CardContent>
+                <CardFooter>
+                  <Button className="brand-gradient brand-glow w-full font-bold text-brand-deep hover:opacity-90" disabled>
+                    Coming soon
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
 
         {NETWORKS.map((n) => (
           <TabsContent key={n.id} value={n.id} className="flex flex-col gap-5">

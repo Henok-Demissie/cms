@@ -1,7 +1,6 @@
-import { CalendarDays, Mail, Phone } from "lucide-react"
+import { CalendarDays } from "lucide-react"
 import { PageHeader } from "@/components/brand/page-header"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { ProfileForm } from "@/components/profile/profile-form"
 import { formatGhs, orders, user, wallet } from "@/lib/data"
 
 export default function ProfilePage() {
@@ -32,32 +31,7 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      <form className="card-shadow flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
-        <h2 className="title-bar text-sm font-bold">Personal information</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="name" className="text-xs font-semibold text-muted-foreground">Full name</label>
-            <Input id="name" defaultValue={user.fullName} className="h-11" />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="phone" className="text-xs font-semibold text-muted-foreground">Phone</label>
-            <div className="relative">
-              <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-              <Input id="phone" defaultValue={user.phone} className="h-11 pl-10" />
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <label htmlFor="email" className="text-xs font-semibold text-muted-foreground">Email</label>
-            <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-              <Input id="email" type="email" defaultValue={user.email} className="h-11 pl-10" />
-            </div>
-          </div>
-        </div>
-        <Button type="button" className="brand-gradient brand-glow h-11 w-fit px-6 font-bold text-brand-deep hover:opacity-90">
-          Save changes
-        </Button>
-      </form>
+      <ProfileForm name={user.fullName} phone={user.phone} email={user.email} />
 
       <section className="card-shadow rounded-2xl border border-border bg-card p-5">
         <h2 className="title-bar text-sm font-bold">Wallet summary</h2>
