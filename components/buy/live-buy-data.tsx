@@ -223,7 +223,7 @@ function LiveCheckoutSheet({
                       value={phone}
                       aria-invalid={invalid || mismatch || undefined}
                       onBlur={() => setTouched(true)}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(e.target.value.replace(/^\+?233\s*/, ""))}
                     />
                   </InputGroup>
                   <FieldDescription>

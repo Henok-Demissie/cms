@@ -71,7 +71,7 @@ export function DepositDialog() {
               onChange={(e) => setAmount(e.target.value)}
             />
           </InputGroup>
-          <FieldDescription>Quick picks:</FieldDescription>
+          <FieldDescription>Enter any positive amount in Ghana cedis.</FieldDescription>
           <ButtonGroup>
             {[10, 20, 50, 100].map((v) => (
               <Button key={v} type="button" variant="outline" size="sm" onClick={() => setAmount(String(v))}>

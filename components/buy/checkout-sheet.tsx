@@ -97,7 +97,7 @@ export function CheckoutSheet({ item, onClose }: { item: CheckoutItem | null; on
                       value={phone}
                       aria-invalid={invalid || mismatch || undefined}
                       onBlur={() => setTouched(true)}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(e.target.value.replace(/^\+?233\s*/, ""))}
                     />
                   </InputGroup>
                   <FieldDescription>
