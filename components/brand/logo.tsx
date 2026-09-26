@@ -14,7 +14,7 @@ export function Logo({ href = "/", size = "md", showTagline = true, markOnly = f
   const word = size === "lg" ? "text-2xl" : size === "sm" ? "text-base" : "text-lg"
 
   return (
-    <Link href={href} className={cn("group inline-flex items-center gap-2.5", className)} aria-label="DataSell home">
+    <Link href={href} className={cn("group inline-flex items-center gap-2.5", className)} aria-label="DataSpots home">
       <span
         className={cn(
           "brand-gradient brand-glow relative grid shrink-0 place-items-center rounded-xl text-primary-foreground",

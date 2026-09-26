@@ -52,7 +52,7 @@ export function DepositDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Top up wallet</DialogTitle>
-          <DialogDescription>Add funds to your DataSell wallet to pay for bundles instantly.</DialogDescription>
+          <DialogDescription>Add funds to your DataSpots wallet to pay for bundles instantly.</DialogDescription>
         </DialogHeader>
         <Field>
           <FieldLabel htmlFor="topup-amt">Amount</FieldLabel>

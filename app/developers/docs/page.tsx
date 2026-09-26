@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/brand/page-header"
 
-const create = `curl -X POST https://api.datasell.app/v1/orders \\
+const create = `curl -X POST https://api.DataSpots.app/v1/orders \\
   -H "Authorization: Bearer ds_live_xxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -39,7 +39,7 @@ function Code({ children }: { children: string }) {
 export default function DocsPage() {
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Documentation" subtitle="REST API · JSON · Bearer auth · Base URL https://api.datasell.app" />
+      <PageHeader title="Documentation" subtitle="REST API · JSON · Bearer auth · Base URL https://api.DataSpots.app" />
 
       <section className="flex flex-col gap-3">
         <h2 className="title-bar text-sm font-bold">Create an order</h2>
