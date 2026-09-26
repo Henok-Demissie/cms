@@ -5,7 +5,7 @@ import { Check, Copy, Gift, Link2, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatGhs, referrals, user, wallet } from "@/lib/data"
 
-const link = `https://DataSpots.app/r/${user.referralCode}`
+const link = `https://dataspots.app/r/${user.referralCode}`
 
 export function ReferCard() {
   const [copied, setCopied] = useState<"code" | "link" | null>(null)

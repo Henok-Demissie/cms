@@ -24,8 +24,8 @@ const faqs = [
 
 const channels = [
   { icon: MessageCircle, label: "WhatsApp", value: "+233 24 000 0000", href: "https://wa.me/233240000000", primary: true },
-  { icon: Send, label: "Telegram", value: "@DataSpots", href: "https://t.me/DataSpots" },
-  { icon: Mail, label: "Email", value: "support@DataSpots.app", href: "mailto:support@DataSpots.app" },
+  { icon: Send, label: "Telegram", value: "@dataspots", href: "https://t.me/dataspots" },
+  { icon: Mail, label: "Email", value: "support@dataspots.app", href: "mailto:support@dataspots.app" },
 ]
 
 export default function SupportPage() {

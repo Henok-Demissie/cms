@@ -17,7 +17,7 @@ const docs: Record<string, { title: string; body: string[] }> = {
     body: [
       "We collect the phone numbers, email address and payment references needed to fulfil your orders and secure your account. We never sell personal data.",
       "Order data is shared with the relevant mobile network only to the extent required to deliver your purchase.",
-      "You can request deletion of your account and personal data at any time by contacting support@DataSpots.app.",
+      "You can request deletion of your account and personal data at any time by contacting support@dataspots.app.",
     ],
   },
   disclaimer: {

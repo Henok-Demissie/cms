@@ -135,7 +135,7 @@ export function SettingsPanels() {
 
       <Panel icon={HelpCircle} title="Help & Support" subtitle="We are here for you">
         <Row icon={HelpCircle} title="Support Center" text="Quick answers, live help, and order tracking." href="/dashboard/support" />
-        <Row icon={Mail} title="Email us" text="support@DataSpots.app" href="mailto:support@DataSpots.app" />
+        <Row icon={Mail} title="Email us" text="support@dataspots.app" href="mailto:support@dataspots.app" />
       </Panel>
 
       <Panel icon={FileText} title="Legal & Privacy" subtitle="The fine print and how we handle your data">
