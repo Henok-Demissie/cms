@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -18,10 +17,9 @@ import { ButtonGroup } from "@/components/ui/button-group"
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
 import { Spinner } from "@/components/ui/spinner"
-import { topUpWallet } from "@/app/actions/wallet"
+import { initiateTopUp } from "@/app/actions/wallet"
 
 export function DepositDialog() {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [amount, setAmount] = useState("")
   const [pending, startTransition] = useTransition()
@@ -33,12 +31,11 @@ export function DepositDialog() {
       return
     }
     startTransition(async () => {
-      const res = await topUpWallet(value)
+      const res = await initiateTopUp(value)
       if (res.ok) {
-        toast.success(res.message)
-        setAmount("")
-        setOpen(false)
-        router.refresh()
+        // Hand off to Paystack's hosted checkout. The wallet is credited
+        // once the payment is confirmed (webhook + redirect verify).
+        window.location.href = res.authorizationUrl
       } else {
         toast.error(res.message)
       }
@@ -87,7 +84,7 @@ export function DepositDialog() {
             onClick={submit}
           >
             {pending && <Spinner data-icon="inline-start" />}
-            {pending ? "Adding…" : "Add funds"}
+            {pending ? "Redirecting…" : "Continue to pay"}
           </Button>
         </DialogFooter>
       </DialogContent>
