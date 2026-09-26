@@ -6,6 +6,7 @@ import {
   serial,
   numeric,
   integer,
+  index,
 } from "drizzle-orm/pg-core"
 
 // --- Better Auth tables (do not rename columns) ---
@@ -95,3 +96,16 @@ export const walletTransactions = pgTable("datasell_wallet_transactions", {
   orderId: integer("orderId"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
+
+export const topups = pgTable("topups", {
+  id: serial("id").primaryKey(),
+  userId: text("userId").notNull(),
+  reference: text("reference").notNull().unique(),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default("pending"),
+  channel: text("channel"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})
+
+export const topupsUserIdIdx = index("topups_user_id_idx").on(topups.userId)

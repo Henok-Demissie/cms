@@ -33,9 +33,11 @@ export function DepositDialog() {
       return
     }
     startTransition(async () => {
-      const res = await topUpWallet()
-      if (res.ok) {
-        toast.success(res.message)
+      const res = await topUpWallet(value)
+      if (res.ok && res.authorizationUrl) {
+        window.location.assign(res.authorizationUrl)
+      } else if (res.ok) {
+        toast.success("Continue to Paystack to complete payment.")
         setAmount("")
         setOpen(false)
         router.refresh()
