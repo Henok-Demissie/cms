@@ -3,47 +3,48 @@
 import { auth } from "@/lib/auth"
 import { pool } from "@/lib/db"
 import { headers } from "next/headers"
-import { revalidatePath } from "next/cache"
+import { getBaseUrl } from "@/lib/utils"
+import { initializeTransaction } from "@/lib/paystack"
+import crypto from "crypto"
 
-async function getUserId() {
+async function getUser() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) throw new Error("Unauthorized")
-  return session.user.id
+  return session.user
 }
 
 /**
- * Demo top-up. In production this MUST be driven by a verified payment
- * webhook (Paystack / MoMo), never trusted directly from the client.
+ * Starts a real Paystack payment for a wallet top-up. The wallet is only
+ * ever credited once Paystack confirms the charge — via the webhook at
+ * /api/paystack/webhook, backed up by the verify step on the redirect
+ * callback at /dashboard/wallet/verify. Never trust the client for this.
  */
-export async function topUpWallet(amount: number) {
-  const userId = await getUserId()
+export async function initiateTopUp(amount: number) {
+  const user = await getUser()
   const value = Math.round(Number(amount) * 100) / 100
   if (!Number.isFinite(value) || value <= 0 || value > 5000) {
-    return { ok: false, message: "Enter an amount between GHS 1 and GHS 5000." }
+    return { ok: false as const, message: "Enter an amount between GHS 1 and GHS 5000." }
   }
 
-  const client = await pool.connect()
+  const reference = `topup_${user.id}_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`
+
   try {
-    await client.query("BEGIN")
-    await client.query(
-      `INSERT INTO wallets ("userId", balance) VALUES ($1, $2)
-       ON CONFLICT ("userId") DO UPDATE SET balance = wallets.balance + $2, "updatedAt" = now()`,
-      [userId, value],
+    await pool.query(
+      `INSERT INTO topups ("userId", reference, amount, status) VALUES ($1, $2, $3, 'pending')`,
+      [user.id, reference, value],
     )
-    await client.query(
-      `INSERT INTO wallet_transactions ("userId", amount, type, description)
-       VALUES ($1, $2, 'topup', 'Wallet top-up')`,
-      [userId, value],
-    )
-    await client.query("COMMIT")
-  } catch (err) {
-    await client.query("ROLLBACK")
-    console.log("[v0] top-up failed:", (err as Error).message)
-    return { ok: false, message: "Top-up failed. Please try again." }
-  } finally {
-    client.release()
-  }
 
-  revalidatePath("/")
-  return { ok: true, message: `Added GHS ${value.toFixed(2)} to your wallet.` }
+    const { authorizationUrl } = await initializeTransaction({
+      email: user.email,
+      amountInSubunit: Math.round(value * 100),
+      reference,
+      callbackUrl: `${getBaseUrl()}/dashboard/wallet/verify`,
+      metadata: { userId: user.id },
+    })
+
+    return { ok: true as const, authorizationUrl }
+  } catch (err) {
+    console.log("[v0] paystack initialize failed:", (err as Error).message)
+    return { ok: false as const, message: "Couldn't start payment. Please try again." }
+  }
 }
