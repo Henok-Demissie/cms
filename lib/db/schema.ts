@@ -86,6 +86,20 @@ export const wallets = pgTable("wallets", {
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
 
+// Tracks Paystack top-up attempts. `reference` is the Paystack transaction
+// reference, used to correlate the redirect callback and the webhook, and to
+// guarantee a top-up is only ever credited to the wallet once.
+export const topups = pgTable("topups", {
+  id: serial("id").primaryKey(),
+  userId: text("userId").notNull(),
+  reference: text("reference").notNull().unique(),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default("pending"), // pending | success | failed
+  channel: text("channel"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})
+
 export const walletTransactions = pgTable("wallet_transactions", {
   id: serial("id").primaryKey(),
   userId: text("userId").notNull(),
