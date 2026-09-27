@@ -33,7 +33,7 @@ export async function creditWalletForTopup(reference: string, channel?: string |
     )
     await client.query(
       `INSERT INTO wallet_transactions ("userId", amount, type, description)
-       VALUES ($1, $2, 'topup', 'Wallet top-up · Paystack')`,
+       VALUES ($1, $2, 'topup', 'Wallet top-up · MoMo / Card')`,
       [topup.userId, topup.amount],
     )
 
