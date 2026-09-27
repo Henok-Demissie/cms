@@ -58,12 +58,13 @@ import { useSession } from "@/lib/auth-client"
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; badge?: string }
 
-export function AppSidebar({ isOwner }: { isOwner?: boolean }) {
+export function AppSidebar({ isOwner, hasAdminAccess }: { isOwner?: boolean; hasAdminAccess?: boolean }) {
   const pathname = usePathname()
   const { data: session } = useSession()
-  const ownerActive = Boolean(
+  const isPrimaryOwner = Boolean(
     isOwner || (session?.user?.email && session.user.email.toLowerCase() === "pboxtv9@gmail.com")
   )
+  const canAccessAdmin = Boolean(isPrimaryOwner || hasAdminAccess)
 
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(href + "/")
@@ -100,7 +101,7 @@ export function AppSidebar({ isOwner }: { isOwner?: boolean }) {
       </SidebarHeader>
 
       <SidebarContent>
-        {ownerActive && (
+        {canAccessAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel className="text-amber-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
               <span>Admin & Control</span>
@@ -111,16 +112,28 @@ export function AppSidebar({ isOwner }: { isOwner?: boolean }) {
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === "/admin" || pathname.startsWith("/admin/")}
-                    tooltip="Owner Console (/admin)"
-                    className="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold hover:bg-amber-500/20"
+                    tooltip={isPrimaryOwner ? "Owner Console (/admin)" : "Admin Console (/admin)"}
+                    className={
+                      isPrimaryOwner
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold hover:bg-amber-500/20"
+                        : "bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-500/20"
+                    }
                   >
                     <Link href="/admin" className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-2">
-                        <ShieldCheck className="text-amber-500 size-4" />
-                        <span>Owner Console</span>
+                        <ShieldCheck
+                          className={`size-4 ${isPrimaryOwner ? "text-amber-500" : "text-blue-500"}`}
+                        />
+                        <span>{isPrimaryOwner ? "Owner Console" : "Admin Console"}</span>
                       </div>
-                      <span className="rounded-md bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                        Admin
+                      <span
+                        className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${
+                          isPrimaryOwner
+                            ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                            : "bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                        }`}
+                      >
+                        {isPrimaryOwner ? "Owner" : "Admin"}
                       </span>
                     </Link>
                   </SidebarMenuButton>

@@ -1,10 +1,11 @@
 import Link from "next/link"
-import { getAllAdminUsers } from "@/lib/owner"
+import { getAllAdminUsers, requireAdminOrOwner } from "@/lib/owner"
 import { AdminUsersTable } from "@/components/admin/admin-users-table"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default async function AdminUsersPage() {
+  const { isOwner } = await requireAdminOrOwner()
   const users = await getAllAdminUsers()
 
   return (
@@ -19,14 +20,14 @@ export default async function AdminUsersPage() {
               </Link>
             </Button>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Customer Accounts</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight">Customer Accounts & Roles</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Full directory of all registered customers, wallet balances, and purchase activity.
+            Full directory of all registered customers, wallet balances, and administrator access management.
           </p>
         </div>
       </div>
 
-      <AdminUsersTable users={users} />
+      <AdminUsersTable users={users} isOwner={isOwner} />
     </div>
   )
 }

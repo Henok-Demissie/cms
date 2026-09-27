@@ -2,12 +2,12 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { ShieldCheck, Users, ClipboardList, ArrowLeft, LogOut, LayoutDashboard } from "lucide-react"
+import { ShieldCheck, Users, ClipboardList, ArrowLeft, LogOut, LayoutDashboard, Crown } from "lucide-react"
 import { Logo } from "@/components/brand/logo"
 import { Button } from "@/components/ui/button"
 import { signOut } from "@/lib/auth-client"
 
-export function AdminNav() {
+export function AdminNav({ isOwner, userEmail }: { isOwner?: boolean; userEmail?: string }) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -19,7 +19,7 @@ export function AdminNav() {
 
   const navLinks = [
     { href: "/admin", label: "Overview", icon: LayoutDashboard },
-    { href: "/admin/users", label: "All Customers", icon: Users },
+    { href: "/admin/users", label: "Customer Accounts", icon: Users },
     { href: "/admin/orders", label: "All Orders", icon: ClipboardList },
   ]
 
@@ -27,10 +27,18 @@ export function AdminNav() {
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-background/90 px-4 backdrop-blur-md sm:px-8">
       <div className="flex items-center gap-6">
         <Logo href="/admin" size="sm" />
-        <div className="flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-600 dark:text-amber-400">
-          <ShieldCheck className="size-3.5" />
-          <span>Owner Console</span>
-        </div>
+
+        {isOwner ? (
+          <div className="flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-600 dark:text-amber-400">
+            <Crown className="size-3.5 text-amber-500" />
+            <span>Owner Console</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-0.5 text-xs font-bold text-blue-600 dark:text-blue-400">
+            <ShieldCheck className="size-3.5 text-blue-500" />
+            <span>Admin Console</span>
+          </div>
+        )}
 
         <nav className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => {

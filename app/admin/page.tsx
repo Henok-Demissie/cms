@@ -10,7 +10,8 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  ExternalLink,
+  Crown,
+  ShieldCheck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -139,7 +140,7 @@ export default async function AdminOverviewPage() {
               {data.totalUsers}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Active user accounts
+              {data.totalUsers} total · <span className="text-amber-500 font-semibold">{data.totalAdmins} admin{data.totalAdmins === 1 ? "" : "s"}</span>
             </p>
           </div>
         </div>
@@ -276,7 +277,15 @@ export default async function AdminOverviewPage() {
               data.recentUsers.map((u: any) => (
                 <div key={u.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
                   <div className="min-w-0 pr-3">
-                    <p className="truncate text-sm font-semibold">{u.name || "Customer"}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="truncate text-sm font-semibold">{u.name || "Customer"}</p>
+                      {u.role === "owner" && (
+                        <Crown className="size-3 text-amber-500 shrink-0" />
+                      )}
+                      {u.role === "admin" && (
+                        <ShieldCheck className="size-3 text-blue-500 shrink-0" />
+                      )}
+                    </div>
                     <p className="truncate text-xs text-muted-foreground font-mono">{u.email}</p>
                     <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
                       <span>Joined {formatDate(u.createdAt)}</span>
