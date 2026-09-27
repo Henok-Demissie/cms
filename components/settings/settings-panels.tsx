@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
+import { useRouter } from "next/navigation"
+import { signOut } from "@/lib/auth-client"
 import {
   ChevronRight,
   FileText,
@@ -13,7 +15,6 @@ import {
   Palette,
   Send,
   Shield,
-  ShieldAlert,
   Sun,
   type LucideIcon,
 } from "lucide-react"
@@ -38,7 +39,21 @@ function Panel({ icon: Icon, title, subtitle, children }: { icon: LucideIcon; ti
   )
 }
 
-function Row({ icon: Icon, title, text, href, danger }: { icon: LucideIcon; title: string; text: string; href?: string; danger?: boolean }) {
+function Row({
+  icon: Icon,
+  title,
+  text,
+  href,
+  danger,
+  onClick,
+}: {
+  icon: LucideIcon
+  title: string
+  text: string
+  href?: string
+  danger?: boolean
+  onClick?: () => void
+}) {
   const inner = (
     <>
       <span className={`flex size-8 items-center justify-center rounded-full ${danger ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>
@@ -51,19 +66,26 @@ function Row({ icon: Icon, title, text, href, danger }: { icon: LucideIcon; titl
       <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
     </>
   )
-  const cls = "flex items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-muted"
+  const cls = "flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-muted cursor-pointer"
   return href ? (
     <Link href={href} className={cls}>{inner}</Link>
   ) : (
-    <button type="button" className={cls}>{inner}</button>
+    <button type="button" onClick={onClick} className={cls}>{inner}</button>
   )
 }
 
 export function SettingsPanels() {
+  const router = useRouter()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [reduceMotion, setReduceMotion] = useState(false)
   const [hideWa, setHideWa] = useState(false)
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push("/")
+    router.refresh()
+  }
 
   useEffect(() => setMounted(true), [])
   useEffect(() => {
@@ -124,8 +146,12 @@ export function SettingsPanels() {
           Update password
         </Button>
         <div className="flex flex-col border-t border-border pt-2">
-          <Row icon={LogOut} title="Sign out (this device)" text="Ends this session and returns to the homepage." href="/" />
-          <Row icon={ShieldAlert} title="Sign out everywhere" text="Revokes sessions on every device." danger />
+          <Row
+            icon={LogOut}
+            title="Sign out"
+            text="Ends this session and returns to the homepage."
+            onClick={handleSignOut}
+          />
         </div>
       </Panel>
 
