@@ -27,17 +27,15 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { formatGhs, wallet } from "@/lib/data"
 
 const platform = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/buy", label: "Buy Data", icon: ShoppingCart },
-  { href: "/dashboard/orders", label: "Orders", icon: ClipboardList, badge: "3" },
+  { href: "/dashboard/orders", label: "Orders", icon: ClipboardList },
   { href: "/dashboard/wallet", label: "Wallet", icon: Wallet },
   { href: "/dashboard/transactions", label: "Transactions", icon: Receipt },
 ]
@@ -75,7 +73,6 @@ export function AppSidebar() {
                   <span>{item.label}</span>
                 </Link>
               </SidebarMenuButton>
-              {item.badge && <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>}
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
@@ -101,14 +98,14 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
+        {/* Wallet balance link — actual balance shown on the Wallet page */}
         <div className="brand-gradient-soft rounded-lg border border-primary/20 p-3 group-data-[collapsible=icon]:hidden">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Wallet balance</p>
-          <p className="mt-0.5 text-lg font-extrabold tabular-nums">{formatGhs(wallet.balance)}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Wallet</p>
           <Link
             href="/dashboard/wallet"
-            className="mt-1 inline-block text-xs font-semibold text-brand-emerald hover:underline"
+            className="mt-0.5 inline-block text-sm font-extrabold text-brand-emerald hover:underline"
           >
-            Top up wallet
+            View balance →
           </Link>
         </div>
         <SidebarMenu>

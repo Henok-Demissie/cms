@@ -4,20 +4,19 @@ import { useState } from "react"
 import Link from "next/link"
 import { ArrowDownToLine, ArrowRight, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { formatGhs, wallet } from "@/lib/data"
+import { Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { formatGhs } from "@/lib/data"
 
-export function WalletCard() {
+// Accepts real balance from the server — no hardcoded mock wallet
+export function WalletCard({ balance }: { balance: number }) {
   const [hidden, setHidden] = useState(false)
-  const spentPct = Math.round((wallet.walletPayments / wallet.totalDeposited) * 100)
 
   return (
     <Card className="card-shadow relative overflow-hidden">
       <CardHeader>
         <CardDescription>Available balance</CardDescription>
         <CardTitle className="text-3xl font-extrabold tabular-nums tracking-tight">
-          {hidden ? "GHS ••••" : formatGhs(wallet.balance)}
+          {hidden ? "GHS ••••" : formatGhs(balance)}
         </CardTitle>
         <CardAction>
           <Button
@@ -31,11 +30,9 @@ export function WalletCard() {
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Spent {formatGhs(wallet.walletPayments)}</span>
-          <span>of {formatGhs(wallet.totalDeposited)} deposited</span>
-        </div>
-        <Progress value={spentPct} aria-label={`${spentPct}% of deposits spent`} />
+        <p className="text-xs text-muted-foreground">
+          {balance === 0 ? "Fund your wallet to start buying data." : "Your available DataSpots wallet balance."}
+        </p>
       </CardContent>
       <CardFooter className="grid grid-cols-2 gap-2">
         <Button asChild className="brand-gradient brand-glow font-bold text-brand-deep hover:opacity-90">

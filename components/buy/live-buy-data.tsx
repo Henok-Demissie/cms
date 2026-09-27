@@ -65,14 +65,14 @@ export function LiveBuyData({
         <Alert className="border-primary/30 bg-success/8">
           <Clock className="text-brand-emerald" />
           <AlertTitle className="flex items-center gap-2">
-            Live delivery via iDataGH
+            Live bundle delivery
             <Badge variant="outline" className="gap-1 border-primary/40 text-brand-emerald">
               <span className="pulse-dot size-1.5 rounded-full bg-brand-green" aria-hidden />
               Live
             </Badge>
           </AlertTitle>
           <AlertDescription>
-            Bundles are delivered automatically by our network partner. Most land within minutes, but MTN can take a few
+            Bundles are delivered automatically. Most land within minutes, but MTN can take a few
             hours during heavy demand. Every order is tracked end-to-end and auto-refunded if it fails.
           </AlertDescription>
         </Alert>

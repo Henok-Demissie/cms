@@ -9,6 +9,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() })
+  // If there is no valid session, force the user to sign in — no auto-login bypass
   if (!session?.user) redirect("/sign-in")
 
   return (

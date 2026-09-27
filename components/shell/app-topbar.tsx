@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Bell, LogOut, Moon, Search, Settings, Sun, User } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -28,7 +28,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { CommandPalette } from "@/components/shell/command-palette"
-import { user } from "@/lib/data"
+import { useSession, signOut } from "@/lib/auth-client"
 import { useState } from "react"
 
 const titles: Record<string, string> = {
@@ -47,9 +47,28 @@ const titles: Record<string, string> = {
 export function AppTopbar() {
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
+  const router = useRouter()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const segment = pathname.split("/")[2]
   const current = segment ? titles[segment] : undefined
+
+  // Real authenticated user from session — no hardcoded data
+  const { data: session } = useSession()
+  const userName = session?.user?.name ?? ""
+  const userEmail = session?.user?.email ?? ""
+  const initials = userName
+    .split(" ")
+    .filter(Boolean)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "?"
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push("/sign-in")
+    router.refresh()
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background/85 px-4 backdrop-blur-md">
@@ -127,10 +146,14 @@ export function AppTopbar() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" aria-label="Account menu" className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <button
+              type="button"
+              aria-label="Account menu"
+              className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
               <Avatar className="size-8">
                 <AvatarFallback className="brand-gradient text-xs font-extrabold text-brand-deep">
-                  {user.initials}
+                  {initials}
                 </AvatarFallback>
               </Avatar>
             </button>
@@ -139,12 +162,12 @@ export function AppTopbar() {
             <DropdownMenuLabel className="flex items-center gap-3 font-normal">
               <Avatar className="size-9">
                 <AvatarFallback className="brand-gradient text-sm font-extrabold text-brand-deep">
-                  {user.initials}
+                  {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-col">
-                <span className="truncate text-sm font-semibold">{user.fullName}</span>
-                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                <span className="truncate text-sm font-semibold">{userName || "My Account"}</span>
+                <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -162,10 +185,12 @@ export function AppTopbar() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link href="/">
-                  <LogOut /> Sign out
-                </Link>
+              {/* Calls real signOut() — clears session and redirects to sign-in */}
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="cursor-pointer text-destructive focus:text-destructive"
+              >
+                <LogOut /> Sign out
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>

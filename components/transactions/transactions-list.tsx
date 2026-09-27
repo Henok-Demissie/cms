@@ -9,9 +9,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState } from "@/components/brand/empty-state"
 import { StatusBadge } from "@/components/brand/status-badge"
 import { cn } from "@/lib/utils"
-import { formatDate, formatGhs, formatTime, transactions, type Transaction } from "@/lib/data"
+import { formatDate, formatGhs, formatTime } from "@/lib/data"
 
-type Filter = "all" | Transaction["kind"]
+// Real transaction row shape from the DB
+interface DbTransaction {
+  id: number
+  userId: string
+  amount: unknown
+  type: string
+  description: string | null
+  orderId: number | null
+  createdAt: unknown
+}
+
+type Filter = "all" | "order" | "topup" | "refund" | "referral"
 
 const filters: { id: Filter; label: string }[] = [
   { id: "all", label: "All" },
@@ -21,25 +32,28 @@ const filters: { id: Filter; label: string }[] = [
   { id: "referral", label: "Referrals" },
 ]
 
-const kindIcon: Record<Transaction["kind"], typeof Receipt> = {
+const kindIcon: Record<string, typeof Receipt> = {
   order: ShoppingCart,
   topup: ArrowDownToLine,
   refund: RotateCcw,
   referral: Gift,
 }
 
-export function TransactionsList() {
+export function TransactionsList({ transactions }: { transactions: DbTransaction[] }) {
   const [filter, setFilter] = useState<Filter>("all")
   const [q, setQ] = useState("")
 
   const list = useMemo(
     () =>
-      transactions.filter(
-        (t) =>
-          (filter === "all" || t.kind === filter) &&
-          (q === "" || [t.reference, t.label].some((s) => s.toLowerCase().includes(q.toLowerCase()))),
-      ),
-    [filter, q],
+      transactions.filter((t) => {
+        const matchFilter = filter === "all" || t.type === filter
+        const matchSearch =
+          q === "" ||
+          (t.description ?? "").toLowerCase().includes(q.toLowerCase()) ||
+          String(t.id).includes(q)
+        return matchFilter && matchSearch
+      }),
+    [filter, q, transactions],
   )
 
   return (
@@ -61,7 +75,7 @@ export function TransactionsList() {
           <InputGroupInput
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search reference or description"
+            placeholder="Search description or ID"
             aria-label="Search transactions"
           />
         </InputGroup>
@@ -70,22 +84,32 @@ export function TransactionsList() {
       <Card className="card-shadow overflow-hidden py-0">
         <CardContent className="px-0">
           {list.length === 0 ? (
-            <EmptyState icon={Receipt} title="No transactions found" description="New transactions will appear here." />
+            <EmptyState
+              icon={Receipt}
+              title={transactions.length === 0 ? "No transactions yet" : "No results found"}
+              description={
+                transactions.length === 0
+                  ? "Top up your wallet or place an order to get started."
+                  : "Try a different filter or search term."
+              }
+            />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="pl-6">Description</TableHead>
-                  <TableHead className="hidden md:table-cell">Reference</TableHead>
+                  <TableHead className="hidden md:table-cell">ID</TableHead>
                   <TableHead className="hidden sm:table-cell">Date</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead className="hidden pr-6 text-right sm:table-cell">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {list.map((t) => {
-                  const Icon = kindIcon[t.kind]
-                  const credit = t.amount > 0
+                  const Icon = kindIcon[t.type] ?? Receipt
+                  const amount = Number(t.amount)
+                  const credit = amount > 0
+                  const date = (t.createdAt as unknown as Date).toISOString()
                   return (
                     <TableRow key={t.id}>
                       <TableCell className="pl-6">
@@ -98,24 +122,29 @@ export function TransactionsList() {
                           >
                             <Icon className="size-4" aria-hidden />
                           </span>
-                          <span className="truncate font-semibold">{t.label}</span>
+                          <span className="truncate font-semibold">{t.description ?? t.type}</span>
                         </div>
                       </TableCell>
                       <TableCell className="hidden font-mono text-xs text-muted-foreground md:table-cell">
-                        {t.reference}
+                        #{t.id}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <div className="flex flex-col text-muted-foreground">
-                          <span>{formatDate(t.createdAt)}</span>
-                          <span className="text-xs">{formatTime(t.createdAt)}</span>
+                          <span>{formatDate(date)}</span>
+                          <span className="text-xs">{formatTime(date)}</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col items-start gap-1">
-                          <StatusBadge status={t.status} />
-                          <span className={cn("text-xs font-semibold tabular-nums sm:hidden", credit && "text-brand-emerald")}>
+                          <StatusBadge status="success" />
+                          <span
+                            className={cn(
+                              "text-xs font-semibold tabular-nums sm:hidden",
+                              credit && "text-brand-emerald",
+                            )}
+                          >
                             {credit ? "+" : "−"}
-                            {formatGhs(Math.abs(t.amount))}
+                            {formatGhs(Math.abs(amount))}
                           </span>
                         </div>
                       </TableCell>
@@ -126,7 +155,7 @@ export function TransactionsList() {
                         )}
                       >
                         {credit ? "+" : "−"}
-                        {formatGhs(Math.abs(t.amount))}
+                        {formatGhs(Math.abs(amount))}
                       </TableCell>
                     </TableRow>
                   )

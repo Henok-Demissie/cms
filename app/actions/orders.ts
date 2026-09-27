@@ -131,7 +131,7 @@ export async function placeDataOrder(input: {
     return {
       ok: true,
       orderId,
-      message: "Order placed. iDataGH is delivering your data — MTN can take a while.",
+      message: "Order placed! Your data is being delivered — MTN can take a while during high demand.",
     }
   } catch (err) {
     // Provider rejected the order: refund and mark failed.

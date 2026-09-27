@@ -1,8 +1,9 @@
+import { headers } from "next/headers"
+import { auth } from "@/lib/auth"
 import Link from "next/link"
 import { ArrowUpRight, ShoppingCart } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { user } from "@/lib/data"
 
 function greeting() {
   const h = new Date().getHours()
@@ -11,7 +12,11 @@ function greeting() {
   return "Good evening"
 }
 
-export function DashboardHero() {
+export async function DashboardHero() {
+  // Get the real signed-in user — no hardcoded name
+  const session = await auth.api.getSession({ headers: await headers() })
+  const firstName = session?.user?.name?.split(" ")[0] ?? "there"
+
   return (
     <section className="brand-gradient brand-glow rise-in relative overflow-hidden rounded-2xl px-6 py-6 text-brand-deep sm:px-8 sm:py-7">
       <div className="relative flex flex-wrap items-end justify-between gap-5">
@@ -21,7 +26,7 @@ export function DashboardHero() {
             All systems operational
           </Badge>
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-            {greeting()}, {user.fullName.split(" ")[0]}
+            {greeting()}, {firstName}
           </h1>
           <p className="max-w-md text-sm font-medium opacity-80 text-pretty">
             Bundles are delivering in 5–30 minutes across MTN, Telecel and AirtelTigo.

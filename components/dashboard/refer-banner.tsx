@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { ArrowRight, Gift } from "lucide-react"
-import { user } from "@/lib/data"
 
 export function ReferBanner() {
   return (
@@ -14,10 +13,9 @@ export function ReferBanner() {
       <p className="text-lg font-bold leading-snug text-balance">
         Give a friend 1GB, get GHS 1.00 data credit for every first order.
       </p>
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-sm tracking-[0.3em] text-brand-lime">{user.referralCode}</span>
+      <div className="flex items-center justify-end">
         <span className="inline-flex items-center gap-1 text-sm font-semibold group-hover:underline">
-          Share <ArrowRight className="size-4" aria-hidden />
+          Learn more <ArrowRight className="size-4" aria-hidden />
         </span>
       </div>
       <div
