@@ -67,10 +67,18 @@ export async function requireOwner() {
 /**
  * Add an admin by user ID.
  * Only callable by the primary owner.
+ * Strictly limited to maximum 1 admin.
  */
 export async function grantAdminRole(targetUserId: string) {
   const session = await requireOwner()
   await ensureAdminTables()
+
+  // Enforce single admin limit
+  const adminCountRes = await pool.query(`SELECT COUNT(*)::int as count FROM system_admins`)
+  const currentCount = adminCountRes.rows[0]?.count || 0
+  if (currentCount >= 1) {
+    throw new Error("Only one administrator is allowed at a time. Please remove the existing admin before adding a new one.")
+  }
 
   const target = await pool.query(`SELECT id, email, name FROM "user" WHERE id = $1 LIMIT 1`, [targetUserId])
   if (!target.rows[0]) throw new Error("User account not found")
@@ -90,10 +98,18 @@ export async function grantAdminRole(targetUserId: string) {
 /**
  * Add an admin by email address.
  * Only callable by the primary owner.
+ * Strictly limited to maximum 1 admin.
  */
 export async function grantAdminByEmail(targetEmail: string) {
   const session = await requireOwner()
   await ensureAdminTables()
+
+  // Enforce single admin limit
+  const adminCountRes = await pool.query(`SELECT COUNT(*)::int as count FROM system_admins`)
+  const currentCount = adminCountRes.rows[0]?.count || 0
+  if (currentCount >= 1) {
+    throw new Error("Only one administrator is allowed at a time. Please remove the existing admin before adding a new one.")
+  }
 
   const cleanEmail = targetEmail.trim().toLowerCase()
   if (isOwnerEmail(cleanEmail)) {
@@ -102,7 +118,7 @@ export async function grantAdminByEmail(targetEmail: string) {
 
   const target = await pool.query(`SELECT id, email, name FROM "user" WHERE LOWER(email) = LOWER($1) LIMIT 1`, [cleanEmail])
   if (!target.rows[0]) {
-    throw new Error(`No registered account found with email "${targetEmail}". The user must sign up first before being appointed as admin.`)
+    throw new Error(`No registered account found with email "${targetEmail}". The user must register first before being appointed as admin.`)
   }
 
   await pool.query(
@@ -111,6 +127,40 @@ export async function grantAdminByEmail(targetEmail: string) {
   )
 
   return { success: true, user: target.rows[0] }
+}
+
+export async function getOwnersAndAdminData() {
+  await requireAdminOrOwner()
+  await ensureAdminTables()
+
+  const ownerRes = await pool.query(`
+    SELECT u.id, u.name, u.email, u."createdAt", COALESCE(w.balance, 0)::numeric as balance
+    FROM "user" u
+    LEFT JOIN wallets w ON u.id = w."userId"
+    WHERE LOWER(u.email) = LOWER($1)
+    LIMIT 1
+  `, [OWNER_EMAIL])
+
+  const owner = ownerRes.rows[0] || {
+    id: "primary-owner",
+    name: "DataSpots Owner",
+    email: OWNER_EMAIL,
+    createdAt: new Date(),
+    balance: 0,
+  }
+
+  const adminRes = await pool.query(`
+    SELECT u.id, u.name, u.email, u."createdAt" as "joinedAt", sa."createdAt" as "appointedAt", COALESCE(w.balance, 0)::numeric as balance
+    FROM system_admins sa
+    JOIN "user" u ON sa."userId" = u.id
+    LEFT JOIN wallets w ON u.id = w."userId"
+    LIMIT 1
+  `)
+
+  return {
+    owner,
+    currentAdmin: adminRes.rows[0] || null,
+  }
 }
 
 /**

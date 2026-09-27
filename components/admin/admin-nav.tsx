@@ -19,8 +19,9 @@ export function AdminNav({ isOwner, userEmail }: { isOwner?: boolean; userEmail?
 
   const navLinks = [
     { href: "/admin", label: "Overview", icon: LayoutDashboard },
-    { href: "/admin/users", label: "Customer Accounts", icon: Users },
+    { href: "/admin/users", label: "All Customers", icon: Users },
     { href: "/admin/orders", label: "All Orders", icon: ClipboardList },
+    { href: "/admin/owners", label: "Owner's Place", icon: Crown },
   ]
 
   return (
