@@ -325,3 +325,25 @@ export function detectNetwork(input: string): NetworkId | null {
   }
   return null
 }
+
+/**
+ * Automatically cleans and sanitizes phone numbers when pasted or typed into Ghana phone fields:
+ * - Strips redundant +233 or 233 country prefix when the field already has a +233 prefix addon
+ * - Removes non-digit symbols (spaces, hyphens, brackets, dots)
+ * - Limits to max 10 digits
+ */
+export function cleanGhPhoneInput(input: string): string {
+  const val = input.trim()
+  const hasPlus = val.startsWith("+")
+  let digits = val.replace(/\D/g, "")
+
+  if (digits.startsWith("233") && (hasPlus || digits.length > 9)) {
+    digits = digits.slice(3)
+  }
+
+  if (digits.length > 10) {
+    digits = digits.slice(0, 10)
+  }
+
+  return digits
+}

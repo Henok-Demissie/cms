@@ -18,7 +18,7 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
-import { detectNetwork, formatGhs, isValidGhPhone, networkOf, normalizeGhPhone, type NetworkId } from "@/lib/data"
+import { detectNetwork, formatGhs, isValidGhPhone, networkOf, normalizeGhPhone, cleanGhPhoneInput, type NetworkId } from "@/lib/data"
 import { placeDataOrder, initiateDirectBundleOrder } from "@/app/actions/orders"
 
 export interface ClientPackage {
@@ -241,11 +241,16 @@ function LiveCheckoutSheet({
                       id="phone"
                       inputMode="tel"
                       autoComplete="tel"
-                      placeholder="your phone number"
+                      placeholder="e.g. 054 000 0000"
                       value={phone}
                       aria-invalid={invalid || mismatch || undefined}
                       onBlur={() => setTouched(true)}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(cleanGhPhoneInput(e.target.value))}
+                      onPaste={(e) => {
+                        e.preventDefault()
+                        const pasted = e.clipboardData.getData("text")
+                        setPhone(cleanGhPhoneInput(pasted))
+                      }}
                     />
                   </InputGroup>
                   <FieldDescription>

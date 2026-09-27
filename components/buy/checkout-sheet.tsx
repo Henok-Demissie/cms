@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
-import { detectNetwork, formatGhs, isValidGhPhone, networkOf, normalizeGhPhone, wallet, type NetworkId } from "@/lib/data"
+import { detectNetwork, formatGhs, isValidGhPhone, networkOf, normalizeGhPhone, cleanGhPhoneInput, wallet, type NetworkId } from "@/lib/data"
 
 interface CheckoutItem {
   title: string
@@ -93,11 +93,16 @@ export function CheckoutSheet({ item, onClose }: { item: CheckoutItem | null; on
                       id="phone"
                       inputMode="tel"
                       autoComplete="tel"
-                      placeholder="your phone number"
+                      placeholder="e.g. 054 000 0000"
                       value={phone}
                       aria-invalid={invalid || mismatch || undefined}
                       onBlur={() => setTouched(true)}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(cleanGhPhoneInput(e.target.value))}
+                      onPaste={(e) => {
+                        e.preventDefault()
+                        const pasted = e.clipboardData.getData("text")
+                        setPhone(cleanGhPhoneInput(pasted))
+                      }}
                     />
                   </InputGroup>
                   <FieldDescription>
