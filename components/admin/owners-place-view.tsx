@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import {
   Crown,
   ShieldCheck,
@@ -134,10 +135,15 @@ export function OwnersPlaceView({
           </div>
         </div>
 
-        <div className="mt-6 border-t border-border/80 pt-4">
+        <div className="mt-6 border-t border-border/80 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            <span className="font-semibold text-foreground">Owner Authority:</span> Only the primary owner (<span className="font-mono text-foreground font-semibold">Pboxtv9@gmail.com</span>) has authority to appoint or revoke administrator privileges. System architecture strictly limits the platform to a single appointed admin.
+            <span className="font-semibold text-foreground">Owner Authority:</span> Only the primary owner (<span className="font-mono text-foreground font-semibold">Pboxtv9@gmail.com</span>) has authority to appoint or revoke administrator privileges.
           </p>
+          <Button variant="outline" size="sm" asChild className="shrink-0 font-semibold border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10">
+            <Link href="/logo-download">
+              Download Logo for Paystack →
+            </Link>
+          </Button>
         </div>
       </section>
 

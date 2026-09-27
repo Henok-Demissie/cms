@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="50%" stop-color="#22C55E" />
+      <stop offset="100%" stop-color="#84CC16" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#10B981" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded squircle with subtle drop shadow -->
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#brandGrad)" filter="url(#shadow)" />
+
+  <!-- DataSpots Icon Mark -->
+  <g transform="translate(136, 136) scale(10)" stroke="#092716" fill="none">
+    <path
+      d="M4 16.5c2.8-4.8 7.4-8.5 12.5-9.5M6.5 19c2.1-3.4 5.3-6 8.9-7.1"
+      stroke="#092716"
+      stroke-width="2.4"
+      stroke-linecap="round"
+    />
+    <circle cx="18" cy="6" r="2.6" fill="#092716" stroke="none" />
+  </g>
+</svg>
