@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default async function AdminUsersPage() {
-  const { isOwner } = await requireAdminOrOwner()
+  await requireAdminOrOwner()
   const users = await getAllAdminUsers()
 
   return (
@@ -20,14 +20,14 @@ export default async function AdminUsersPage() {
               </Link>
             </Button>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Customer Accounts & Roles</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight">All Customers</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Full directory of all registered customers, wallet balances, and administrator access management.
+            Full directory of registered accounts, system roles, wallet balances, and order activity.
           </p>
         </div>
       </div>
 
-      <AdminUsersTable users={users} isOwner={isOwner} />
+      <AdminUsersTable users={users} />
     </div>
   )
 }

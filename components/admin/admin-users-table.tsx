@@ -1,30 +1,15 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import {
-  Search,
-  ShieldCheck,
-  Crown,
-  UserPlus,
-  ShieldAlert,
-  UserCheck,
-  UserX,
-  AlertCircle,
-  CheckCircle2,
-} from "lucide-react"
+import { useState } from "react"
+import { Search, ShieldCheck, Crown } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import {
-  grantAdminAction,
-  grantAdminByEmailAction,
-  revokeAdminAction,
-} from "@/app/actions/owner"
 
 function formatGHS(amount: number) {
   return `GHS ${Number(amount || 0).toFixed(2)}`
 }
 
-function formatDate(date: string | Date) {
+function formatDate(date: string | Date | undefined) {
+  if (!date) return "—"
   return new Date(date).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
@@ -32,17 +17,8 @@ function formatDate(date: string | Date) {
   })
 }
 
-export function AdminUsersTable({
-  users,
-  isOwner,
-}: {
-  users: any[]
-  isOwner: boolean
-}) {
+export function AdminUsersTable({ users }: { users: any[] }) {
   const [search, setSearch] = useState("")
-  const [newAdminEmail, setNewAdminEmail] = useState("")
-  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null)
-  const [isPending, startTransition] = useTransition()
 
   const filtered = users.filter((u) => {
     const term = search.toLowerCase()
@@ -54,113 +30,8 @@ export function AdminUsersTable({
     )
   })
 
-  const handleAddAdminByEmail = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newAdminEmail.trim()) return
-    setFeedback(null)
-
-    startTransition(async () => {
-      const res = await grantAdminByEmailAction(newAdminEmail.trim())
-      if (res.success) {
-        setFeedback({ type: "success", text: res.message || "Admin appointed successfully!" })
-        setNewAdminEmail("")
-      } else {
-        setFeedback({ type: "error", text: res.error || "Failed to appoint admin." })
-      }
-    })
-  }
-
-  const handleMakeAdmin = (user: any) => {
-    if (!confirm(`Are you sure you want to promote ${user.name || user.email} to Administrator?`)) return
-    setFeedback(null)
-
-    startTransition(async () => {
-      const res = await grantAdminAction(user.id)
-      if (res.success) {
-        setFeedback({ type: "success", text: `Granted admin privileges to ${user.email}.` })
-      } else {
-        setFeedback({ type: "error", text: res.error || "Failed to grant admin privileges." })
-      }
-    })
-  }
-
-  const handleRevokeAdmin = (user: any) => {
-    if (String(user.email).toLowerCase() === "pboxtv9@gmail.com") {
-      alert("Pboxtv9@gmail.com is the permanent primary owner and cannot be revoked.")
-      return
-    }
-
-    if (!confirm(`Revoke admin privileges from ${user.name || user.email}?`)) return
-    setFeedback(null)
-
-    startTransition(async () => {
-      const res = await revokeAdminAction(user.id)
-      if (res.success) {
-        setFeedback({ type: "success", text: `Revoked admin privileges from ${user.email}.` })
-      } else {
-        setFeedback({ type: "error", text: res.error || "Failed to revoke admin privileges." })
-      }
-    })
-  }
-
   return (
-    <div className="flex flex-col gap-6">
-      {/* Feedback banner */}
-      {feedback && (
-        <div
-          className={`flex items-center gap-2 rounded-xl border p-4 text-xs font-semibold ${
-            feedback.type === "success"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-              : "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
-          }`}
-        >
-          {feedback.type === "success" ? (
-            <CheckCircle2 className="size-4 shrink-0" />
-          ) : (
-            <AlertCircle className="size-4 shrink-0" />
-          )}
-          <span>{feedback.text}</span>
-        </div>
-      )}
-
-      {/* Owner-Only: Quick Add Admin Panel */}
-      {isOwner && (
-        <div className="card-shadow rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                <Crown className="size-4" />
-                <span>Owner Controls: Appoint New Administrator</span>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                As the primary owner, you can appoint registered customers as platform admins to manage orders and monitor activity.
-              </p>
-            </div>
-
-            <form onSubmit={handleAddAdminByEmail} className="flex items-center gap-2 w-full sm:w-auto">
-              <Input
-                type="email"
-                placeholder="customer@gmail.com"
-                value={newAdminEmail}
-                onChange={(e) => setNewAdminEmail(e.target.value)}
-                disabled={isPending}
-                className="h-10 text-xs sm:w-64"
-                required
-              />
-              <Button
-                type="submit"
-                disabled={isPending}
-                size="sm"
-                className="brand-gradient brand-glow shrink-0 font-bold text-brand-deep"
-              >
-                <UserPlus className="size-3.5 mr-1.5" />
-                {isPending ? "Adding..." : "Add Admin"}
-              </Button>
-            </form>
-          </div>
-        </div>
-      )}
-
+    <div className="flex flex-col gap-5">
       {/* Search & Stats Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="relative w-full sm:w-80">
@@ -194,7 +65,6 @@ export function AdminUsersTable({
                   <th className="px-4 py-3">Orders</th>
                   <th className="px-4 py-3">Total Spend</th>
                   <th className="px-4 py-3">Joined Date</th>
-                  {isOwner && <th className="px-4 py-3 text-right">Role Management</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -260,41 +130,6 @@ export function AdminUsersTable({
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                         {formatDate(u.createdAt)}
                       </td>
-
-                      {/* Owner-Only Actions Column */}
-                      {isOwner && (
-                        <td className="px-4 py-3 text-right">
-                          {isPrimaryOwner ? (
-                            <span className="text-[10px] font-medium text-muted-foreground italic">
-                              Permanent (Cannot be revoked)
-                            </span>
-                          ) : isAdmin ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={isPending}
-                              onClick={() => handleRevokeAdmin(u)}
-                              className="h-7 text-xs font-semibold text-destructive hover:bg-destructive hover:text-destructive-foreground border-destructive/30"
-                            >
-                              <UserX className="size-3 mr-1" />
-                              Remove Admin
-                            </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={isPending}
-                              onClick={() => handleMakeAdmin(u)}
-                              className="h-7 text-xs font-semibold text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
-                            >
-                              <UserCheck className="size-3 mr-1" />
-                              Make Admin
-                            </Button>
-                          )}
-                        </td>
-                      )}
                     </tr>
                   )
                 })}
