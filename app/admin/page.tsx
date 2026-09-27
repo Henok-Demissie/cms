@@ -12,6 +12,7 @@ import {
   XCircle,
   Crown,
   ShieldCheck,
+  AlertTriangle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -68,6 +69,33 @@ export default async function AdminOverviewPage() {
           </Button>
         </div>
       </div>
+
+      {/* Provider Wholesale Balance Alert */}
+      {(data.providerBalance === null || data.providerBalance < 15) && (
+        <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 text-foreground flex items-start gap-4">
+          <AlertTriangle className="size-6 shrink-0 text-amber-500 mt-0.5" />
+          <div className="flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-extrabold text-base text-foreground">
+                Action Required: Wholesale Gateway Balance is Low ({data.providerBalance !== null ? formatGHS(data.providerBalance) : "Low"})
+              </h3>
+              <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-bold text-amber-700 dark:text-amber-300">
+                iDataGH Gateway
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed max-w-3xl">
+              When customers order data bundles, Ghdatastore automatically dispenses them via your <strong>iDataGH (idatagh.com)</strong> wholesale account. Because your wholesale balance is depleted, telecom fulfillment failed and customers were refunded. Top up your wholesale account on idatagh.com to enable instant delivery.
+            </p>
+            <div className="mt-3">
+              <Button asChild size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-8">
+                <a href="https://idatagh.com" target="_blank" rel="noopener noreferrer">
+                  Top Up iDataGH Wholesale Balance →
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

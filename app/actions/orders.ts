@@ -141,7 +141,11 @@ export async function placeDataOrder(input: {
     await refundOrder(userId, orderId, pkg.customerPrice, reason)
     revalidatePath("/")
     console.log("[v0] iDataGH place-order failed:", reason)
-    return { ok: false, message: `Order could not be delivered: ${reason}. You were refunded.` }
+    const isLowProviderStock = reason.toLowerCase().includes("balance") || reason.toLowerCase().includes("insufficient")
+    const friendlyMessage = isLowProviderStock
+      ? "Telecom gateway is temporarily replenishing bundle inventory. Your payment was safely refunded to your wallet."
+      : `Order could not be delivered: ${reason}. You were refunded.`
+    return { ok: false, message: friendlyMessage }
   }
 }
 

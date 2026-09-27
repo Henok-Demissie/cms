@@ -2,6 +2,7 @@ import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { pool } from "@/lib/db"
+import { getWalletBalance as getIdataBalance } from "@/lib/idatagh"
 
 export const OWNER_EMAIL = "pboxtv9@gmail.com"
 
@@ -299,6 +300,16 @@ export async function getAdminOverview() {
     LIMIT 10
   `, [OWNER_EMAIL])
 
+  let providerBalance: number | null = null
+  try {
+    const wb = await getIdataBalance()
+    if (wb && typeof wb.balance === "number") {
+      providerBalance = Number(wb.balance)
+    }
+  } catch {
+    providerBalance = null
+  }
+
   return {
     totalUsers,
     totalAdmins,
@@ -310,6 +321,7 @@ export async function getAdminOverview() {
     completedOrders: Number(orderStats.completed_orders || 0),
     failedOrders: Number(orderStats.failed_orders || 0),
     totalWalletFloat: Number(totalWalletFloat),
+    providerBalance,
     recentOrders: recentOrdersRes.rows,
     recentUsers: recentUsersRes.rows,
   }
