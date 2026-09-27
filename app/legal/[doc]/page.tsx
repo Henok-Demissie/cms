@@ -7,9 +7,9 @@ const docs: Record<string, { title: string; body: string[] }> = {
   terms: {
     title: "Terms of Service",
     body: [
-      "DataSpots sells prepaid mobile data, airtime and examination result checkers for Ghanaian networks. By funding a wallet or placing an order you agree to these terms.",
+      "Ghdatastore sells prepaid mobile data, airtime and examination result checkers for Ghanaian networks. By funding a wallet or placing an order you agree to these terms.",
       "Orders are final once delivered to the recipient number you entered. Please verify numbers before paying. Orders rejected by a network are refunded to your wallet automatically.",
-      "Wallet balances are non-withdrawable store credit and can only be spent on DataSpots services. Data credit earned through referrals is not transferable.",
+      "Wallet balances are non-withdrawable store credit and can only be spent on Ghdatastore services. Data credit earned through referrals is not transferable.",
     ],
   },
   privacy: {
@@ -17,13 +17,13 @@ const docs: Record<string, { title: string; body: string[] }> = {
     body: [
       "We collect the phone numbers, email address and payment references needed to fulfil your orders and secure your account. We never sell personal data.",
       "Order data is shared with the relevant mobile network only to the extent required to deliver your purchase.",
-      "You can request deletion of your account and personal data at any time by contacting support@dataspots.app.",
+      "You can request deletion of your account and personal data at any time by contacting support@ghdatastore.app.",
     ],
   },
   disclaimer: {
     title: "Disclaimer",
     body: [
-      "DataSpots is an independent reseller and is not affiliated with MTN Ghana, Telecel Ghana, AirtelTigo or WAEC.",
+      "Ghdatastore is an independent reseller and is not affiliated with MTN Ghana, Telecel Ghana, AirtelTigo or WAEC.",
       "Delivery times depend on network conditions. Most orders are delivered within 30 minutes; during congestion delivery can take up to 48 hours.",
     ],
   },

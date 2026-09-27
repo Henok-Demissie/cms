@@ -106,7 +106,7 @@ export function OwnersPlaceView({
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-xl font-black tracking-tight text-foreground sm:text-2xl">
-                  {owner?.name || "DataSpots Owner"}
+                  {owner?.name || "Ghdatastore Owner"}
                 </h2>
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-3 py-0.5 text-xs font-extrabold text-amber-600 dark:text-amber-400 border border-amber-500/40">
                   <Crown className="size-3 text-amber-500" /> Permanent Primary Owner
@@ -167,7 +167,7 @@ export function OwnersPlaceView({
               </span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              DataSpots policy allows <span className="font-bold text-foreground">only one admin</span> at a time to maintain strict platform control.
+              Ghdatastore policy allows <span className="font-bold text-foreground">only one admin</span> at a time to maintain strict platform control.
             </p>
           </div>
         </div>

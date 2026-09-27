@@ -26,7 +26,7 @@ export default function DevelopersPage() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Welcome, {user.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Your DataSpots developer console — Data bundles, MTN Flexa, Airtime &amp; Result Checkers, one API.
+            Your Ghdatastore developer console — Data bundles, MTN Flexa, Airtime &amp; Result Checkers, one API.
           </p>
         </div>
         <Button asChild variant="ghost" size="sm">

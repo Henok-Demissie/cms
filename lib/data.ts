@@ -35,7 +35,7 @@ export interface Transaction {
 export const user = {
   name: "ANTHONY",
   fullName: "Anthony Mensah",
-  email: "anthony@dataspots.app",
+  email: "anthony@ghdatastore.app",
   phone: "024 555 0198",
   initials: "A",
   memberSince: "Feb 2025",

@@ -31,7 +31,7 @@ export function WalletCard({ balance }: { balance: number }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         <p className="text-xs text-muted-foreground">
-          {balance === 0 ? "Fund your wallet to start buying data." : "Your available DataSpots wallet balance."}
+          {balance === 0 ? "Fund your wallet to start buying data." : "Your available Ghdatastore wallet balance."}
         </p>
       </CardContent>
       <CardFooter className="grid grid-cols-2 gap-2">

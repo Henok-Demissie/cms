@@ -143,7 +143,7 @@ export async function getOwnersAndAdminData() {
 
   const owner = ownerRes.rows[0] || {
     id: "primary-owner",
-    name: "DataSpots Owner",
+    name: "Ghdatastore Owner",
     email: OWNER_EMAIL,
     createdAt: new Date(),
     balance: 0,
@@ -200,7 +200,7 @@ export async function ensureOwnerAccountExists() {
         body: {
           email: OWNER_EMAIL,
           password: "Datasell@2026",
-          name: "DataSpots Owner",
+          name: "Ghdatastore Owner",
         },
       })
       // Ensure wallet row exists

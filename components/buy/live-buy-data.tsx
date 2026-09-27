@@ -339,7 +339,7 @@ function LiveCheckoutSheet({
                       <Wallet className="size-4" />
                     </span>
                     <div>
-                      <p className="text-sm font-bold text-foreground">DataSpots Wallet</p>
+                      <p className="text-sm font-bold text-foreground">Ghdatastore Wallet</p>
                       <p className="text-[11px] text-muted-foreground">
                         Balance: <strong className={insufficient ? "text-destructive" : "text-emerald-500 font-bold"}>{formatGhs(walletBalance)}</strong>
                         {insufficient && " (Insufficient)"}

@@ -24,7 +24,7 @@ export function ReferCard({ code, link, referralCount, qualifiedCount }: ReferCa
     }
   }
 
-  const whatsappText = `Get cheap data bundles on DataSpots! 🇬🇭\nUse my referral link and get MTN 1GB for just GHS 3.50 on your first order.\n\n👉 ${link}`
+  const whatsappText = `Get cheap data bundles on Ghdatastore! 🇬🇭\nUse my referral link and get MTN 1GB for just GHS 3.50 on your first order.\n\n👉 ${link}`
   const shareUrl = `https://wa.me/?text=${encodeURIComponent(whatsappText)}`
 
   return (

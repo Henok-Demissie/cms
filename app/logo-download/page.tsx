@@ -60,7 +60,7 @@ export default function LogoDownloadPage() {
     const url = canvas.toDataURL("image/png")
     const a = document.createElement("a")
     a.href = url
-    a.download = "dataspots-logo.png"
+    a.download = "ghdatastore-logo.png"
     a.click()
   }
 
@@ -78,7 +78,7 @@ export default function LogoDownloadPage() {
             <ShieldCheck className="size-3.5" /> Paystack Ready (512x512 PNG)
           </span>
 
-          <h1 className="text-2xl font-black tracking-tight sm:text-3xl">DataSpots Official Logo</h1>
+          <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Ghdatastore Official Logo</h1>
           <p className="mt-1 text-xs text-muted-foreground max-w-md">
             Download this high-resolution logo and upload it directly to your Paystack dashboard under <strong>Settings &gt; System &gt; Business Logo</strong>.
           </p>
@@ -109,7 +109,7 @@ export default function LogoDownloadPage() {
               asChild
               className="font-semibold h-11"
             >
-              <a href="/dataspots-logo.svg" download="dataspots-logo.svg">
+              <a href="/ghdatastore-logo.svg" download="ghdatastore-logo.svg">
                 <Download className="size-4 mr-2" /> Download SVG
               </a>
             </Button>
@@ -128,7 +128,7 @@ export default function LogoDownloadPage() {
             </div>
             <div className="flex items-start gap-2 text-muted-foreground">
               <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary font-bold text-[10px]">3</span>
-              <span>Click <strong>Choose a file</strong> under <em>Business logo</em> and select your downloaded <code>dataspots-logo.png</code>.</span>
+              <span>Click <strong>Choose a file</strong> under <em>Business logo</em> and select your downloaded <code>ghdatastore-logo.png</code>.</span>
             </div>
           </div>
         </div>

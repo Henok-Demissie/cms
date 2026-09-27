@@ -10,9 +10,9 @@ const _manrope = Manrope({ subsets: ["latin"] })
 const _jetbrains = JetBrains_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "DataSpots — Buy Data. Save More.",
+  title: "Ghdatastore — Buy Data. Save More.",
   description:
-    "DataSpots is Ghana's fastest data marketplace. Buy MTN, Telecel and AirtelTigo bundles, airtime and result checkers instantly, with a wallet, referrals, and a developer API.",
+    "Ghdatastore is Ghana's fastest data marketplace. Buy MTN, Telecel and AirtelTigo bundles, airtime and result checkers instantly, with direct checkout, referrals, and a developer API.",
   generator: "v0.app",
 }
 

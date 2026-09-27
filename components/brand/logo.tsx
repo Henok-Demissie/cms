@@ -14,7 +14,7 @@ export function Logo({ href = "/", size = "md", showTagline = true, markOnly = f
   const word = size === "lg" ? "text-2xl" : size === "sm" ? "text-base" : "text-lg"
 
   return (
-    <Link href={href} className={cn("group inline-flex items-center gap-2.5", className)} aria-label="DataSpots home">
+    <Link href={href} className={cn("group inline-flex items-center gap-2.5", className)} aria-label="Ghdatastore home">
       <span
         className={cn(
           "brand-gradient brand-glow relative grid shrink-0 place-items-center rounded-xl text-primary-foreground",
@@ -34,7 +34,7 @@ export function Logo({ href = "/", size = "md", showTagline = true, markOnly = f
       {!markOnly && (
         <span className="flex flex-col leading-none">
           <span className={cn("font-extrabold tracking-tight text-foreground", word)}>
-            Data<span className="brand-gradient-text">Spots</span>
+            Gh<span className="brand-gradient-text">DataStore</span>
           </span>
           {showTagline && (
             <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">

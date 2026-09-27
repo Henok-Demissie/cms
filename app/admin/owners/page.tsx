@@ -25,7 +25,7 @@ export default async function OwnersPlacePage() {
             <span>Owner&apos;s Place &amp; Admin</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Primary owner identity and single administrator assignment for DataSpots.
+            Primary owner identity and single administrator assignment for Ghdatastore.
           </p>
         </div>
       </div>

@@ -3,10 +3,10 @@ import { MessageCircle } from "lucide-react"
 export function WhatsAppFloat() {
   return (
     <a
-      href="https://wa.me/233245550198?text=Hi%20DataSpots%2C%20I%20need%20help"
+      href="https://wa.me/233245550198?text=Hi%20Ghdatastore%2C%20I%20need%20help"
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Chat with DataSpots on WhatsApp"
+      aria-label="Chat with Ghdatastore on WhatsApp"
       className="whatsapp-float brand-gradient brand-glow fixed bottom-6 right-6 z-50 grid size-14 place-items-center rounded-full text-primary-foreground transition-transform hover:scale-105"
     >
       <MessageCircle className="size-6" />

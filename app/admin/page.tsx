@@ -259,7 +259,7 @@ export default async function AdminOverviewPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold">New Customers</h2>
-              <p className="text-xs text-muted-foreground">Recent signups on DataSpots</p>
+              <p className="text-xs text-muted-foreground">Recent signups on Ghdatastore</p>
             </div>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/admin/users" className="text-xs font-semibold">
