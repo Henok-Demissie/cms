@@ -1,7 +1,10 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { formatGhs } from "@/lib/data"
+import { getWalletBalance } from "@/app/actions/orders"
 import {
   ArrowLeft,
   ClipboardList,
@@ -58,9 +61,37 @@ import { useSession } from "@/lib/auth-client"
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; badge?: string }
 
-export function AppSidebar({ isOwner, hasAdminAccess }: { isOwner?: boolean; hasAdminAccess?: boolean }) {
+export function AppSidebar({
+  isOwner,
+  hasAdminAccess,
+  walletBalance: initialBalance,
+}: {
+  isOwner?: boolean
+  hasAdminAccess?: boolean
+  walletBalance?: number
+}) {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const [balance, setBalance] = useState<number | undefined>(initialBalance)
+
+  useEffect(() => {
+    if (initialBalance !== undefined) {
+      setBalance(initialBalance)
+    }
+  }, [initialBalance])
+
+  useEffect(() => {
+    let active = true
+    getWalletBalance()
+      .then((b) => {
+        if (active) setBalance(b)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [pathname])
+
   const isPrimaryOwner = Boolean(
     isOwner || (session?.user?.email && session.user.email.toLowerCase() === "pboxtv9@gmail.com")
   )
@@ -148,16 +179,21 @@ export function AppSidebar({ isOwner, hasAdminAccess }: { isOwner?: boolean; has
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-        {/* Wallet balance link — actual balance shown on the Wallet page */}
-        <div className="brand-gradient-soft rounded-lg border border-primary/20 p-3 group-data-[collapsible=icon]:hidden">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Wallet</p>
-          <Link
-            href="/dashboard/wallet"
-            className="mt-0.5 inline-block text-sm font-extrabold text-brand-emerald hover:underline"
-          >
-            View balance →
-          </Link>
-        </div>
+        {/* Real wallet balance button */}
+        <Link
+          href="/dashboard/wallet"
+          className="brand-gradient-soft block rounded-xl border border-primary/20 p-3 transition-all hover:border-brand-emerald/40 hover:shadow-sm group-data-[collapsible=icon]:hidden group/wallet"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Wallet</p>
+            <span className="text-[10px] font-semibold text-brand-emerald group-hover/wallet:underline">Manage →</span>
+          </div>
+          <div className="mt-1 flex items-baseline justify-between">
+            <span className="text-base font-black tracking-tight text-foreground font-mono">
+              {balance !== undefined ? formatGhs(balance) : "GHS 0.00"}
+            </span>
+          </div>
+        </Link>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Back to home">

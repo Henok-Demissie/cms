@@ -8,6 +8,7 @@ import { WhatsAppFloat } from "@/components/shell/whatsapp-float"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 import { isOwnerEmail, isUserAdminOrOwner } from "@/lib/owner"
+import { getWalletBalance } from "@/app/actions/orders"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -16,10 +17,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const isOwner = isOwnerEmail(session.user.email)
   const hasAdminAccess = await isUserAdminOrOwner(session.user.id, session.user.email)
+  const walletBalance = await getWalletBalance().catch(() => 0)
 
   return (
     <SidebarProvider>
-      <AppSidebar isOwner={isOwner} hasAdminAccess={hasAdminAccess} />
+      <AppSidebar isOwner={isOwner} hasAdminAccess={hasAdminAccess} walletBalance={walletBalance} />
       <SidebarInset>
         <AppTopbar />
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
