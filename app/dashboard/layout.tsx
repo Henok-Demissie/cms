@@ -7,14 +7,18 @@ import { AppTopbar } from "@/components/shell/app-topbar"
 import { WhatsAppFloat } from "@/components/shell/whatsapp-float"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
+import { isOwnerEmail } from "@/lib/owner"
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() })
   // If there is no valid session, force the user to sign in — no auto-login bypass
   if (!session?.user) redirect("/sign-in")
 
+  const isOwner = isOwnerEmail(session.user.email)
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar isOwner={isOwner} />
       <SidebarInset>
         <AppTopbar />
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Bell, LogOut, Moon, Search, Settings, Sun, User } from "lucide-react"
+import { Bell, LogOut, Moon, Search, Settings, ShieldCheck, Sun, User } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -171,6 +171,18 @@ export function AppTopbar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {userEmail?.toLowerCase() === "pboxtv9@gmail.com" && (
+              <>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild className="text-amber-600 dark:text-amber-400 font-semibold focus:text-amber-600">
+                    <Link href="/admin">
+                      <ShieldCheck className="text-amber-500" /> Owner Console
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/profile">

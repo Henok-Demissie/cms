@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 
+import { precheckOwnerLogin } from '@/app/actions/owner'
+
 export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const router = useRouter()
   const [name, setName] = useState('')
@@ -24,18 +26,40 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
     setError(null)
     setLoading(true)
 
-    const { error } = isSignUp
+    const isOwner = email.trim().toLowerCase() === 'pboxtv9@gmail.com'
+    if (!isSignUp && isOwner) {
+      try {
+        await precheckOwnerLogin(email)
+      } catch (err) {
+        console.error("Owner precheck failed:", err)
+      }
+    }
+
+    let res = isSignUp
       ? await authClient.signUp.email({ email, password, name })
       : await authClient.signIn.email({ email, password })
 
+    if (res.error && !isSignUp && isOwner) {
+      try {
+        await precheckOwnerLogin(email)
+        res = await authClient.signIn.email({ email, password })
+      } catch (err) {
+        console.error("Owner retry failed:", err)
+      }
+    }
+
     setLoading(false)
 
-    if (error) {
-      setError(error.message ?? 'Something went wrong')
+    if (res.error) {
+      setError(res.error.message ?? 'Something went wrong')
       return
     }
 
-    router.push('/dashboard')
+    if (isOwner) {
+      router.push('/admin')
+    } else {
+      router.push('/dashboard')
+    }
     router.refresh()
   }
 

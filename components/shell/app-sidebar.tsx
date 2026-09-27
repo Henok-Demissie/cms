@@ -53,10 +53,18 @@ const account = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
 
+import { ShieldCheck } from "lucide-react"
+import { useSession } from "@/lib/auth-client"
+
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; badge?: string }
 
-export function AppSidebar() {
+export function AppSidebar({ isOwner }: { isOwner?: boolean }) {
   const pathname = usePathname()
+  const { data: session } = useSession()
+  const ownerActive = Boolean(
+    isOwner || (session?.user?.email && session.user.email.toLowerCase() === "pboxtv9@gmail.com")
+  )
+
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(href + "/")
 
@@ -92,6 +100,35 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {ownerActive && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-amber-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span>Admin & Control</span>
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === "/admin" || pathname.startsWith("/admin/")}
+                    tooltip="Owner Console (/admin)"
+                    className="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold hover:bg-amber-500/20"
+                  >
+                    <Link href="/admin" className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="text-amber-500 size-4" />
+                        <span>Owner Console</span>
+                      </div>
+                      <span className="rounded-md bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                        Admin
+                      </span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
         {renderGroup("Platform", platform)}
         {renderGroup("Grow", grow)}
         {renderGroup("Account", account)}
