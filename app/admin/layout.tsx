@@ -8,7 +8,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <AdminNav isOwner={isOwner} userEmail={session.user.email} />
-      <main className="flex-1 px-4 py-8 sm:px-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 px-4 py-6 pb-24 md:pb-8 sm:px-8 max-w-7xl mx-auto w-full">
         {children}
       </main>
     </div>

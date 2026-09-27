@@ -55,11 +55,7 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
       return
     }
 
-    if (isOwner) {
-      router.push('/admin')
-    } else {
-      router.push('/dashboard')
-    }
+    router.push('/dashboard')
     router.refresh()
   }
 
