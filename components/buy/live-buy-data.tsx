@@ -1,9 +1,9 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { AlertCircle, AlertTriangle, CheckCircle2, Clock, ShieldCheck, Wallet } from "lucide-react"
+import { AlertCircle, AlertTriangle, CheckCircle2, Clock, CreditCard, ShieldCheck, Smartphone, Wallet } from "lucide-react"
 import { toast } from "sonner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -19,7 +19,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { detectNetwork, formatGhs, isValidGhPhone, networkOf, normalizeGhPhone, type NetworkId } from "@/lib/data"
-import { placeDataOrder } from "@/app/actions/orders"
+import { placeDataOrder, initiateDirectBundleOrder } from "@/app/actions/orders"
 
 export interface ClientPackage {
   packageId: number
@@ -141,6 +141,16 @@ function LiveCheckoutSheet({
   const validPhone = isValidGhPhone(phone)
   const invalid = touched && phone.length > 0 && !validPhone
 
+  const [paymentMethod, setPaymentMethod] = useState<"wallet" | "direct">("direct")
+
+  useEffect(() => {
+    if (walletBalance >= price) {
+      setPaymentMethod("wallet")
+    } else {
+      setPaymentMethod("direct")
+    }
+  }, [price, walletBalance])
+
   const detected = useMemo(() => detectNetwork(phone), [phone])
   const expected = selected?.network
   const mismatch = !!expected && !!detected && detected !== expected
@@ -151,7 +161,8 @@ function LiveCheckoutSheet({
   const detectedName = detected ? networkOf(detected)?.name : undefined
   const prettyPhone = normalizeGhPhone(phone) || phone
 
-  const canPay = validPhone && !insufficient && !mismatch && !pending
+  const canPayFromWallet = validPhone && !insufficient && !mismatch && !pending
+  const canPayDirect = validPhone && !mismatch && !pending
 
   const close = () => {
     onClose()
@@ -162,7 +173,7 @@ function LiveCheckoutSheet({
     }, 250)
   }
 
-  const pay = () => {
+  const payFromWallet = () => {
     if (!selected) return
     startTransition(async () => {
       const res = await placeDataOrder({
@@ -175,6 +186,22 @@ function LiveCheckoutSheet({
         router.refresh()
       } else {
         toast.error(res.message)
+      }
+    })
+  }
+
+  const payDirect = () => {
+    if (!selected || !validPhone || mismatch) return
+    startTransition(async () => {
+      const res = await initiateDirectBundleOrder({
+        network: selected.network,
+        packageLabel: selected.pkg.label,
+        recipient: normalizeGhPhone(phone),
+      })
+      if (res.ok && res.authorizationUrl) {
+        window.location.href = res.authorizationUrl
+      } else {
+        toast.error(res.message || "Could not start direct payment")
       }
     })
   }
@@ -260,44 +287,95 @@ function LiveCheckoutSheet({
 
               <Separator />
 
-              <Item variant="outline">
-                <ItemMedia variant="icon" className="text-brand-emerald">
-                  <Wallet />
-                </ItemMedia>
-                <ItemContent>
-                  <ItemTitle>Wallet balance</ItemTitle>
-                  <ItemDescription>Paid instantly, no card needed</ItemDescription>
-                </ItemContent>
-                <span className={cn("font-bold tabular-nums", insufficient && "text-destructive")}>
-                  {formatGhs(walletBalance)}
-                </span>
-              </Item>
+              <div className="flex flex-col gap-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Payment Method</p>
 
-              {insufficient && (
-                <Alert variant="destructive">
-                  <AlertCircle />
-                  <AlertTitle>Insufficient balance</AlertTitle>
-                  <AlertDescription>
-                    You need {formatGhs(price - walletBalance)} more.{" "}
-                    <Link href="/dashboard/wallet" className="font-semibold underline">
-                      Top up your wallet
-                    </Link>{" "}
-                    to continue.
-                  </AlertDescription>
-                </Alert>
-              )}
+                {/* Option 1: Direct Checkout (MoMo / Card) — Never requires topping up */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setPaymentMethod("direct")}
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setPaymentMethod("direct")}
+                  className={cn(
+                    "flex items-center justify-between rounded-xl border p-3.5 cursor-pointer transition-all",
+                    paymentMethod === "direct"
+                      ? "border-brand-emerald bg-brand-emerald/10 ring-1 ring-brand-emerald shadow-sm"
+                      : "border-border hover:bg-muted/40"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-9 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-500 shrink-0">
+                      <CreditCard className="size-4" />
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-foreground">Direct Pay (MoMo / Card)</p>
+                        <span className="rounded-full bg-emerald-500/20 px-2 py-0.2 text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                          Direct
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">MTN MoMo, Telecel Cash, AT Money, Cards</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-brand-emerald whitespace-nowrap">No top-up needed</span>
+                </div>
+
+                {/* Option 2: Pay from Wallet */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => !insufficient && setPaymentMethod("wallet")}
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && !insufficient && setPaymentMethod("wallet")}
+                  className={cn(
+                    "flex items-center justify-between rounded-xl border p-3.5 transition-all",
+                    insufficient ? "opacity-60 cursor-not-allowed border-border" : "cursor-pointer",
+                    paymentMethod === "wallet" && !insufficient
+                      ? "border-brand-emerald bg-brand-emerald/10 ring-1 ring-brand-emerald shadow-sm"
+                      : "border-border hover:bg-muted/40"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+                      <Wallet className="size-4" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">DataSpots Wallet</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Balance: <strong className={insufficient ? "text-destructive" : "text-emerald-500 font-bold"}>{formatGhs(walletBalance)}</strong>
+                        {insufficient && " (Insufficient)"}
+                      </p>
+                    </div>
+                  </div>
+                  {insufficient ? (
+                    <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Need {formatGhs(price - walletBalance)} more</span>
+                  ) : (
+                    <span className="text-xs font-bold text-emerald-500">1-Click</span>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <SheetFooter>
-              <Button
-                className="brand-gradient brand-glow font-bold text-brand-deep hover:opacity-90"
-                disabled={!canPay}
-                onClick={pay}
-              >
-                {pending && <Spinner data-icon="inline-start" />}
-                {pending ? "Placing order…" : `Pay ${formatGhs(price)}`}
-              </Button>
-              <Button variant="ghost" onClick={close}>
+            <SheetFooter className="flex flex-col gap-2 sm:flex-row pt-2">
+              {paymentMethod === "direct" ? (
+                <Button
+                  className="brand-gradient brand-glow font-bold text-brand-deep hover:opacity-90 w-full"
+                  disabled={!canPayDirect}
+                  onClick={payDirect}
+                >
+                  {pending && <Spinner data-icon="inline-start" />}
+                  {pending ? "Opening Checkout…" : `Pay ${formatGhs(price)} via MoMo / Card`}
+                </Button>
+              ) : (
+                <Button
+                  className="brand-gradient brand-glow font-bold text-brand-deep hover:opacity-90 w-full"
+                  disabled={!canPayFromWallet}
+                  onClick={payFromWallet}
+                >
+                  {pending && <Spinner data-icon="inline-start" />}
+                  {pending ? "Placing order…" : `Pay ${formatGhs(price)} from Wallet`}
+                </Button>
+              )}
+              <Button variant="ghost" onClick={close} disabled={pending}>
                 Cancel
               </Button>
             </SheetFooter>

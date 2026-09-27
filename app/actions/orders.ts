@@ -10,6 +10,8 @@ import { and, desc, eq } from "drizzle-orm"
 import { headers } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "crypto"
+import { initializeTransaction } from "@/lib/paystack"
+import { getBaseUrl } from "@/lib/utils"
 
 async function getUserId() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -193,4 +195,52 @@ export async function syncOrderStatus(orderId: number) {
   }
 }
 
+/**
+ * Initiates direct Paystack checkout (MoMo / Card) for a specific data bundle.
+ * The customer does NOT have to top up their wallet first.
+ */
+export async function initiateDirectBundleOrder(input: {
+  network: IdataNetwork
+  packageLabel: string
+  recipient: string
+}) {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) throw new Error("Unauthorized")
+  const user = session.user
 
+  const recipient = input.recipient.replace(/\D/g, "").replace(/^233/, "0")
+  if (!/^0\d{9}$/.test(recipient)) {
+    return { ok: false as const, message: "Enter a valid 10-digit Ghana phone number (e.g. 024xxxxxxx)." }
+  }
+
+  const pkg = await findRetailPackage(input.network, input.packageLabel)
+  if (!pkg) {
+    return { ok: false as const, message: "That package is no longer available. Please refresh and try again." }
+  }
+
+  const reference = `DS-${randomUUID().slice(0, 8).toUpperCase()}`
+
+  try {
+    const { authorizationUrl } = await initializeTransaction({
+      email: user.email,
+      amountInSubunit: Math.round(pkg.customerPrice * 100),
+      reference,
+      callbackUrl: `${getBaseUrl()}/dashboard/orders/verify`,
+      metadata: {
+        orderType: "direct_bundle",
+        userId: user.id,
+        network: input.network,
+        packageLabel: pkg.label,
+        recipient,
+        dataSize: pkg.dataSize,
+        customerPrice: pkg.customerPrice,
+        costPrice: pkg.costPrice,
+      },
+    })
+
+    return { ok: true as const, authorizationUrl }
+  } catch (err: any) {
+    console.error("Direct checkout initialize failed:", err.message)
+    return { ok: false as const, message: "Could not start direct checkout. Please try again." }
+  }
+}

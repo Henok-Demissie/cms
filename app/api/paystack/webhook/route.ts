@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { isValidPaystackSignature } from "@/lib/paystack"
-import { creditWalletForTopup, markTopupFailed } from "@/lib/topups"
+import { creditWalletForTopup, markTopupFailed, fulfillDirectBundleOrder } from "@/lib/topups"
 
 /**
  * Receives payment events from Paystack. Paystack signs the raw body with
@@ -32,7 +32,12 @@ export async function POST(req: Request) {
   try {
     if (event.event === "charge.success") {
       const channel = typeof event.data?.channel === "string" ? event.data.channel : null
-      await creditWalletForTopup(reference, channel)
+      const metadata = event.data?.metadata as any
+      if (metadata?.orderType === "direct_bundle") {
+        await fulfillDirectBundleOrder(reference, metadata)
+      } else {
+        await creditWalletForTopup(reference, channel)
+      }
     } else if (event.event === "charge.failed") {
       await markTopupFailed(reference)
     }
