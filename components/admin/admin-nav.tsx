@@ -51,7 +51,19 @@ export function AdminNav({ isOwner, userEmail }: { isOwner?: boolean; userEmail?
     <>
       <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-background/95 px-3 backdrop-blur-md sm:px-8">
         {/* Left: Brand + Role Badge + Desktop Links */}
-        <div className="flex items-center gap-3 sm:gap-6">
+        <div className="flex items-center gap-2 sm:gap-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="md:hidden -ml-1 h-8 px-2 text-xs font-bold gap-1 text-foreground hover:bg-muted"
+          >
+            <Link href="/dashboard" aria-label="Back to customer dashboard">
+              <ArrowLeft className="size-4 text-brand-emerald" />
+              <span>Back</span>
+            </Link>
+          </Button>
+
           <Logo href="/admin" size="sm" showTagline={false} />
 
           {isOwner ? (

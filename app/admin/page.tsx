@@ -13,6 +13,7 @@ import {
   Crown,
   ShieldCheck,
   AlertTriangle,
+  ArrowLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -42,6 +43,19 @@ export default async function AdminOverviewPage() {
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
         <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="h-7 px-2.5 text-xs font-bold gap-1.5 border-brand-emerald/40 text-brand-emerald hover:bg-brand-emerald/10"
+            >
+              <Link href="/dashboard">
+                <ArrowLeft className="size-3.5" />
+                <span>← Back to Customer Dashboard</span>
+              </Link>
+            </Button>
+          </div>
           <div className="flex items-center gap-2 mb-1">
             <span className="inline-block size-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
