@@ -66,7 +66,7 @@ export function AppTopbar() {
 
   const handleSignOut = async () => {
     await signOut()
-    router.push("/sign-in")
+    router.push("/")
     router.refresh()
   }
 
