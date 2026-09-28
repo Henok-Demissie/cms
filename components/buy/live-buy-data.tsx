@@ -32,7 +32,7 @@ export type PackagesByNetwork = Record<NetworkId, ClientPackage[]>
 
 const NETWORKS: { id: NetworkId; name: string }[] = [
   { id: "mtn", name: "MTN" },
-  { id: "telecel", name: "Telecel (Vodafone)" },
+  { id: "telecel", name: "Telecel" },
   { id: "airteltigo", name: "AirtelTigo" },
 ]
 
@@ -54,15 +54,14 @@ export function LiveBuyData({
   return (
     <div className="flex flex-col gap-5">
       <Tabs value={tab} onValueChange={(v) => setTab(v as NetworkId)} className="gap-5">
-        <TabsList className="h-auto w-full flex-wrap justify-start sm:w-fit">
+        <TabsList className="grid w-full grid-cols-3 h-11 p-1">
           {NETWORKS.map((n) => (
-            <TabsTrigger key={n.id} value={n.id} className="flex-none gap-1.5 px-4 py-1.5">
+            <TabsTrigger
+              key={n.id}
+              value={n.id}
+              className="justify-center px-2 py-1.5 font-bold text-xs sm:text-sm data-[state=active]:shadow-sm"
+            >
               {n.name}
-              {packages[n.id].length > 0 && (
-                <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-primary">
-                  {packages[n.id].length}
-                </span>
-              )}
             </TabsTrigger>
           ))}
         </TabsList>

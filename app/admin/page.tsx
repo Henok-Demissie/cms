@@ -17,7 +17,6 @@ import {
   RefreshCw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { BulkSyncButton } from "@/components/admin/bulk-sync-button"
 import { ClearTestDataButton } from "@/components/admin/clear-test-data-button"
 
 function formatGHS(amount: number) {
@@ -60,7 +59,6 @@ export default async function AdminOverviewPage() {
 
         <div className="flex items-center gap-3 flex-wrap">
           <ClearTestDataButton />
-          <BulkSyncButton />
           <Button asChild variant="outline" size="sm">
             <Link href="/admin/users">
               <Users className="size-4 mr-2" />
