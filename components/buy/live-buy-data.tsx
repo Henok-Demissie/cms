@@ -56,8 +56,13 @@ export function LiveBuyData({
       <Tabs value={tab} onValueChange={(v) => setTab(v as NetworkId)} className="gap-5">
         <TabsList className="h-auto w-full flex-wrap justify-start sm:w-fit">
           {NETWORKS.map((n) => (
-            <TabsTrigger key={n.id} value={n.id} className="flex-none px-4 py-1.5">
+            <TabsTrigger key={n.id} value={n.id} className="flex-none gap-1.5 px-4 py-1.5">
               {n.name}
+              {packages[n.id].length > 0 && (
+                <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-primary">
+                  {packages[n.id].length}
+                </span>
+              )}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -79,6 +84,17 @@ export function LiveBuyData({
 
         {NETWORKS.map((n) => (
           <TabsContent key={n.id} value={n.id} className="flex flex-col gap-5">
+            {/* Low inventory notice */}
+            {packages[n.id].length > 0 && packages[n.id].length < 3 && (
+              <Alert className="border-amber-500/40 bg-amber-500/8">
+                <AlertCircle className="text-amber-500" />
+                <AlertTitle className="text-amber-600 dark:text-amber-400">Limited bundles available</AlertTitle>
+                <AlertDescription>
+                  Only {packages[n.id].length} {n.name} bundle{packages[n.id].length === 1 ? "" : "s"} are currently
+                  in stock from our provider. Smaller sizes are temporarily out of inventory — check back soon.
+                </AlertDescription>
+              </Alert>
+            )}
             {packages[n.id].length === 0 ? (
               <Empty className="rounded-lg border">
                 <EmptyHeader>
