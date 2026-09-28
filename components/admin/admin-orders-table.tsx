@@ -1,12 +1,9 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
-import { Search, CheckCircle2, Clock, XCircle, RefreshCw } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, CheckCircle2, Clock, XCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { markOrderDelivered, markAllFailedDelivered } from "@/app/actions/owner"
 
 function formatGHS(amount: number) {
   return `GHS ${Number(amount || 0).toFixed(2)}`
@@ -26,8 +23,6 @@ export function AdminOrdersTable({ orders }: { orders: any[] }) {
   const [search, setSearch] = useState("")
   const [networkFilter, setNetworkFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [isPending, startTransition] = useTransition()
-  const [markingId, setMarkingId] = useState<number | null>(null)
   const router = useRouter()
 
   // Auto-revalidate immediately whenever any order is pending or processing
@@ -39,32 +34,6 @@ export function AdminOrdersTable({ orders }: { orders: any[] }) {
     }, 4000)
     return () => clearInterval(timer)
   }, [hasInFlight, router])
-
-  const markDelivered = (id: number) => {
-    setMarkingId(id)
-    startTransition(async () => {
-      const res = await markOrderDelivered(id)
-      setMarkingId(null)
-      if (res.success) {
-        toast.success("Order marked as delivered")
-        router.refresh()
-      } else {
-        toast.error(res.error || "Failed to update order")
-      }
-    })
-  }
-
-  const markAllDelivered = () => {
-    startTransition(async () => {
-      const res = await markAllFailedDelivered()
-      if (res.success) {
-        toast.success(res.message)
-        router.refresh()
-      } else {
-        toast.error("Failed to update orders")
-      }
-    })
-  }
 
   const filtered = orders.filter((o) => {
     const term = search.toLowerCase()
@@ -123,18 +92,6 @@ export function AdminOrdersTable({ orders }: { orders: any[] }) {
             <option value="processing">Processing</option>
             <option value="failed">Failed</option>
           </select>
-
-          {/* Bulk mark all failed as delivered */}
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={isPending}
-            onClick={markAllDelivered}
-            className="border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400 text-xs h-10"
-          >
-            <CheckCircle2 className={`size-3.5 mr-1.5 ${isPending ? "animate-pulse" : ""}`} />
-            {isPending ? "Updating…" : "Mark All Failed → Delivered"}
-          </Button>
         </div>
       </div>
 
@@ -204,23 +161,9 @@ export function AdminOrdersTable({ orders }: { orders: any[] }) {
                             <Clock className="size-3" /> Processing
                           </span>
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-500">
-                              <XCircle className="size-3" /> Failed
-                            </span>
-                            <button
-                              onClick={() => markDelivered(order.id)}
-                              disabled={markingId === order.id || isPending}
-                              className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-600 hover:bg-emerald-500/30 disabled:opacity-50 transition-colors dark:text-emerald-400"
-                            >
-                              {markingId === order.id ? (
-                                <RefreshCw className="size-3 animate-spin" />
-                              ) : (
-                                <CheckCircle2 className="size-3" />
-                              )}
-                              Mark Delivered
-                            </button>
-                          </div>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-500">
+                            <XCircle className="size-3" /> Failed
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
