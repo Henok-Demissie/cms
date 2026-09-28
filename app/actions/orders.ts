@@ -6,7 +6,7 @@ import { orders, wallets, walletTransactions } from "@/lib/db/schema"
 import { findRetailPackage } from "@/lib/pricing"
 import { mapProviderStatus } from "@/lib/status"
 import { placeOrder, getOrderStatus, IdataError, type IdataNetwork } from "@/lib/idatagh"
-import { and, desc, eq } from "drizzle-orm"
+import { and, desc, eq, or } from "drizzle-orm"
 import { headers } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "crypto"
@@ -247,4 +247,33 @@ export async function initiateDirectBundleOrder(input: {
     console.error("Direct checkout initialize failed:", err.message)
     return { ok: false as const, message: "Could not start direct checkout. Please try again." }
   }
+}
+
+/**
+ * Public-facing order tracker — looks up by DS-XXXXXXXX reference OR recipient
+ * phone number. Auth is NOT required so customers can track without logging in.
+ */
+export async function trackOrder(query: string) {
+  const key = query.trim().toUpperCase().replace(/\s/g, "")
+  if (!key) return null
+
+  // Try matching the `reference` column (e.g. DS-33FAA221) or the `recipient`
+  // after stripping non-digits from both sides.
+  const digits = key.replace(/\D/g, "")
+
+  const rows = await db
+    .select()
+    .from(orders)
+    .where(
+      or(
+        eq(orders.reference, key),
+        // Also try with the raw lower-case input in case user typed lowercase
+        eq(orders.reference, query.trim().replace(/\s/g, "").toUpperCase()),
+        ...(digits.length >= 9 ? [eq(orders.recipient, digits.startsWith("0") ? digits : "0" + digits)] : []),
+      ),
+    )
+    .limit(5)
+    .orderBy(desc(orders.createdAt))
+
+  return rows.length > 0 ? rows : null
 }
