@@ -55,15 +55,19 @@ export function AppTopbar() {
 
   // Real authenticated user from session — no hardcoded data
   const { data: session } = useSession()
-  const userName = session?.user?.name ?? ""
-  const userEmail = session?.user?.email ?? ""
+  const userName = session?.user?.name?.trim() ?? ""
+  const userEmail = session?.user?.email?.trim() ?? ""
   const initials = userName
-    .split(" ")
-    .filter(Boolean)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "?"
+    ? userName
+        .split(" ")
+        .filter(Boolean)
+        .map((p) => p[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : userEmail
+      ? userEmail.slice(0, 1).toUpperCase()
+      : ""
 
   const handleSignOut = async () => {
     await signOut()
@@ -146,7 +150,7 @@ export function AppTopbar() {
             >
               <Avatar className="size-8">
                 <AvatarFallback className="brand-gradient text-xs font-extrabold text-brand-deep">
-                  {initials}
+                  {initials || <User className="size-4 text-brand-deep" />}
                 </AvatarFallback>
               </Avatar>
             </button>
@@ -155,7 +159,7 @@ export function AppTopbar() {
             <DropdownMenuLabel className="flex items-center gap-3 font-normal">
               <Avatar className="size-9">
                 <AvatarFallback className="brand-gradient text-sm font-extrabold text-brand-deep">
-                  {initials}
+                  {initials || <User className="size-4 text-brand-deep" />}
                 </AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-col">

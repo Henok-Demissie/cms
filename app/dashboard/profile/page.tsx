@@ -1,6 +1,6 @@
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
-import { CalendarDays, Mail } from "lucide-react"
+import { CalendarDays, Mail, User } from "lucide-react"
 import { PageHeader } from "@/components/brand/page-header"
 import { formatGhs } from "@/lib/data"
 import { getWalletBalance, getMyOrders } from "@/app/actions/orders"
@@ -15,15 +15,19 @@ export default async function ProfilePage() {
   const [balance, dbOrders] = await Promise.all([getWalletBalance(), getMyOrders()])
   const spent = dbOrders.reduce((s, o) => s + Number(o.customerPrice), 0)
 
-  const name = sessionUser?.name ?? ""
-  const email = sessionUser?.email ?? ""
+  const name = sessionUser?.name?.trim() ?? ""
+  const email = sessionUser?.email?.trim() ?? ""
   const initials = name
-    .split(" ")
-    .filter(Boolean)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "?"
+    ? name
+        .split(" ")
+        .filter(Boolean)
+        .map((p) => p[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : email
+      ? email.slice(0, 1).toUpperCase()
+      : ""
 
   const memberSince = sessionUser?.createdAt
     ? new Date(sessionUser.createdAt as unknown as string).toLocaleDateString("en-GB", {
@@ -38,7 +42,7 @@ export default async function ProfilePage() {
 
       <section className="card-shadow flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card p-5">
         <span className="brand-gradient brand-glow flex size-16 items-center justify-center rounded-full text-2xl font-extrabold text-brand-deep">
-          {initials}
+          {initials || <User className="size-8 text-brand-deep" />}
         </span>
         <div className="flex-1">
           <h2 className="text-lg font-bold">{name || "My Account"}</h2>
