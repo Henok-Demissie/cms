@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Bell, LogOut, Moon, Search, Settings, ShieldCheck, Sun, User } from "lucide-react"
+import { LogOut, Moon, Search, Settings, ShieldCheck, Sun, User } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -28,6 +28,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { CommandPalette } from "@/components/shell/command-palette"
+import { NotificationPanel } from "@/components/shell/notification-panel"
 import { useSession, signOut } from "@/lib/auth-client"
 import { useState } from "react"
 
@@ -132,15 +133,7 @@ export function AppTopbar() {
           <TooltipContent>Toggle theme</TooltipContent>
         </Tooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label="Notifications" className="relative">
-              <Bell />
-              <span aria-hidden className="absolute right-1.5 top-1.5 size-2 rounded-full bg-primary ring-2 ring-background" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Notifications</TooltipContent>
-        </Tooltip>
+        <NotificationPanel />
 
         <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
 
