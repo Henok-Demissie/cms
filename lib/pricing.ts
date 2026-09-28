@@ -36,13 +36,16 @@ function toRetail(pkg: IdataPackage): RetailPackage {
   }
 }
 
+// Standard packages matching iDataGH's official Telecel wholesale pricing (starting from 10GB)
 const STANDARD_TELECEL_PACKAGES: IdataPackage[] = [
-  { package_id: 201, label: "1", data_size: 1, price: 4.5 },
-  { package_id: 202, label: "2", data_size: 2, price: 9.0 },
-  { package_id: 205, label: "5", data_size: 5, price: 21.5 },
-  { package_id: 210, label: "10", data_size: 10, price: 41.0 },
-  { package_id: 215, label: "15", data_size: 15, price: 60.0 },
-  { package_id: 220, label: "20", data_size: 20, price: 78.0 },
+  { package_id: 210, label: "10", data_size: 10, price: 39.0 },
+  { package_id: 215, label: "15", data_size: 15, price: 56.0 },
+  { package_id: 220, label: "20", data_size: 20, price: 74.0 },
+  { package_id: 225, label: "25", data_size: 25, price: 93.0 },
+  { package_id: 230, label: "30", data_size: 30, price: 109.0 },
+  { package_id: 240, label: "40", data_size: 40, price: 144.0 },
+  { package_id: 250, label: "50", data_size: 50, price: 178.0 },
+  { package_id: 299, label: "100", data_size: 100, price: 350.0 },
 ]
 
 export async function getRetailPackages(network: IdataNetwork): Promise<RetailPackage[]> {
@@ -58,21 +61,21 @@ export async function getRetailPackages(network: IdataNetwork): Promise<RetailPa
       ...(vodaRes?.packages || []),
     ]
 
-    // Create a map of bundles by data_size, seeded with standard bundles
-    const sizeMap = new Map<number, IdataPackage>()
-    for (const std of STANDARD_TELECEL_PACKAGES) {
-      sizeMap.set(std.data_size, std)
-    }
-    // Overwrite with live packages from provider if available
-    for (const live of livePackages) {
-      if (live && live.data_size) {
-        sizeMap.set(live.data_size, live)
+    // If iDataGH returns packages, use them exclusively so we never offer unavailable sizes
+    if (livePackages.length > 0) {
+      const sizeMap = new Map<number, IdataPackage>()
+      for (const live of livePackages) {
+        if (live && live.data_size) {
+          sizeMap.set(live.data_size, live)
+        }
       }
+      return Array.from(sizeMap.values())
+        .map(toRetail)
+        .sort((a, b) => a.dataSize - b.dataSize)
     }
 
-    return Array.from(sizeMap.values())
-      .map(toRetail)
-      .sort((a, b) => a.dataSize - b.dataSize)
+    // Fallback only if iDataGH API is unreachable
+    return STANDARD_TELECEL_PACKAGES.map(toRetail).sort((a, b) => a.dataSize - b.dataSize)
   }
 
   const res = await getPackages(network)
