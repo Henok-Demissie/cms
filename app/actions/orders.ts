@@ -130,6 +130,7 @@ export async function placeDataOrder(input: {
       .where(eq(orders.id, orderId))
 
     revalidatePath("/")
+    revalidatePath("/dashboard/orders")
     return {
       ok: true,
       orderId,
@@ -140,6 +141,7 @@ export async function placeDataOrder(input: {
     const reason = err instanceof IdataError ? err.message : "Provider error"
     await refundOrder(userId, orderId, pkg.customerPrice, reason)
     revalidatePath("/")
+    revalidatePath("/dashboard/orders")
     console.log("[v0] iDataGH place-order failed:", reason)
     const isLowProviderStock = reason.toLowerCase().includes("balance") || reason.toLowerCase().includes("insufficient")
     const friendlyMessage = isLowProviderStock
@@ -184,17 +186,31 @@ export async function syncOrderStatus(orderId: number) {
     .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
     .limit(1)
   const order = rows[0]
-  if (!order?.providerOrderId) return { ok: false }
+  if (!order) return { ok: false }
+
+  // If the order has no providerOrderId it failed before iDataGH even accepted it.
+  // The refundOrder path already set status = 'failed' in the DB.
+  // Revalidate so the customer page shows the real status immediately.
+  if (!order.providerOrderId) {
+    revalidatePath("/")
+    revalidatePath("/dashboard/orders")
+    return { ok: true, status: order.status }
+  }
 
   try {
     const status = await getOrderStatus(order.providerOrderId)
+    const mappedStatus = mapProviderStatus(status.order_status)
     await db
       .update(orders)
-      .set({ providerStatus: status.order_status, status: mapProviderStatus(status.order_status), updatedAt: new Date() })
+      .set({ providerStatus: status.order_status, status: mappedStatus, updatedAt: new Date() })
       .where(eq(orders.id, orderId))
     revalidatePath("/")
-    return { ok: true, status: status.order_status }
+    revalidatePath("/dashboard/orders")
+    return { ok: true, status: mappedStatus }
   } catch {
+    // Even if iDataGH is unreachable, revalidate so the page shows the real DB status.
+    revalidatePath("/")
+    revalidatePath("/dashboard/orders")
     return { ok: false }
   }
 }

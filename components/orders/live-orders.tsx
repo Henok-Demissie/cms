@@ -36,10 +36,17 @@ export function LiveOrders({ orders }: { orders: LiveOrder[] }) {
       const res = await syncOrderStatus(id)
       setSyncingId(null)
       if (res.ok) {
-        toast.success(`Status: ${res.status}`)
+        const label =
+          res.status === "delivered" ? "Delivered ✓" :
+          res.status === "failed" ? "Failed – you were refunded" :
+          res.status === "processing" ? "Still processing…" :
+          res.status ?? "Updated"
+        toast.success(`Status: ${label}`)
         router.refresh()
       } else {
         toast.error("Could not refresh status right now.")
+        // Still refresh the page — the DB might have the correct status already.
+        router.refresh()
       }
     })
   }
@@ -112,7 +119,7 @@ export function LiveOrders({ orders }: { orders: LiveOrder[] }) {
                     variant="ghost"
                     size="icon"
                     aria-label="Refresh status"
-                    disabled={syncingId === o.id || o.status === "delivered" || o.status === "failed"}
+                    disabled={syncingId === o.id || o.status === "delivered"}
                     onClick={() => sync(o.id)}
                   >
                     <RefreshCw className={syncingId === o.id ? "animate-spin" : ""} />
