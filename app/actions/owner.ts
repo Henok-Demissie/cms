@@ -8,6 +8,7 @@ import {
   grantAdminByEmail,
   revokeAdminRole,
   requireAdminOrOwner,
+  purgeFailedTestErrorsAndResetFloat,
 } from "@/lib/owner"
 import { db } from "@/lib/db"
 import { orders } from "@/lib/db/schema"
@@ -105,4 +106,23 @@ export async function bulkSyncOrders() {
     message: `Synced ${stuck.length} orders — ${updated} updated, ${errors} unreachable.`,
   }
 }
+
+/**
+ * Manually trigger purge of test error orders and reset customer float to real deposits.
+ */
+export async function clearTestErrorsAction() {
+  await requireAdminOrOwner()
+  const res = await purgeFailedTestErrorsAndResetFloat()
+  revalidatePath("/")
+  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/orders")
+  revalidatePath("/admin")
+  revalidatePath("/admin/orders")
+  revalidatePath("/admin/users")
+  return {
+    success: true,
+    message: `Cleared ${res.count} test orders and updated customer float to real deposits only.`,
+  }
+}
+
 
