@@ -32,7 +32,7 @@ export type PackagesByNetwork = Record<NetworkId, ClientPackage[]>
 
 const NETWORKS: { id: NetworkId; name: string }[] = [
   { id: "mtn", name: "MTN" },
-  { id: "telecel", name: "Telecel" },
+  { id: "telecel", name: "Telecel (Vodafone)" },
   { id: "airteltigo", name: "AirtelTigo" },
 ]
 

@@ -96,15 +96,32 @@ export function getOrderStatus(orderId: number | string) {
  * Place a data bundle order. `packageLabel` is the bundle label from getPackages
  * (e.g. "2" for the 2GB package), matching the API's `pa_data-bundle-packages` field.
  */
-export function placeOrder(params: { network: IdataNetwork; beneficiary: string; packageLabel: string | number }) {
-  return request<PlaceOrderResult>(`/place-order`, {
-    method: "POST",
-    body: JSON.stringify({
-      network: params.network,
-      beneficiary: params.beneficiary,
-      "pa_data-bundle-packages": params.packageLabel,
-    }),
-  })
+export async function placeOrder(params: { network: string; beneficiary: string; packageLabel: string | number }) {
+  try {
+    return await request<PlaceOrderResult>(`/place-order`, {
+      method: "POST",
+      body: JSON.stringify({
+        network: params.network,
+        beneficiary: params.beneficiary,
+        "pa_data-bundle-packages": params.packageLabel,
+      }),
+    })
+  } catch (err: any) {
+    // If telecom fulfillment rejected with "telecel", try "vodafone" fallback
+    if (params.network === "telecel") {
+      try {
+        return await request<PlaceOrderResult>(`/place-order`, {
+          method: "POST",
+          body: JSON.stringify({
+            network: "vodafone",
+            beneficiary: params.beneficiary,
+            "pa_data-bundle-packages": params.packageLabel,
+          }),
+        })
+      } catch {}
+    }
+    throw err
+  }
 }
 
 export function setWebhookUrl(webhookUrl: string) {
