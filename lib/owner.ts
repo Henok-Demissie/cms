@@ -2,7 +2,8 @@ import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { pool } from "@/lib/db"
-import { getWalletBalance as getIdataBalance } from "@/lib/idatagh"
+import { getWalletBalance as getIdataBalance, getOrderStatus } from "@/lib/idatagh"
+import { mapProviderStatus } from "@/lib/status"
 
 export const OWNER_EMAIL = "pboxtv9@gmail.com"
 
@@ -375,6 +376,7 @@ export async function getAllAdminOrders() {
       o."customerPrice",
       o."costPrice",
       o.status,
+      o."providerOrderId",
       o."createdAt",
       u.name as user_name,
       u.email as user_email
@@ -383,5 +385,28 @@ export async function getAllAdminOrders() {
     ORDER BY o."createdAt" DESC
     LIMIT 200
   `)
+
+  // Automatically check in-flight orders so admin immediately sees delivered
+  const inFlight = res.rows.filter(
+    (o: any) => (o.status === "processing" || o.status === "pending") && o.providerOrderId
+  )
+  if (inFlight.length > 0) {
+    await Promise.allSettled(
+      inFlight.slice(0, 15).map(async (order: any) => {
+        try {
+          const statusRes = await getOrderStatus(order.providerOrderId)
+          const mapped = mapProviderStatus(statusRes.order_status)
+          if (mapped !== order.status) {
+            await pool.query(
+              `UPDATE orders SET status = $1, "providerStatus" = $2, "updatedAt" = now() WHERE id = $3`,
+              [mapped, statusRes.order_status, order.id]
+            )
+            order.status = mapped
+          }
+        } catch {}
+      })
+    )
+  }
+
   return res.rows
 }

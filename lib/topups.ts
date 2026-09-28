@@ -1,6 +1,8 @@
 import "server-only"
 import { pool } from "@/lib/db"
 import { placeOrder, type IdataNetwork } from "@/lib/idatagh"
+import { mapProviderStatus } from "@/lib/status"
+import { revalidatePath } from "next/cache"
 
 export type CreditResult = { credited: true } | { credited: false; reason: "not_found" | "already_processed" }
 
@@ -103,11 +105,16 @@ export async function fulfillDirectBundleOrder(reference: string, metadata: any)
       packageLabel,
     })
 
-    const finalStatus = result.status === "failed" ? "failed" : "completed"
+    const finalStatus = mapProviderStatus(result.status)
     await pool.query(
       `UPDATE orders SET "providerOrderId" = $1, "providerStatus" = $2, status = $3, "updatedAt" = now() WHERE id = $4`,
       [String(result.order_id), result.status, finalStatus, orderId]
     )
+
+    revalidatePath("/")
+    revalidatePath("/dashboard/orders")
+    revalidatePath("/admin")
+    revalidatePath("/admin/orders")
 
     return { success: true, orderId, status: finalStatus }
   } catch (err: any) {
@@ -127,6 +134,12 @@ export async function fulfillDirectBundleOrder(reference: string, metadata: any)
        VALUES ($1, $2, 'refund', $3, $4)`,
       [userId, customerPrice, `Refund: delivery failed · ${network.toUpperCase()} ${dataSize}GB`, orderId]
     )
+
+    revalidatePath("/")
+    revalidatePath("/dashboard/orders")
+    revalidatePath("/admin")
+    revalidatePath("/admin/orders")
+
     return { success: false, orderId, error: err.message }
   }
 }

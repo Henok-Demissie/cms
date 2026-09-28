@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ClipboardList, RefreshCw } from "lucide-react"
@@ -29,6 +29,16 @@ export function LiveOrders({ orders }: { orders: LiveOrder[] }) {
   const router = useRouter()
   const [syncingId, setSyncingId] = useState<number | null>(null)
   const [, startTransition] = useTransition()
+
+  // Auto-revalidate immediately whenever any order is pending or processing
+  const hasInFlight = orders.some((o) => o.status === "processing" || o.status === "pending")
+  useEffect(() => {
+    if (!hasInFlight) return
+    const timer = setInterval(() => {
+      router.refresh()
+    }, 3500)
+    return () => clearInterval(timer)
+  }, [hasInFlight, router])
 
   const sync = (id: number) => {
     setSyncingId(id)

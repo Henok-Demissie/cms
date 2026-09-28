@@ -4,6 +4,7 @@ import { mapProviderStatus } from "@/lib/status"
 import { eq } from "drizzle-orm"
 import crypto from "crypto"
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 
 /**
  * Receives order status updates from iDataGH.
@@ -61,6 +62,10 @@ export async function POST(req: Request) {
       .update(orders)
       .set({ status: "delivered", providerStatus, updatedAt: new Date() })
       .where(eq(orders.id, order.id))
+    revalidatePath("/")
+    revalidatePath("/dashboard/orders")
+    revalidatePath("/admin")
+    revalidatePath("/admin/orders")
     return NextResponse.json({ ok: true })
   }
 
@@ -89,6 +94,10 @@ export async function POST(req: Request) {
     } finally {
       client.release()
     }
+    revalidatePath("/")
+    revalidatePath("/dashboard/orders")
+    revalidatePath("/admin")
+    revalidatePath("/admin/orders")
     return NextResponse.json({ ok: true })
   }
 
@@ -97,6 +106,11 @@ export async function POST(req: Request) {
     .update(orders)
     .set({ status: newStatus, providerStatus, updatedAt: new Date() })
     .where(eq(orders.id, order.id))
+
+  revalidatePath("/")
+  revalidatePath("/dashboard/orders")
+  revalidatePath("/admin")
+  revalidatePath("/admin/orders")
 
   return NextResponse.json({ ok: true })
 }

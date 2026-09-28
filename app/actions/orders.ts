@@ -27,7 +27,32 @@ export async function getWalletBalance() {
 
 export async function getMyOrders() {
   const userId = await getUserId()
-  return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt))
+  const userOrders = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt))
+
+  // Automatically sync in-flight processing orders so the customer immediately sees delivered
+  const inFlight = userOrders.filter(
+    (o) => (o.status === "processing" || o.status === "pending") && o.providerOrderId
+  )
+  if (inFlight.length > 0) {
+    await Promise.allSettled(
+      inFlight.map(async (order) => {
+        try {
+          const res = await getOrderStatus(order.providerOrderId!)
+          const mapped = mapProviderStatus(res.order_status)
+          if (mapped !== order.status) {
+            await db
+              .update(orders)
+              .set({ status: mapped, providerStatus: res.order_status, updatedAt: new Date() })
+              .where(eq(orders.id, order.id))
+            order.status = mapped
+            order.providerStatus = res.order_status
+          }
+        } catch {}
+      })
+    )
+  }
+
+  return userOrders
 }
 
 export async function getMyTransactions() {
@@ -126,11 +151,18 @@ export async function placeDataOrder(input: {
     })
     await db
       .update(orders)
-      .set({ providerOrderId: String(result.order_id), providerStatus: result.status, updatedAt: new Date() })
+      .set({
+        providerOrderId: String(result.order_id),
+        providerStatus: result.status,
+        status: mapProviderStatus(result.status),
+        updatedAt: new Date(),
+      })
       .where(eq(orders.id, orderId))
 
     revalidatePath("/")
     revalidatePath("/dashboard/orders")
+    revalidatePath("/admin")
+    revalidatePath("/admin/orders")
     return {
       ok: true,
       orderId,
@@ -142,6 +174,8 @@ export async function placeDataOrder(input: {
     await refundOrder(userId, orderId, pkg.customerPrice, reason)
     revalidatePath("/")
     revalidatePath("/dashboard/orders")
+    revalidatePath("/admin")
+    revalidatePath("/admin/orders")
     console.log("[v0] iDataGH place-order failed:", reason)
     const isLowProviderStock = reason.toLowerCase().includes("balance") || reason.toLowerCase().includes("insufficient")
     const friendlyMessage = isLowProviderStock

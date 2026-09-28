@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { Search, CheckCircle2, Clock, XCircle, RefreshCw } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,16 @@ export function AdminOrdersTable({ orders }: { orders: any[] }) {
   const [isPending, startTransition] = useTransition()
   const [markingId, setMarkingId] = useState<number | null>(null)
   const router = useRouter()
+
+  // Auto-revalidate immediately whenever any order is pending or processing
+  const hasInFlight = orders.some((o) => o.status === "processing" || o.status === "pending")
+  useEffect(() => {
+    if (!hasInFlight) return
+    const timer = setInterval(() => {
+      router.refresh()
+    }, 4000)
+    return () => clearInterval(timer)
+  }, [hasInFlight, router])
 
   const markDelivered = (id: number) => {
     setMarkingId(id)
