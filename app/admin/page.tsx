@@ -14,8 +14,10 @@ import {
   ShieldCheck,
   AlertTriangle,
   ArrowLeft,
+  RefreshCw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { BulkSyncButton } from "@/components/admin/bulk-sync-button"
 
 function formatGHS(amount: number) {
   return `GHS ${Number(amount || 0).toFixed(2)}`
@@ -55,7 +57,8 @@ export default async function AdminOverviewPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <BulkSyncButton />
           <Button asChild variant="outline" size="sm">
             <Link href="/admin/users">
               <Users className="size-4 mr-2" />

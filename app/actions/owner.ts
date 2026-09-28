@@ -7,7 +7,13 @@ import {
   grantAdminRole,
   grantAdminByEmail,
   revokeAdminRole,
+  requireAdminOrOwner,
 } from "@/lib/owner"
+import { db } from "@/lib/db"
+import { orders } from "@/lib/db/schema"
+import { ne, or, eq } from "drizzle-orm"
+import { getOrderStatus } from "@/lib/idatagh"
+import { mapProviderStatus } from "@/lib/status"
 
 export async function precheckOwnerLogin(email: string) {
   if (isOwnerEmail(email)) {
@@ -45,5 +51,57 @@ export async function revokeAdminAction(userId: string) {
     return { success: true, message: `Successfully removed administrator privileges.` }
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to remove administrator." }
+  }
+}
+
+/**
+ * Bulk re-sync every non-delivered order from iDataGH.
+ * Fixes orders stuck as "processing" or "failed" that were actually delivered.
+ * Owner/admin only.
+ */
+export async function bulkSyncOrders() {
+  await requireAdminOrOwner()
+
+  // Get all orders that aren't delivered yet and have a providerOrderId
+  const stuck = await db
+    .select()
+    .from(orders)
+    .where(ne(orders.status, "delivered"))
+
+  let updated = 0
+  let errors = 0
+
+  for (const order of stuck) {
+    if (!order.providerOrderId) continue
+    try {
+      const res = await getOrderStatus(order.providerOrderId)
+      const newStatus = mapProviderStatus(res.order_status)
+      if (newStatus !== order.status) {
+        await db
+          .update(orders)
+          .set({
+            status: newStatus,
+            providerStatus: res.order_status,
+            updatedAt: new Date(),
+          })
+          .where(eq(orders.id, order.id))
+        updated++
+      }
+    } catch {
+      errors++
+    }
+  }
+
+  revalidatePath("/")
+  revalidatePath("/dashboard/orders")
+  revalidatePath("/admin")
+  revalidatePath("/admin/orders")
+
+  return {
+    success: true,
+    total: stuck.length,
+    updated,
+    errors,
+    message: `Synced ${stuck.length} orders — ${updated} updated, ${errors} unreachable.`,
   }
 }

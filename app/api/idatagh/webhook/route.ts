@@ -48,7 +48,23 @@ export async function POST(req: Request) {
 
   const newStatus = mapProviderStatus(providerStatus)
 
-  // If it failed and we haven't already refunded, refund the customer.
+  // Log unknown status strings so we can expand mapProviderStatus if needed
+  if (newStatus === "processing" && providerStatus) {
+    console.log(`[idatagh-webhook] Unrecognized status string: "${providerStatus}" for order ${providerOrderId}`)
+  }
+
+  // Case 1: provider says delivered — update regardless of current status.
+  // This handles MTN/Telecel async delivery where we pre-marked the order "failed"
+  // because the initial API call timed out, but iDataGH later delivered it.
+  if (newStatus === "delivered") {
+    await db
+      .update(orders)
+      .set({ status: "delivered", providerStatus, updatedAt: new Date() })
+      .where(eq(orders.id, order.id))
+    return NextResponse.json({ ok: true })
+  }
+
+  // Case 2: provider says failed and we haven't already refunded → refund now.
   if (newStatus === "failed" && order.status !== "failed") {
     const client = await pool.connect()
     try {
@@ -73,12 +89,14 @@ export async function POST(req: Request) {
     } finally {
       client.release()
     }
-  } else {
-    await db
-      .update(orders)
-      .set({ status: newStatus, providerStatus, updatedAt: new Date() })
-      .where(eq(orders.id, order.id))
+    return NextResponse.json({ ok: true })
   }
+
+  // Case 3: processing or any other status — just update.
+  await db
+    .update(orders)
+    .set({ status: newStatus, providerStatus, updatedAt: new Date() })
+    .where(eq(orders.id, order.id))
 
   return NextResponse.json({ ok: true })
 }
