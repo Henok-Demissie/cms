@@ -105,3 +105,72 @@ export async function bulkSyncOrders() {
     message: `Synced ${stuck.length} orders — ${updated} updated, ${errors} unreachable.`,
   }
 }
+
+/**
+ * Mark a single order as delivered manually.
+ * Admin/Owner only.
+ */
+export async function markOrderDelivered(orderId: number) {
+  try {
+    await requireAdminOrOwner()
+
+    await db
+      .update(orders)
+      .set({
+        status: "delivered",
+        providerStatus: "manual_delivered",
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, orderId))
+
+    revalidatePath("/")
+    revalidatePath("/dashboard/orders")
+    revalidatePath("/admin")
+    revalidatePath("/admin/orders")
+
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to mark order as delivered." }
+  }
+}
+
+/**
+ * Mark all currently failed orders as delivered in bulk.
+ * Admin/Owner only.
+ */
+export async function markAllFailedDelivered() {
+  try {
+    await requireAdminOrOwner()
+
+    const failed = await db
+      .select({ id: orders.id })
+      .from(orders)
+      .where(eq(orders.status, "failed"))
+
+    if (failed.length === 0) {
+      return { success: true, message: "No failed orders found to update." }
+    }
+
+    await db
+      .update(orders)
+      .set({
+        status: "delivered",
+        providerStatus: "manual_delivered",
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.status, "failed"))
+
+    revalidatePath("/")
+    revalidatePath("/dashboard/orders")
+    revalidatePath("/admin")
+    revalidatePath("/admin/orders")
+
+    return {
+      success: true,
+      message: `Successfully marked ${failed.length} failed order${failed.length === 1 ? "" : "s"} as delivered.`,
+    }
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to update orders." }
+  }
+}
+

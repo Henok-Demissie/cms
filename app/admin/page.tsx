@@ -259,13 +259,13 @@ export default async function AdminOverviewPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            {order.status === "completed" ? (
+                            {order.status === "completed" || order.status === "delivered" ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-500">
-                                <CheckCircle2 className="size-3" /> Done
+                                <CheckCircle2 className="size-3" /> Delivered
                               </span>
-                            ) : order.status === "pending" ? (
+                            ) : order.status === "pending" || order.status === "processing" ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-500">
-                                <Clock className="size-3" /> Pending
+                                <Clock className="size-3" /> Processing
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-500">

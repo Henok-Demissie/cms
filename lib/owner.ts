@@ -233,11 +233,11 @@ export async function getAdminOverview() {
   const orderStatsRes = await pool.query(`
     SELECT
       COUNT(*)::int as total_orders,
-      COALESCE(SUM(CASE WHEN status = 'completed' THEN "customerPrice" ELSE 0 END), 0)::numeric as total_revenue,
-      COALESCE(SUM(CASE WHEN status = 'completed' THEN "costPrice" ELSE 0 END), 0)::numeric as total_cost,
-      COALESCE(SUM(CASE WHEN status = 'completed' THEN ("customerPrice" - "costPrice") ELSE 0 END), 0)::numeric as total_profit,
-      COUNT(CASE WHEN status = 'pending' THEN 1 END)::int as pending_orders,
-      COUNT(CASE WHEN status = 'completed' THEN 1 END)::int as completed_orders,
+      COALESCE(SUM(CASE WHEN status IN ('completed', 'delivered') THEN "customerPrice" ELSE 0 END), 0)::numeric as total_revenue,
+      COALESCE(SUM(CASE WHEN status IN ('completed', 'delivered') THEN "costPrice" ELSE 0 END), 0)::numeric as total_cost,
+      COALESCE(SUM(CASE WHEN status IN ('completed', 'delivered') THEN ("customerPrice" - "costPrice") ELSE 0 END), 0)::numeric as total_profit,
+      COUNT(CASE WHEN status IN ('pending', 'processing') THEN 1 END)::int as pending_orders,
+      COUNT(CASE WHEN status IN ('completed', 'delivered') THEN 1 END)::int as completed_orders,
       COUNT(CASE WHEN status = 'failed' THEN 1 END)::int as failed_orders
     FROM orders
   `)
@@ -340,7 +340,7 @@ export async function getAllAdminUsers() {
       u."createdAt",
       COALESCE(w.balance, 0)::numeric as balance,
       (SELECT COUNT(*)::int FROM orders WHERE orders."userId" = u.id) as order_count,
-      (SELECT COALESCE(SUM("customerPrice"), 0)::numeric FROM orders WHERE orders."userId" = u.id AND orders.status = 'completed') as total_spend,
+      (SELECT COALESCE(SUM("customerPrice"), 0)::numeric FROM orders WHERE orders."userId" = u.id AND orders.status IN ('completed', 'delivered')) as total_spend,
       CASE
         WHEN LOWER(u.email) = LOWER($1) THEN 'owner'
         WHEN sa."userId" IS NOT NULL THEN 'admin'
