@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ClipboardList, RefreshCw } from "lucide-react"
+import { ClipboardList, RefreshCw, Download } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -39,6 +39,46 @@ export function LiveOrders({ orders }: { orders: LiveOrder[] }) {
     }, 3500)
     return () => clearInterval(timer)
   }, [hasInFlight, router])
+
+  const downloadCSV = () => {
+    if (orders.length === 0) {
+      toast.error("No orders to download")
+      return
+    }
+
+    const headers = ["Order ID", "Service", "Recipient", "Amount (GH₵)", "Status", "Date"]
+    const rows = orders.map((o) => [
+      o.reference || `#${o.id}`,
+      `${o.network.toUpperCase()} ${o.volume}`,
+      o.recipient,
+      formatGhs(o.amount).replace("GHS ", ""),
+      o.status ? o.status.charAt(0).toUpperCase() + o.status.slice(1) : "",
+      o.createdAt,
+    ])
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row
+          .map((val) => {
+            const str = String(val ?? "").replace(/"/g, '""')
+            return `"${str}"`
+          })
+          .join(",")
+      ),
+    ]
+
+    const blob = new Blob([csvContent.join("\r\n")], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `my_orders_${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    toast.success(`Downloaded ${orders.length} orders`)
+  }
 
   const sync = (id: number) => {
     setSyncingId(id)
@@ -81,7 +121,19 @@ export function LiveOrders({ orders }: { orders: LiveOrder[] }) {
   }
 
   return (
-    <Card className="card-shadow overflow-hidden py-0">
+    <div className="flex flex-col gap-3">
+      <div className="flex justify-end">
+        <Button
+          onClick={downloadCSV}
+          variant="outline"
+          size="sm"
+          className="text-xs h-8 gap-1.5"
+        >
+          <Download className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+          Download CSV
+        </Button>
+      </div>
+      <Card className="card-shadow overflow-hidden py-0">
       <CardContent className="px-0">
         <Table>
           <TableHeader>
@@ -141,5 +193,6 @@ export function LiveOrders({ orders }: { orders: LiveOrder[] }) {
         </Table>
       </CardContent>
     </Card>
+    </div>
   )
 }

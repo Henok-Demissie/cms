@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, CheckCircle2, Clock, XCircle } from "lucide-react"
+import { Search, CheckCircle2, Clock, XCircle, Download } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
 function formatGHS(amount: number) {
@@ -34,6 +36,69 @@ export function AdminOrdersTable({ orders }: { orders: any[] }) {
     }, 4000)
     return () => clearInterval(timer)
   }, [hasInFlight, router])
+
+  const downloadOrdersCSV = () => {
+    const list = filtered.length > 0 ? filtered : orders
+    if (list.length === 0) {
+      toast.error("No orders to download")
+      return
+    }
+
+    const headers = [
+      "Order ID",
+      "Service",
+      "Recipient",
+      "Amount (GH₵)",
+      "Cost (GH₵)",
+      "Profit (GH₵)",
+      "Status",
+      "Customer",
+      "Customer Email",
+      "Date",
+    ]
+
+    const rows = list.map((o) => {
+      const service = `${(o.network || "").toUpperCase()} ${o.volume || ""}`.trim()
+      const profit = Number(o.customerPrice || 0) - Number(o.costPrice || 0)
+      const dateStr = o.createdAt ? new Date(o.createdAt).toISOString() : ""
+
+      return [
+        o.reference || `#${o.id}`,
+        service,
+        o.recipient || "",
+        Number(o.customerPrice || 0).toFixed(2),
+        Number(o.costPrice || 0).toFixed(2),
+        profit.toFixed(2),
+        o.status ? o.status.charAt(0).toUpperCase() + o.status.slice(1) : "",
+        o.user_name || "Customer",
+        o.user_email || "",
+        dateStr,
+      ]
+    })
+
+    const csvRows = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row
+          .map((val) => {
+            const str = String(val ?? "").replace(/"/g, '""')
+            return `"${str}"`
+          })
+          .join(",")
+      ),
+    ]
+
+    const blob = new Blob([csvRows.join("\r\n")], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `orders_${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    toast.success(`Downloaded ${list.length} orders to CSV`)
+  }
 
   const filtered = orders.filter((o) => {
     const term = search.toLowerCase()
@@ -92,6 +157,18 @@ export function AdminOrdersTable({ orders }: { orders: any[] }) {
             <option value="processing">Processing</option>
             <option value="failed">Failed</option>
           </select>
+
+          {/* Export / Download CSV */}
+          <Button
+            type="button"
+            onClick={downloadOrdersCSV}
+            variant="outline"
+            size="sm"
+            className="h-10 text-xs font-semibold gap-1.5"
+          >
+            <Download className="size-4 text-emerald-600 dark:text-emerald-400" />
+            Download CSV
+          </Button>
         </div>
       </div>
 
