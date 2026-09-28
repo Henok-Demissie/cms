@@ -33,6 +33,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 const platform = [
@@ -97,6 +98,12 @@ export function AppSidebar({
   )
   const canAccessAdmin = Boolean(isPrimaryOwner || hasAdminAccess)
 
+  const { isMobile, setOpenMobile } = useSidebar()
+  // Close the sidebar sheet on mobile after navigation
+  const closeOnMobile = () => {
+    if (isMobile) setOpenMobile(false)
+  }
+
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(href + "/")
 
@@ -108,7 +115,7 @@ export function AppSidebar({
           {items.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton asChild isActive={isActive(item.href)} tooltip={item.label}>
-                <Link href={item.href}>
+                <Link href={item.href} onClick={closeOnMobile}>
                   <item.icon />
                   <span>{item.label}</span>
                 </Link>
@@ -150,7 +157,7 @@ export function AppSidebar({
                         : "bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-500/20"
                     }
                   >
-                    <Link href="/admin" className="flex items-center justify-between w-full">
+                  <Link href="/admin" className="flex items-center justify-between w-full" onClick={closeOnMobile}>
                       <div className="flex items-center gap-2">
                         <ShieldCheck
                           className={`size-4 ${isPrimaryOwner ? "text-amber-500" : "text-blue-500"}`}
@@ -182,6 +189,7 @@ export function AppSidebar({
         {/* Real wallet balance button */}
         <Link
           href="/dashboard/wallet"
+          onClick={closeOnMobile}
           className="brand-gradient-soft block rounded-xl border border-primary/20 p-3 transition-all hover:border-brand-emerald/40 hover:shadow-sm group-data-[collapsible=icon]:hidden group/wallet"
         >
           <div className="flex items-center justify-between">
@@ -197,7 +205,7 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Back to home">
-              <Link href="/">
+              <Link href="/" onClick={closeOnMobile}>
                 <ArrowLeft />
                 <span>Back to Home</span>
               </Link>
