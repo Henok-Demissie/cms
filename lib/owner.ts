@@ -306,9 +306,9 @@ export async function getAdminOverview() {
   const orderStatsRes = await pool.query(`
     SELECT
       COUNT(*)::int as total_orders,
-      COALESCE(SUM(CASE WHEN status IN ('completed', 'delivered') THEN "customerPrice" ELSE 0 END), 0)::numeric as total_revenue,
-      COALESCE(SUM(CASE WHEN status IN ('completed', 'delivered') THEN "costPrice" ELSE 0 END), 0)::numeric as total_cost,
-      COALESCE(SUM(CASE WHEN status IN ('completed', 'delivered') THEN ("customerPrice" - "costPrice") ELSE 0 END), 0)::numeric as total_profit,
+      COALESCE(SUM(CASE WHEN status NOT IN ('failed') THEN "customerPrice" ELSE 0 END), 0)::numeric as total_revenue,
+      COALESCE(SUM(CASE WHEN status NOT IN ('failed') THEN "costPrice" ELSE 0 END), 0)::numeric as total_cost,
+      COALESCE(SUM(CASE WHEN status NOT IN ('failed') THEN ("customerPrice" - "costPrice") ELSE 0 END), 0)::numeric as total_profit,
       COUNT(CASE WHEN status IN ('pending', 'processing') THEN 1 END)::int as pending_orders,
       COUNT(CASE WHEN status IN ('completed', 'delivered') THEN 1 END)::int as completed_orders,
       COUNT(CASE WHEN status = 'failed' THEN 1 END)::int as failed_orders
