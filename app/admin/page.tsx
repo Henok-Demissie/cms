@@ -17,7 +17,6 @@ import {
   RefreshCw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ClearTestDataButton } from "@/components/admin/clear-test-data-button"
 
 function formatGHS(amount: number) {
   return `GHS ${Number(amount || 0).toFixed(2)}`
@@ -58,7 +57,6 @@ export default async function AdminOverviewPage() {
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          <ClearTestDataButton />
           <Button asChild variant="outline" size="sm">
             <Link href="/admin/users">
               <Users className="size-4 mr-2" />
